@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Katherine Ullman — Operations & People Strategy</title>
+    <title>Writing — Katherine Ullman</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -44,7 +44,6 @@
             flex-direction: column;
         }
 
-        /* Subtle texture overlay */
         body::before {
             content: '';
             position: fixed;
@@ -58,7 +57,6 @@
             z-index: 1000;
         }
 
-        /* Decorative background elements */
         .bg-texture {
             position: fixed;
             pointer-events: none;
@@ -85,7 +83,6 @@
             border-radius: 50%;
         }
 
-        /* Top Center Navigation - floating dock style */
         .nav-top {
             position: fixed;
             top: 32px;
@@ -116,7 +113,8 @@
             background: transparent;
         }
 
-        .nav-top a:hover {
+        .nav-top a:hover,
+        .nav-top a.active {
             background: var(--slate);
             color: var(--cream);
         }
@@ -128,157 +126,106 @@
         .nav-top a:nth-child(5) { border-radius: 42px 32px 38px 48px; }
         .nav-top a:nth-child(6) { border-radius: 38px 48px 32px 42px; }
 
-        /* Main Content */
         .main {
             flex: 1;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 100px 40px 60px 40px;
+            flex-direction: column;
+            padding: 120px 40px 80px 40px;
             position: relative;
             z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
         }
 
-        .hero {
-            display: flex;
-            align-items: center;
-            gap: 80px;
-            max-width: 1000px;
+        .page-header {
+            margin-bottom: 60px;
         }
 
-        .hero-text {
-            flex: 1;
-        }
-
-        .hero-text h1 {
+        .page-header h1 {
             font-family: 'Outfit', sans-serif;
-            font-size: 3.5rem;
+            font-size: 3rem;
             font-weight: 300;
             line-height: 1.15;
             color: var(--charcoal);
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             letter-spacing: -0.02em;
         }
 
-        .hero-text h1 span {
-            display: block;
-            font-weight: 500;
+        .page-header h1 span {
             color: var(--coral);
+            font-weight: 500;
         }
 
-        .hero-tagline {
+        .page-header p {
             font-size: 1.1rem;
             color: var(--warm-gray);
-            max-width: 380px;
-            margin-bottom: 32px;
+            max-width: 500px;
         }
 
-        .hero-cta {
+        /* Writing Cards */
+        .writing-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .writing-card {
+            background: var(--cream-dark);
+            border-radius: 20px;
+            padding: 32px;
+            border: 1.5px solid transparent;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+        }
+
+        .writing-card:hover {
+            border-color: var(--coral);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(232, 135, 124, 0.15);
+        }
+
+        .writing-card .date {
+            font-size: 0.8rem;
+            color: var(--coral);
+            font-weight: 500;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .writing-card h3 {
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: var(--slate-deep);
+            margin-bottom: 10px;
+        }
+
+        .writing-card p {
+            color: var(--warm-gray);
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        .writing-card .read-more {
             display: inline-flex;
             align-items: center;
-            gap: 12px;
-            padding: 14px 28px;
-            background-color: var(--coral);
-            color: white;
-            text-decoration: none;
-            border-radius: 50px;
+            gap: 6px;
+            margin-top: 16px;
+            color: var(--coral);
             font-size: 0.9rem;
             font-weight: 500;
-            transition: all 0.3s ease;
         }
 
-        .hero-cta:hover {
-            background-color: var(--coral-deep);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(232, 135, 124, 0.35);
-        }
-
-        .hero-cta svg {
-            width: 16px;
-            height: 16px;
+        .writing-card .read-more svg {
             transition: transform 0.3s ease;
         }
 
-        .hero-cta:hover svg {
+        .writing-card:hover .read-more svg {
             transform: translateX(4px);
         }
 
-        /* Headshot */
-        .hero-visual {
-            position: relative;
-            flex-shrink: 0;
-        }
-
-        .headshot-container {
-            position: relative;
-            width: 320px;
-            height: 400px;
-        }
-
-        .headshot-frame {
-            position: absolute;
-            top: 16px;
-            left: 16px;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(145deg, var(--coral-pink) 0%, var(--coral) 100%);
-            border-radius: 180px 180px 100px 100px;
-        }
-
-        .headshot-frame-2 {
-            position: absolute;
-            top: -12px;
-            left: -12px;
-            width: calc(100% + 24px);
-            height: calc(100% + 24px);
-            border: 1.5px solid var(--slate-light);
-            border-radius: 190px 190px 110px 110px;
-            opacity: 0.4;
-        }
-
-        .headshot-img {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center top;
-            border-radius: 180px 180px 100px 100px;
-            z-index: 1;
-        }
-
-        .headshot-accent {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            border: 1.5px solid var(--slate);
-            border-radius: 50%;
-            top: -24px;
-            right: -24px;
-            opacity: 0.5;
-        }
-
-        .headshot-accent-2 {
-            position: absolute;
-            width: 24px;
-            height: 24px;
-            background-color: var(--coral-pink);
-            border-radius: 50%;
-            bottom: 60px;
-            left: -40px;
-        }
-
-        .headshot-accent-3 {
-            position: absolute;
-            width: 80px;
-            height: 40px;
-            border: 1.5px solid var(--coral);
-            border-radius: 40px;
-            bottom: -20px;
-            right: 40px;
-            opacity: 0.5;
-        }
-
-        /* Footer */
         footer {
             padding: 24px 40px;
             background: var(--slate-deep);
@@ -315,7 +262,6 @@
             color: var(--coral-pink);
         }
 
-        /* Responsive */
         @media (max-width: 900px) {
             .nav-top {
                 padding: 8px 12px;
@@ -331,34 +277,8 @@
                 padding: 120px 24px 60px 24px;
             }
 
-            .hero {
-                flex-direction: column-reverse;
-                gap: 40px;
-                text-align: center;
-            }
-
-            .hero-tagline {
-                margin-left: auto;
-                margin-right: auto;
-            }
-
-            .headshot-container {
-                width: 240px;
-                height: 300px;
-            }
-
-            .hero-text h1 {
-                font-size: 2.5rem;
-            }
-
-            footer {
-                padding: 24px;
-            }
-
-            footer .footer-content {
-                flex-direction: column;
-                gap: 16px;
-                text-align: center;
+            .page-header h1 {
+                font-size: 2.4rem;
             }
         }
 
@@ -380,63 +300,82 @@
                 padding: 140px 24px 60px 24px;
             }
 
-            .hero-text h1 {
+            .page-header h1 {
                 font-size: 2rem;
-            }
-
-            .headshot-container {
-                width: 200px;
-                height: 250px;
-            }
-
-            .headshot-accent,
-            .headshot-accent-2,
-            .headshot-accent-3,
-            .headshot-frame-2 {
-                display: none;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Background texture elements -->
     <div class="bg-texture bg-blob-1"></div>
     <div class="bg-texture bg-blob-2"></div>
 
-    <!-- Top Center Navigation -->
     <nav class="nav-top">
         <a href="about.html">About</a>
         <a href="consulting.html">Consulting</a>
         <a href="projects.html">Projects</a>
-        <a href="writing.html">Writing</a>
+        <a href="writing.html" class="active">Writing</a>
         <a href="influences.html">Influences</a>
         <a href="connect.html">Connect</a>
     </nav>
 
-    <!-- Main Content -->
     <main class="main">
-        <div class="hero">
-            <div class="hero-text">
-                <h1>
-                    Hi, I'm
-                    <span>Katherine.</span>
-                </h1>
-                <p class="hero-tagline">Welcome to my own little corner of the internet. Let's get to know each other.</p>
-            </div>
-            <div class="hero-visual">
-                <div class="headshot-container">
-                    <div class="headshot-frame"></div>
-                    <div class="headshot-frame-2"></div>
-                    <img src="headshot.png" alt="Katherine Ullman" class="headshot-img">
-                    <div class="headshot-accent"></div>
-                    <div class="headshot-accent-2"></div>
-                    <div class="headshot-accent-3"></div>
-                </div>
-            </div>
+        <header class="page-header">
+            <h1>Words & <span>ideas</span></h1>
+            <p>Essays, reflections, and things I'm thinking about.</p>
+        </header>
+
+        <div class="writing-grid">
+            <a href="#" class="writing-card">
+                <span class="date">January 2026</span>
+                <h3>Article Title One</h3>
+                <p>A brief description or excerpt from this piece — enough to give readers a sense of what it's about and why they might want to read it.</p>
+                <span class="read-more">
+                    Read more
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                </span>
+            </a>
+
+            <a href="#" class="writing-card">
+                <span class="date">December 2025</span>
+                <h3>Article Title Two</h3>
+                <p>A brief description or excerpt from this piece — enough to give readers a sense of what it's about and why they might want to read it.</p>
+                <span class="read-more">
+                    Read more
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                </span>
+            </a>
+
+            <a href="#" class="writing-card">
+                <span class="date">November 2025</span>
+                <h3>Article Title Three</h3>
+                <p>A brief description or excerpt from this piece — enough to give readers a sense of what it's about and why they might want to read it.</p>
+                <span class="read-more">
+                    Read more
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                </span>
+            </a>
+
+            <a href="#" class="writing-card">
+                <span class="date">October 2025</span>
+                <h3>Article Title Four</h3>
+                <p>A brief description or excerpt from this piece — enough to give readers a sense of what it's about and why they might want to read it.</p>
+                <span class="read-more">
+                    Read more
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                </span>
+            </a>
         </div>
     </main>
 
-    <!-- Footer -->
     <footer>
         <div class="footer-content">
             <p>© 2026 Katherine Ullman (with the help of Claude Code)</p>

@@ -127,6 +127,7 @@
         .nav-top a:nth-child(3) { border-radius: 40px 35px 45px 30px; }
         .nav-top a:nth-child(4) { border-radius: 30px 40px 35px 45px; }
         .nav-top a:nth-child(5) { border-radius: 42px 32px 38px 48px; }
+        .nav-top a:nth-child(6) { border-radius: 38px 48px 32px 42px; }
 
         /* Main Content */
         .main {
@@ -159,12 +160,6 @@
         .page-header h1 span {
             color: var(--coral);
             font-weight: 500;
-        }
-
-        .page-header .subtitle {
-            font-size: 1.15rem;
-            color: var(--warm-gray);
-            max-width: 500px;
         }
 
         /* Content Sections */
@@ -217,18 +212,18 @@
             font-style: italic;
         }
 
-        /* Two Column Layout */
-        .two-column {
+        /* Four Column Layout */
+        .four-column {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
             margin: 40px 0;
         }
 
         .column-card {
             background: var(--cream-dark);
             border-radius: 20px;
-            padding: 32px;
+            padding: 28px;
             border: 1.5px solid transparent;
             transition: all 0.3s ease;
         }
@@ -239,40 +234,17 @@
         }
 
         .column-card h3 {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 500;
             color: var(--slate-deep);
             margin-bottom: 12px;
         }
 
         .column-card p {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             color: var(--warm-gray);
             margin: 0;
-        }
-
-        /* List Style */
-        .styled-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .styled-list li {
-            position: relative;
-            padding-left: 24px;
-            margin-bottom: 12px;
-            color: var(--charcoal);
-        }
-
-        .styled-list li::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 10px;
-            width: 8px;
-            height: 8px;
-            background: var(--coral-pink);
-            border-radius: 50%;
+            line-height: 1.6;
         }
 
         /* Footer */
@@ -332,9 +304,9 @@
                 font-size: 2.4rem;
             }
 
-            .two-column {
-                grid-template-columns: 1fr;
-                gap: 24px;
+            .four-column {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
             }
         }
 
@@ -363,6 +335,10 @@
             .highlight-card {
                 padding: 28px;
             }
+
+            .four-column {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -373,10 +349,11 @@
 
     <!-- Top Center Navigation -->
     <nav class="nav-top">
-        <a href="index.html" class="active">About</a>
+        <a href="about.html" class="active">About</a>
         <a href="consulting.html">Consulting</a>
         <a href="projects.html">Projects</a>
         <a href="writing.html">Writing</a>
+        <a href="influences.html">Influences</a>
         <a href="connect.html">Connect</a>
     </nav>
 
@@ -384,11 +361,9 @@
     <main class="main">
         <header class="page-header">
             <h1>A bit more <span>about me</span></h1>
-            <p class="subtitle">Placeholder subtitle text goes here — a sentence or two that sets the tone.</p>
         </header>
 
         <section class="content-section">
-            <h2>Background</h2>
             <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
             <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.</p>
         </section>
@@ -402,32 +377,30 @@
             <p>Sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium.</p>
         </section>
 
-        <div class="two-column">
+        <div class="four-column">
             <div class="column-card">
-                <h3>Area of Focus One</h3>
-                <p>Brief description of this area — what it involves and why it matters to you.</p>
+                <h3>Area One</h3>
+                <p>Brief description of this area of focus.</p>
             </div>
             <div class="column-card">
-                <h3>Area of Focus Two</h3>
-                <p>Brief description of this area — what it involves and why it matters to you.</p>
+                <h3>Area Two</h3>
+                <p>Brief description of this area of focus.</p>
+            </div>
+            <div class="column-card">
+                <h3>Area Three</h3>
+                <p>Brief description of this area of focus.</p>
+            </div>
+            <div class="column-card">
+                <h3>Area Four</h3>
+                <p>Brief description of this area of focus.</p>
             </div>
         </div>
-
-        <section class="content-section">
-            <h2>A Few More Things</h2>
-            <ul class="styled-list">
-                <li>An interesting fact or detail about you</li>
-                <li>Another thing people might want to know</li>
-                <li>Something that makes you, you</li>
-                <li>A personal interest or passion</li>
-            </ul>
-        </section>
     </main>
 
     <!-- Footer -->
     <footer>
         <div class="footer-content">
-            <p>© 2026 Katherine Ullman</p>
+            <p>© 2026 Katherine Ullman (with the help of Claude Code)</p>
             <div class="footer-links">
                 <a href="mailto:katherineullman@gmail.com" aria-label="Email">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">

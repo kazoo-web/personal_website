@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Influences — Katherine Ullman</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cream: #FAF7F2; --cream-dark: #F0EBE3; --slate: #4A6670;
+            --slate-deep: #3D555E; --slate-light: #6B8A95; --coral: #E8877C;
+            --coral-deep: #D9706A; --coral-pink: #F2A59D; --blush: #F4D3C4;
+            --charcoal: #2D3436; --warm-gray: #6B6560;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Outfit', sans-serif; background-color: var(--cream);
+            color: var(--charcoal); line-height: 1.7; min-height: 100vh;
+            display: flex; flex-direction: column;
+        }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.04; pointer-events: none; z-index: 1000;
+        }
+
+        .main {
+            flex: 1; padding: 100px 0 80px; position: relative; z-index: 1;
+        }
+
+        .page-header { 
+            margin-bottom: 50px; padding: 0 40px; max-width: 900px; margin-left: auto; margin-right: auto;
+        }
+        .page-header h1 {
+            font-size: 3rem; font-weight: 300; color: var(--charcoal); margin-bottom: 12px;
+        }
+        .page-header h1 span { color: var(--coral); font-weight: 500; }
+        .page-header p { font-size: 1.1rem; color: var(--warm-gray); }
+
+        /* Shelf Section */
+        .shelf-section {
+            margin-bottom: 50px;
+        }
+
+        .shelf-header {
+            display: flex; align-items: center; gap: 16px;
+            padding: 0 40px; margin-bottom: 20px;
+            max-width: 900px; margin-left: auto; margin-right: auto;
+        }
+        .shelf-header .icon {
+            width: 40px; height: 40px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+        }
+        .shelf-header.books .icon { background: linear-gradient(135deg, var(--blush), var(--coral-pink)); }
+        .shelf-header.podcasts .icon { background: linear-gradient(135deg, var(--slate-light), var(--slate)); }
+        .shelf-header.movies .icon { background: linear-gradient(135deg, var(--coral), var(--coral-deep)); }
+        
+        .shelf-header h2 {
+            font-size: 1.3rem; font-weight: 500; color: var(--slate-deep);
+        }
+
+        /* Horizontal Scroll */
+        .shelf-scroll {
+            display: flex; gap: 20px; overflow-x: auto; padding: 10px 40px 20px;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+        .shelf-scroll::-webkit-scrollbar { height: 6px; }
+        .shelf-scroll::-webkit-scrollbar-track { background: var(--cream-dark); border-radius: 3px; }
+        .shelf-scroll::-webkit-scrollbar-thumb { background: var(--coral-pink); border-radius: 3px; }
+
+        .shelf-item {
+            flex-shrink: 0; scroll-snap-align: start;
+            width: 160px; cursor: pointer; transition: transform 0.3s ease;
+        }
+        .shelf-item:hover { transform: translateY(-8px) scale(1.02); }
+
+        .shelf-cover {
+            width: 100%; aspect-ratio: 2/3; border-radius: 12px;
+            background: linear-gradient(135deg, var(--blush), var(--coral-pink));
+            margin-bottom: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; opacity: 0.3;
+        }
+        .podcasts .shelf-cover {
+            aspect-ratio: 1; border-radius: 16px;
+            background: linear-gradient(135deg, var(--slate-light), var(--slate));
+        }
+        .movies .shelf-cover {
+            background: linear-gradient(135deg, var(--coral), var(--coral-deep));
+        }
+
+        .shelf-item h3 { font-size: 0.9rem; font-weight: 500; color: var(--slate-deep); margin-bottom: 2px; }
+        .shelf-item p { font-size: 0.8rem; color: var(--warm-gray); }
+
+        footer {
+            padding: 24px 40px; background: var(--slate-deep);
+        }
+        footer p { color: rgba(255,255,255,0.6); font-size: 0.85rem; text-align: center; }
+
+        @media (max-width: 500px) {
+            .page-header h1 { font-size: 2rem; }
+            .page-header, .shelf-header { padding: 0 24px; }
+            .shelf-scroll { padding: 10px 24px 20px; gap: 16px; }
+            .shelf-item { width: 130px; }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="main">
+        <header class="page-header">
+            <h1>What's <span>influencing</span> me</h1>
+            <p>Books, podcasts, and films I'm currently consuming.</p>
+        </header>
+
+        <section class="shelf-section books">
+            <div class="shelf-header books">
+                <div class="icon">📚</div>
+                <h2>Currently Reading</h2>
+            </div>
+            <div class="shelf-scroll">
+                <div class="shelf-item">
+                    <div class="shelf-cover">📖</div>
+                    <h3>Book Title One</h3>
+                    <p>Author Name</p>
+                </div>
+                <div class="shelf-item">
+                    <div class="shelf-cover">📖</div>
+                    <h3>Book Title Two</h3>
+                    <p>Author Name</p>
+                </div>
+                <div class="shelf-item">
+                    <div class="shelf-cover">📖</div>
+                    <h3>Book Title Three</h3>
+                    <p>Author Name</p>
+                </div>
+                <div class="shelf-item">
+                    <div class="shelf-cover">📖</div>
+                    <h3>Book Title Four</h3>
+                    <p>Author Name</p>
+                </div>
+                <div class="shelf-item">
+                    <div class="shelf-cover">📖</div>
+                    <h3>Book Title Five</h3>
+                    <p>Author Name</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="shelf-section podcasts">
+            <div class="shelf-header podcasts">
+                <div class="icon">🎧</div>
+                <h2>In My Ears</h2>
+            </div>
+            <div class="shelf-scroll">
+                <div class="shelf-item">
+                    <div class="shelf-cover">🎙️</div>
+                    <h3>Podcast One</h3>
+                    <p>Host Name</p>
+                </div>
+                <div class="shelf-item">
+                    <div class="shelf-cover">🎙️</div>
+                    <h3>Podcast Two</h3>
+                    <p>Host Name</p>
+                </div>
+                <div class="shelf-item">
+                    <div class="shelf-cover">🎙️</div>
+                    <h3>Podcast Three</h3>
+                    <p>Host Name</p>
+                </div>
+                <div class="shelf-item">
+                    <div class="shelf-cover">🎙️</div>
+                    <h3>Podcast Four</h3>
+                    <p>Host Name</p>
+                </div>
+                <div class="shelf-item">
+                    <div class="shelf-cover">🎙️</div>
+                    <h3>Podcast Five</h3>
+                    <p>Host Name</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="shelf-section movies">
+            <div class="shelf-header movies">
+                <div class="icon">🎬</div>
+                <h2>Recently Watched</h2>
+            </div>
+            <div class="shelf-scroll">
+                <div class="shelf-item">
+                    <div class="shelf-cover">🎞️</div>
+                    <h3>Film Title One</h3>
+                    <p>Director</p>
+                </div>
+                <div class="shelf-item">
+                    <div class="shelf-cover">🎞️</div>
+                    <h3>Film Title Two</h3>
+                    <p>Director</p>
+                </div>
+                <div class="shelf-item">
+                    <div class="shelf-cover">🎞️</div>
+                    <h3>Film Title Three</h3>
+                    <p>Director</p>
+                </div>
+                <div class="shelf-item">
+                    <div class="shelf-cover">🎞️</div>
+                    <h3>Film Title Four</h3>
+                    <p>Director</p>
+                </div>
+                <div class="shelf-item">
+                    <div class="shelf-cover">🎞️</div>
+                    <h3>Film Title Five</h3>
+                    <p>Director</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer><p>© 2026 Katherine Ullman (with the help of Claude Code)</p></footer>
+</body>
+</html>
