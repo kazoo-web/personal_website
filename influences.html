@@ -130,17 +130,18 @@
         /* Main Content */
         .main {
             flex: 1;
-            padding: 120px 0 80px;
+            display: flex;
+            flex-direction: column;
+            padding: 120px 40px 80px 40px;
             position: relative;
             z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
         }
 
         .page-header {
             margin-bottom: 50px;
-            padding: 0 40px;
-            max-width: 900px;
-            margin-left: auto;
-            margin-right: auto;
         }
 
         .page-header h1 {
@@ -172,11 +173,7 @@
             display: flex;
             align-items: center;
             gap: 16px;
-            padding: 0 40px;
             margin-bottom: 20px;
-            max-width: 900px;
-            margin-left: auto;
-            margin-right: auto;
         }
 
         .shelf-header .icon {
@@ -212,7 +209,7 @@
             display: flex;
             gap: 20px;
             overflow-x: auto;
-            padding: 10px 40px 20px;
+            padding: 10px 0 20px;
             scroll-snap-type: x mandatory;
             -webkit-overflow-scrolling: touch;
         }
@@ -359,13 +356,7 @@
                 font-size: 2rem;
             }
 
-            .page-header,
-            .shelf-header {
-                padding: 0 24px;
-            }
-
             .shelf-scroll {
-                padding: 10px 24px 20px;
                 gap: 16px;
             }
 
