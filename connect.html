@@ -82,7 +82,27 @@
             left: -100px;
             border-radius: 50%;
         }
-
+                /* Home Logo */
+        .home-logo {
+            position: fixed;
+            top: 32px;
+            left: 40px;
+            z-index: 100;
+            text-decoration: none;
+            width: 48px;
+            height: 48px;
+            background: var(--coral);
+            border-radius: 40% 60% 55% 45% / 55% 45% 60% 40%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .home-logo:hover {
+            background: var(--slate);
+            transform: scale(1.05);
+        }
         .nav-top {
             position: fixed;
             top: 32px;
@@ -375,7 +395,11 @@
 <body>
     <div class="bg-texture bg-blob-1"></div>
     <div class="bg-texture bg-blob-2"></div>
-
+    <a href="index.html" class="home-logo">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+    </svg>
+    </a>
     <nav class="nav-top">
         <a href="about.html">About</a>
         <a href="consulting.html">Consulting</a>
