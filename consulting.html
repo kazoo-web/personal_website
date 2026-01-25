@@ -146,6 +146,116 @@
         .nav-top a:nth-child(5) { border-radius: 42px 32px 38px 48px; }
         .nav-top a:nth-child(6) { border-radius: 38px 48px 32px 42px; }
 
+        /* Framework Box */
+        .framework {
+            background: var(--cream-dark);
+            border-radius: 24px;
+            padding: 48px;
+            margin-bottom: 48px;
+        }
+
+        .framework-headline {
+            font-size: 1.8rem;
+            font-weight: 400;
+            color: var(--charcoal);
+            line-height: 2.4;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        /* Tooltip Word with underline animation */
+        .tooltip-word {
+            position: relative;
+            display: inline-block;
+            color: var(--coral);
+            font-weight: 500;
+            cursor: pointer;
+            padding-bottom: 4px;
+        }
+
+        /* Animated underline */
+        .tooltip-word::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--coral-pink), var(--coral));
+            border-radius: 2px;
+            transform: scaleX(0.3);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .tooltip-word:hover::after,
+        .tooltip-word.active::after {
+            transform: scaleX(1);
+        }
+
+        /* Number badge */
+        .tooltip-word .num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: var(--coral-pink);
+            color: white;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 6px;
+            vertical-align: middle;
+            transition: background 0.3s ease;
+        }
+
+        .tooltip-word:hover .num,
+        .tooltip-word.active .num {
+            background: var(--coral);
+        }
+
+        /* Tooltip detail area */
+        .tooltip-detail {
+            background: white;
+            border-radius: 16px;
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: all 0.4s ease;
+            margin-top: 24px;
+            border-left: 4px solid var(--coral);
+        }
+
+        .tooltip-detail.visible {
+            padding: 24px 28px;
+            max-height: 150px;
+            opacity: 1;
+        }
+
+        .tooltip-detail .label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--coral);
+            margin-bottom: 8px;
+        }
+
+        .tooltip-detail .description {
+            color: var(--slate-deep);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Hint */
+        .framework .hint {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--warm-gray);
+            margin-top: 16px;
+            opacity: 0.7;
+        }
+
         .main {
             flex: 1;
             display: flex;
@@ -350,6 +460,33 @@
             <h1>How I can <span>help</span></h1>
         </header>
 
+        <p class="subtext" style="font-size: 1.1rem; color: #6B6560; margin-bottom: 32px;">I help founders build the organizational foundation for scale.</p>
+
+        <div class="framework">
+            <p class="framework-headline">
+                Get the 
+                <span class="tooltip-word" data-target="detail-1"><span class="num">1</span>right people</span> 
+                <span class="tooltip-word" data-target="detail-2"><span class="num">2</span>working</span> 
+                on the 
+                <span class="tooltip-word" data-target="detail-3"><span class="num">3</span>right things</span>
+            </p>
+
+            <div class="tooltip-detail" id="detail-1">
+                <div class="label">Right People</div>
+                <p class="description">Identifying key hires, crafting roles & profiles, recruiting support</p>
+            </div>
+            <div class="tooltip-detail" id="detail-2">
+                <div class="label">Working</div>
+                <p class="description">Designing operating rhythms, clarifying ownership, building collaboration systems</p>
+            </div>
+            <div class="tooltip-detail" id="detail-3">
+                <div class="label">Right Things</div>
+                <p class="description">Defining near-term priorities and long-term strategy</p>
+            </div>
+
+            <p class="hint">Hover or click the highlighted words to explore</p>
+        </div>
+
         <section class="content-section">
             <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
             <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
@@ -394,4 +531,50 @@
                         <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                     </svg>
                 </a>
-            </di
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const words = document.querySelectorAll('.tooltip-word');
+        const details = document.querySelectorAll('.tooltip-detail');
+        let activeDetail = null;
+
+        function showDetail(targetId) {
+            // Hide all
+            details.forEach(d => d.classList.remove('visible'));
+            
+            // Show target
+            const target = document.getElementById(targetId);
+            if (target && activeDetail !== targetId) {
+                target.classList.add('visible');
+                activeDetail = targetId;
+            } else {
+                activeDetail = null;
+            }
+        }
+
+        words.forEach(word => {
+            // Hover to show
+            word.addEventListener('mouseenter', () => {
+                const targetId = word.getAttribute('data-target');
+                details.forEach(d => d.classList.remove('visible'));
+                document.getElementById(targetId).classList.add('visible');
+            });
+
+            // Click to toggle/stick
+            word.addEventListener('click', () => {
+                const targetId = word.getAttribute('data-target');
+                showDetail(targetId);
+            });
+        });
+
+        // Hide on mouse leave from framework (unless clicked)
+        document.querySelector('.framework').addEventListener('mouseleave', () => {
+            if (!activeDetail) {
+                details.forEach(d => d.classList.remove('visible'));
+            }
+        });
+    </script>
+</body>
+</html>
