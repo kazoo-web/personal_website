@@ -7,93 +7,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <style>
-        :root {
-            --cream: #FAF7F2;
-            --cream-dark: #F0EBE3;
-            --slate: #4A6670;
-            --slate-deep: #3D555E;
-            --slate-light: #6B8A95;
-            --coral: #E8877C;
-            --coral-deep: #D9706A;
-            --coral-pink: #F2A59D;
-            --blush: #F4D3C4;
-            --charcoal: #2D3436;
-            --warm-gray: #6B6560;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--cream);
-            color: var(--charcoal);
-            line-height: 1.7;
-            font-size: 16px;
-            overflow-x: hidden;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Subtle texture overlay */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-            opacity: 0.04;
-            pointer-events: none;
-            z-index: 1000;
-        }
-
-        /* Decorative background elements */
-        .bg-texture {
-            position: fixed;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .bg-blob-1 {
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(ellipse, var(--slate) 0%, transparent 70%);
-            opacity: 0.06;
-            top: -200px;
-            right: -100px;
-            border-radius: 50%;
-        }
-
-        .bg-blob-2 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(ellipse, var(--coral-pink) 0%, transparent 70%);
-            opacity: 0.08;
-            bottom: -100px;
-            left: -100px;
-            border-radius: 50%;
-        }
-
-        /* Main Content */
+        /* Under construction page overrides */
         .main {
-            flex: 1;
-            display: flex;
             align-items: center;
             justify-content: center;
             padding: 60px 40px;
-            position: relative;
-            z-index: 1;
+            max-width: none;
         }
 
         .construction-content {
@@ -101,7 +22,6 @@
             max-width: 560px;
         }
 
-        /* Decorative hard hat icon area */
         .construction-icon {
             position: relative;
             width: 120px;
@@ -172,7 +92,6 @@
             line-height: 1.8;
         }
 
-        /* Divider */
         .divider {
             width: 60px;
             height: 3px;
@@ -187,7 +106,6 @@
             margin-bottom: 32px;
         }
 
-        /* CTA */
         .construction-cta {
             display: inline-flex;
             align-items: center;
@@ -218,44 +136,6 @@
             transform: translateX(4px);
         }
 
-        /* Footer */
-        footer {
-            padding: 24px 40px;
-            background: var(--slate-deep);
-            position: relative;
-            z-index: 1;
-        }
-
-        footer .footer-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        footer p {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.85rem;
-        }
-
-        footer .footer-links {
-            display: flex;
-            gap: 24px;
-        }
-
-        footer a {
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            font-size: 0.85rem;
-            transition: color 0.3s ease;
-        }
-
-        footer a:hover {
-            color: var(--coral-pink);
-        }
-
-        /* Responsive */
         @media (max-width: 900px) {
             .main {
                 padding: 60px 24px;
@@ -263,16 +143,6 @@
 
             .construction-content h1 {
                 font-size: 2.5rem;
-            }
-
-            footer {
-                padding: 24px;
-            }
-
-            footer .footer-content {
-                flex-direction: column;
-                gap: 16px;
-                text-align: center;
             }
         }
 

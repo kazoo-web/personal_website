@@ -7,145 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <style>
-        :root {
-            --cream: #FAF7F2;
-            --cream-dark: #F0EBE3;
-            --slate: #4A6670;
-            --slate-deep: #3D555E;
-            --slate-light: #6B8A95;
-            --coral: #E8877C;
-            --coral-deep: #D9706A;
-            --coral-pink: #F2A59D;
-            --blush: #F4D3C4;
-            --charcoal: #2D3436;
-            --warm-gray: #6B6560;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--cream);
-            color: var(--charcoal);
-            line-height: 1.7;
-            font-size: 16px;
-            overflow-x: hidden;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-            opacity: 0.04;
-            pointer-events: none;
-            z-index: 1000;
-        }
-
-        .bg-texture {
-            position: fixed;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .bg-blob-1 {
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(ellipse, var(--slate) 0%, transparent 70%);
-            opacity: 0.06;
-            top: -200px;
-            right: -100px;
-            border-radius: 50%;
-        }
-
-        .bg-blob-2 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(ellipse, var(--coral-pink) 0%, transparent 70%);
-            opacity: 0.08;
-            bottom: -100px;
-            left: -100px;
-            border-radius: 50%;
-        }
-                /* Home Logo */
-        .home-logo {
-            position: fixed;
-            top: 38px;
-            left: 40px;
-            z-index: 100;
-            text-decoration: none;
-            width: 48px;
-            height: 48px;
-            background: var(--coral);
-            border-radius: 40% 60% 55% 45% / 55% 45% 60% 40%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            transition: all 0.3s ease;
-        }
-        .home-logo:hover {
-            background: var(--slate);
-            transform: scale(1.05);
-        }
-        .nav-top {
-            position: fixed;
-            top: 32px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            flex-direction: row;
-            gap: 10px;
-            z-index: 100;
-            padding: 10px 14px;
-            background: rgba(250, 247, 242, 0.95);
-            backdrop-filter: blur(12px);
-            border-radius: 60px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-        }
-
-        .nav-top a {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            padding: 10px 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border: 1.5px solid transparent;
-            color: var(--slate-deep);
-            background: transparent;
-        }
-
-        .nav-top a:hover,
-        .nav-top a.active {
-            background: var(--slate);
-            color: var(--cream);
-        }
-
-        .nav-top a:nth-child(1) { border-radius: 45px 30px 40px 35px; }
-        .nav-top a:nth-child(2) { border-radius: 35px 45px 30px 40px; }
-        .nav-top a:nth-child(3) { border-radius: 40px 35px 45px 30px; }
-        .nav-top a:nth-child(4) { border-radius: 30px 40px 35px 45px; }
-        .nav-top a:nth-child(5) { border-radius: 42px 32px 38px 48px; }
-        .nav-top a:nth-child(6) { border-radius: 38px 48px 32px 42px; }
-
         /* Framework Box */
         .framework {
             background: var(--cream-dark);
@@ -173,7 +36,6 @@
             padding-bottom: 4px;
         }
 
-        /* Animated underline */
         .tooltip-word::after {
             content: '';
             position: absolute;
@@ -193,7 +55,6 @@
             transform: scaleX(1);
         }
 
-        /* Number badge */
         .tooltip-word .num {
             display: inline-flex;
             align-items: center;
@@ -215,7 +76,6 @@
             background: var(--coral);
         }
 
-        /* Tooltip detail area */
         .tooltip-detail {
             background: white;
             border-radius: 16px;
@@ -247,72 +107,12 @@
             line-height: 1.6;
         }
 
-        /* Hint */
         .framework .hint {
             text-align: center;
             font-size: 0.85rem;
             color: var(--warm-gray);
             margin-top: 16px;
             opacity: 0.7;
-        }
-
-        .main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 120px 40px 80px 40px;
-            position: relative;
-            z-index: 1;
-            max-width: 700px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .page-header {
-            margin-bottom: 60px;
-        }
-
-        .page-header h1 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 3rem;
-            font-weight: 300;
-            line-height: 1.15;
-            color: var(--charcoal);
-            margin-bottom: 16px;
-            letter-spacing: -0.02em;
-        }
-
-        .page-header h1 span {
-            color: var(--coral);
-            font-weight: 500;
-        }
-
-        .page-header p {
-            font-size: 1.1rem;
-            color: var(--warm-gray);
-            max-width: 500px;
-        }
-
-        .content-section {
-            margin-bottom: 60px;
-        }
-
-        .content-section h2 {
-            font-size: 1.4rem;
-            font-weight: 500;
-            color: var(--coral);
-            margin-bottom: 20px;
-            letter-spacing: -0.01em;
-        }
-
-        .content-section p {
-            color: var(--charcoal);
-            margin-bottom: 16px;
-            line-height: 1.8;
-        }
-
-        .content-section p:last-child {
-            margin-bottom: 0;
         }
 
         /* Quote boxes grid */
@@ -332,7 +132,7 @@
         }
 
         .quote-card::before {
-            content: '"';
+            content: '\201C';
             position: absolute;
             top: 16px;
             left: 24px;
@@ -360,86 +160,9 @@
             font-weight: 500;
         }
 
-        footer {
-            padding: 24px 40px;
-            background: var(--slate-deep);
-            position: relative;
-            z-index: 1;
-        }
-
-        footer .footer-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        footer p {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.85rem;
-        }
-
-        footer .footer-links {
-            display: flex;
-            gap: 24px;
-        }
-
-        footer a {
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            font-size: 0.85rem;
-            transition: color 0.3s ease;
-        }
-
-        footer a:hover {
-            color: var(--coral-pink);
-        }
-
         @media (max-width: 900px) {
-            .nav-top {
-                padding: 8px 12px;
-                gap: 6px;
-            }
-
-            .nav-top a {
-                padding: 8px 14px;
-                font-size: 0.8rem;
-            }
-
-            .main {
-                padding: 120px 24px 60px 24px;
-            }
-
-            .page-header h1 {
-                font-size: 2.4rem;
-            }
-
             .quotes-grid {
                 grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 500px) {
-            .nav-top {
-                width: calc(100% - 32px);
-                justify-content: center;
-                flex-wrap: wrap;
-                border-radius: 24px;
-                top: 16px;
-            }
-
-            .nav-top a {
-                padding: 8px 12px;
-                font-size: 0.75rem;
-            }
-
-            .main {
-                padding: 140px 24px 60px 24px;
-            }
-
-            .page-header h1 {
-                font-size: 2rem;
             }
         }
     </style>
@@ -469,10 +192,10 @@
 
         <div class="framework">
             <p class="framework-headline">
-                Get the 
-                <span class="tooltip-word" data-target="detail-1"><span class="num">1</span>right people</span> 
-                <span class="tooltip-word" data-target="detail-2"><span class="num">2</span>working</span> 
-                on the 
+                Get the
+                <span class="tooltip-word" data-target="detail-1"><span class="num">1</span>right people</span>
+                <span class="tooltip-word" data-target="detail-2"><span class="num">2</span>working</span>
+                on the
                 <span class="tooltip-word" data-target="detail-3"><span class="num">3</span>right things</span>
             </p>
 
@@ -510,34 +233,34 @@
         <div class="quotes-grid">
             <div class="quote-card">
                 <p>The talent space is full of people who spew platitudes and generalities. Not Katherine. She's specific, nuanced, and insightful. When I contacted Katherine for an expert interview on the present and future of the DEI training space, Katherine dropped insight after insight that I am still repeating to others (and relying upon for strategic decisions) six months later.</p>
-                <span class="attribution">— Entrepreneur, HR Tech</span>
+                <span class="attribution">&mdash; Entrepreneur, HR Tech</span>
             </div>
             <div class="quote-card">
                 <p>We had an idea of what aspects of the employee experience we needed to create space for, but Katherine's expertise in the organizational behavior/psychological space uncovered multiple issues with our form that we'd initially overlooked. For anyone building a product in the HR/DEI Tech world, bringing Katherine on to your team should be a no-brainer.</p>
-                <span class="attribution">— Founder/CEO</span>
+                <span class="attribution">&mdash; Founder/CEO</span>
             </div>
             <div class="quote-card">
                 <p>Katherine's intuitive understanding of the challenges and opportunities represented by our data allowed her to make incisive recommendations that are transforming our data platform.</p>
-                <span class="attribution">— Founder, Clean Tech</span>
+                <span class="attribution">&mdash; Founder, Clean Tech</span>
             </div>
             <div class="quote-card">
                 <p>I partnered with Katherine for several years while building an HR/recruiting product. Katherine's experience, research, and thoughtfulness always improved our thinking and helped make a stronger product. I always came back from our conversations energized for the next development.</p>
-                <span class="attribution">— Dir. of Product, HR Tech</span>
+                <span class="attribution">&mdash; Dir. of Product, HR Tech</span>
             </div>
             <div class="quote-card">
                 <p>Katherine helped our growth-stage company to efficiently navigate a variety of organizational challenges. Her experience across organizational strategy and behavior, with SaaS tools for people and recruiting, and her ability to help us focus quickly on a set of solutions enabled us to consistently solve our toughest problems across the company.</p>
-                <span class="attribution">— CEO/Founder, Hard Tech</span>
+                <span class="attribution">&mdash; CEO/Founder, Hard Tech</span>
             </div>
             <div class="quote-card">
                 <p>During our consulting conversations, she really knew how to ask great questions that make you stop and think about the big picture of DEI and how your decisions will fit in your strategy. With her depth of knowledge and passion for the subject matter, she challenged us to create actual action items for our DEI initiative – not just things you say but do. We would highly recommend Katherine!</p>
-                <span class="attribution">— CHRO, Professional Services</span>
+                <span class="attribution">&mdash; CHRO, Professional Services</span>
             </div>
         </div>
     </main>
 
     <footer>
         <div class="footer-content">
-            <p>© 2026 Katherine Ullman (with the help of Claude Code)</p>
+            <p>&copy; 2026 Katherine Ullman (with the help of Claude Code)</p>
             <div class="footer-links">
                 <a href="https://www.linkedin.com/in/katherineullman/" target="_blank" aria-label="LinkedIn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
@@ -556,7 +279,7 @@
         function showDetail(targetId) {
             // Hide all
             details.forEach(d => d.classList.remove('visible'));
-            
+
             // Show target
             const target = document.getElementById(targetId);
             if (target && activeDetail !== targetId) {
