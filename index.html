@@ -13,25 +13,33 @@
         .main {
             align-items: center;
             justify-content: center;
-            padding: 60px 40px;
+            padding: 40px 24px;
             max-width: none;
+        }
+
+        .page-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            max-width: 560px;
+            width: 100%;
         }
 
         .construction-content {
             text-align: center;
-            max-width: 560px;
         }
 
         .construction-icon {
             position: relative;
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 48px;
+            width: 96px;
+            height: 96px;
+            margin: 0 auto 28px;
         }
 
         .icon-shape {
-            width: 120px;
-            height: 120px;
+            width: 96px;
+            height: 96px;
             background: linear-gradient(145deg, var(--coral-pink) 0%, var(--coral) 100%);
             border-radius: 40% 60% 55% 45% / 55% 45% 60% 40%;
             display: flex;
@@ -40,8 +48,8 @@
         }
 
         .icon-shape svg {
-            width: 52px;
-            height: 52px;
+            width: 42px;
+            height: 42px;
             stroke: white;
             fill: none;
             stroke-width: 1.5;
@@ -72,11 +80,11 @@
 
         .construction-content h1 {
             font-family: 'Outfit', sans-serif;
-            font-size: 3rem;
+            font-size: 2.6rem;
             font-weight: 300;
             line-height: 1.15;
             color: var(--charcoal);
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             letter-spacing: -0.02em;
         }
 
@@ -86,24 +94,24 @@
         }
 
         .construction-subtitle {
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             color: var(--warm-gray);
-            margin-bottom: 40px;
-            line-height: 1.8;
+            margin-bottom: 24px;
+            line-height: 1.7;
         }
 
         .divider {
-            width: 60px;
+            width: 48px;
             height: 3px;
             background: linear-gradient(90deg, var(--coral-pink), var(--coral));
             border-radius: 2px;
-            margin: 0 auto 40px;
+            margin: 0 auto 24px;
         }
 
         .construction-note {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             color: var(--warm-gray);
-            margin-bottom: 32px;
+            margin-bottom: 20px;
         }
 
         .construction-cta {
@@ -136,19 +144,133 @@
             transform: translateX(4px);
         }
 
-        @media (max-width: 900px) {
-            .main {
-                padding: 60px 24px;
-            }
-
-            .construction-content h1 {
-                font-size: 2.5rem;
-            }
+        /* Preview Carousel */
+        .preview-carousel {
+            position: relative;
+            width: 100%;
+            height: 280px;
         }
 
-        @media (max-width: 500px) {
+        .preview-card {
+            position: absolute;
+            inset: 0;
+            background: white;
+            border-radius: 16px;
+            padding: 24px 28px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.07);
+            opacity: 0;
+            transform: translateY(12px) scale(0.97);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-card.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .preview-badge {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--coral);
+            background: rgba(232, 135, 124, 0.1);
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin: 0 auto 14px;
+        }
+
+        .preview-icon-row {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 14px;
+            background: linear-gradient(145deg, var(--coral-pink), var(--coral));
+        }
+
+        .preview-icon-row svg {
+            width: 26px;
+            height: 26px;
+            stroke: white;
+            fill: none;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .preview-card h3 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--charcoal);
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .preview-card p {
+            font-size: 0.85rem;
+            color: var(--warm-gray);
+            line-height: 1.6;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .preview-lines {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: auto;
+        }
+
+        .preview-lines span {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--cream-dark);
+        }
+
+        .preview-lines span:nth-child(1) { width: 100%; }
+        .preview-lines span:nth-child(2) { width: 75%; }
+        .preview-lines span:nth-child(3) { width: 88%; }
+
+        .preview-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            position: absolute;
+            bottom: -32px;
+            left: 0;
+            right: 0;
+        }
+
+        .preview-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--slate);
+            opacity: 0.25;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            padding: 0;
+        }
+
+        .preview-dot.active {
+            opacity: 1;
+            background: var(--coral);
+            transform: scale(1.2);
+        }
+
+        @media (max-width: 600px) {
             .main {
-                padding: 48px 24px;
+                padding: 32px 20px;
+            }
+
+            .page-content {
+                gap: 32px;
             }
 
             .construction-content h1 {
@@ -156,24 +278,32 @@
             }
 
             .construction-icon {
-                width: 96px;
-                height: 96px;
-                margin-bottom: 36px;
+                width: 72px;
+                height: 72px;
+                margin-bottom: 20px;
             }
 
             .icon-shape {
-                width: 96px;
-                height: 96px;
+                width: 72px;
+                height: 72px;
             }
 
             .icon-shape svg {
-                width: 40px;
-                height: 40px;
+                width: 32px;
+                height: 32px;
             }
 
             .icon-accent,
             .icon-accent-2 {
                 display: none;
+            }
+
+            .preview-carousel {
+                height: 260px;
+            }
+
+            .preview-card {
+                padding: 20px;
             }
         }
     </style>
@@ -185,42 +315,148 @@
 
     <!-- Main Content -->
     <main class="main">
-        <div class="construction-content">
-            <div class="construction-icon">
-                <div class="icon-shape">
-                    <!-- Wrench / build icon -->
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-                    </svg>
+        <div class="page-content">
+            <div class="construction-content">
+                <div class="construction-icon">
+                    <div class="icon-shape">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                        </svg>
+                    </div>
+                    <div class="icon-accent"></div>
+                    <div class="icon-accent-2"></div>
                 </div>
-                <div class="icon-accent"></div>
-                <div class="icon-accent-2"></div>
+
+                <h1>
+                    Something lovely is
+                    <span>on its way.</span>
+                </h1>
+
+                <p class="construction-subtitle">
+                    I'm building my own little corner of the internet. Check back soon to explore what I've been working on.
+                </p>
+
+                <div class="divider"></div>
+
+                <p class="construction-note">
+                    In the meantime, let's connect.
+                </p>
+
+                <a href="https://www.linkedin.com/in/katherineullman/" target="_blank" class="construction-cta">
+                    Find me on LinkedIn
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
             </div>
 
-            <h1>
-                Something lovely is
-                <span>on its way.</span>
-            </h1>
+            <div class="preview-carousel">
+                <div class="preview-card active" data-index="0">
+                    <span class="preview-badge">Coming Soon</span>
+                    <div class="preview-icon-row">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                            <path d="M16 3H8l-2 4h12l-2-4z"/>
+                        </svg>
+                    </div>
+                    <h3>Consulting</h3>
+                    <p>Operations, analytics, and people/talent support for teams navigating growth and change.</p>
+                    <div class="preview-lines">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
 
-            <p class="construction-subtitle">
-                I'm building my own little corner of the internet. Check back soon to explore what I've been working on.
-            </p>
+                <div class="preview-card" data-index="1">
+                    <span class="preview-badge">Coming Soon</span>
+                    <div class="preview-icon-row">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 20h9"/>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                        </svg>
+                    </div>
+                    <h3>Writing</h3>
+                    <p>Essays and reflections on leadership, culture, and the human side of work.</p>
+                    <div class="preview-lines">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
 
-            <div class="divider"></div>
+                <div class="preview-card" data-index="2">
+                    <span class="preview-badge">Coming Soon</span>
+                    <div class="preview-icon-row">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                        </svg>
+                    </div>
+                    <h3>Influences</h3>
+                    <p>Books, podcasts, and ideas that shape my thinking and approach.</p>
+                    <div class="preview-lines">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
 
-            <p class="construction-note">
-                In the meantime, let's connect.
-            </p>
+                <div class="preview-card" data-index="3">
+                    <span class="preview-badge">Coming Soon</span>
+                    <div class="preview-icon-row">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                            <polyline points="2 17 12 22 22 17"/>
+                            <polyline points="2 12 12 17 22 12"/>
+                        </svg>
+                    </div>
+                    <h3>Projects</h3>
+                    <p>Side vibe-coding projects and experiments in building better systems and tools.</p>
+                    <div class="preview-lines">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
 
-            <a href="https://www.linkedin.com/in/katherineullman/" target="_blank" class="construction-cta">
-                Find me on LinkedIn
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-            </a>
+                <div class="preview-dots">
+                    <button class="preview-dot active" data-index="0" aria-label="Consulting"></button>
+                    <button class="preview-dot" data-index="1" aria-label="Writing"></button>
+                    <button class="preview-dot" data-index="2" aria-label="Influences"></button>
+                    <button class="preview-dot" data-index="3" aria-label="Projects"></button>
+                </div>
+            </div>
         </div>
     </main>
+
+    <script>
+        (function() {
+            var cards = document.querySelectorAll('.preview-card');
+            var dots = document.querySelectorAll('.preview-dot');
+            var current = 0;
+            var timer;
+
+            function show(index) {
+                cards[current].classList.remove('active');
+                dots[current].classList.remove('active');
+                current = index;
+                cards[current].classList.add('active');
+                dots[current].classList.add('active');
+            }
+
+            function next() {
+                show((current + 1) % cards.length);
+            }
+
+            function startTimer() {
+                timer = setInterval(next, 3500);
+            }
+
+            dots.forEach(function(dot) {
+                dot.addEventListener('click', function() {
+                    clearInterval(timer);
+                    show(parseInt(this.dataset.index));
+                    startTimer();
+                });
+            });
+
+            startTimer();
+        })();
+    </script>
 
     <!-- Footer -->
     <footer>
