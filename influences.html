@@ -122,6 +122,22 @@
             color: var(--warm-gray);
         }
 
+        /* Linked shelf items */
+        a.shelf-item {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        /* Podcast artwork loaded from iTunes API */
+        .shelf-cover.has-artwork {
+            opacity: 1;
+            background-image: none;
+            background-size: cover;
+            background-position: center;
+            font-size: 0;
+        }
+
         @media (max-width: 500px) {
             .main {
                 padding: 140px 0 60px;
@@ -203,31 +219,56 @@
                 <h2>In My Ears</h2>
             </div>
             <div class="shelf-scroll">
-                <div class="shelf-item">
+                <!-- Ordered most recent → oldest by Apple Podcasts episode ID -->
+                <a href="https://podcasts.apple.com/us/podcast/hard-fork/id1528594034?i=1000749587690"
+                   target="_blank" rel="noopener noreferrer"
+                   class="shelf-item" data-podcast-id="1528594034">
                     <div class="shelf-cover">🎙️</div>
-                    <h3>Podcast One</h3>
-                    <p>Host Name</p>
-                </div>
-                <div class="shelf-item">
+                    <h3>Hard Fork</h3>
+                    <p>Kevin Roose & Casey Newton</p>
+                </a>
+                <a href="https://podcasts.apple.com/us/podcast/the-ezra-klein-show/id1548604447?i=1000749057142"
+                   target="_blank" rel="noopener noreferrer"
+                   class="shelf-item" data-podcast-id="1548604447">
                     <div class="shelf-cover">🎙️</div>
-                    <h3>Podcast Two</h3>
-                    <p>Host Name</p>
-                </div>
-                <div class="shelf-item">
+                    <h3>The Ezra Klein Show</h3>
+                    <p>Ezra Klein</p>
+                </a>
+                <a href="https://podcasts.apple.com/us/podcast/culture-study-podcast/id1718662839?i=1000745116763"
+                   target="_blank" rel="noopener noreferrer"
+                   class="shelf-item" data-podcast-id="1718662839">
                     <div class="shelf-cover">🎙️</div>
-                    <h3>Podcast Three</h3>
-                    <p>Host Name</p>
-                </div>
-                <div class="shelf-item">
+                    <h3>Culture Study</h3>
+                    <p>Anne Helen Petersen</p>
+                </a>
+                <a href="https://podcasts.apple.com/us/podcast/the-good-fight/id1198765424?i=1000744981540"
+                   target="_blank" rel="noopener noreferrer"
+                   class="shelf-item" data-podcast-id="1198765424">
                     <div class="shelf-cover">🎙️</div>
-                    <h3>Podcast Four</h3>
-                    <p>Host Name</p>
-                </div>
-                <div class="shelf-item">
+                    <h3>The Good Fight</h3>
+                    <p>Yascha Mounk</p>
+                </a>
+                <a href="https://podcasts.apple.com/us/podcast/hard-fork/id1528594034?i=1000742774838"
+                   target="_blank" rel="noopener noreferrer"
+                   class="shelf-item" data-podcast-id="1528594034">
                     <div class="shelf-cover">🎙️</div>
-                    <h3>Podcast Five</h3>
-                    <p>Host Name</p>
-                </div>
+                    <h3>Hard Fork</h3>
+                    <p>Kevin Roose & Casey Newton</p>
+                </a>
+                <a href="https://podcasts.apple.com/us/podcast/critics-at-large-the-new-yorker/id1704902371?i=1000742684738"
+                   target="_blank" rel="noopener noreferrer"
+                   class="shelf-item" data-podcast-id="1704902371">
+                    <div class="shelf-cover">🎙️</div>
+                    <h3>Critics at Large</h3>
+                    <p>The New Yorker</p>
+                </a>
+                <a href="https://podcasts.apple.com/us/podcast/how-i-write/id1700171470?i=1000734068301"
+                   target="_blank" rel="noopener noreferrer"
+                   class="shelf-item" data-podcast-id="1700171470">
+                    <div class="shelf-cover">🎙️</div>
+                    <h3>How I Write</h3>
+                    <p>David Perell</p>
+                </a>
             </div>
         </section>
 
@@ -265,6 +306,45 @@
             </div>
         </section>
     </main>
+
+    <script>
+        // Load podcast artwork from the iTunes API at browser render time.
+        // Each unique podcast ID is fetched once; artwork is applied to all
+        // shelf items sharing that ID (e.g. two Hard Fork episodes).
+        async function loadPodcastArtwork() {
+            const artworkCache = {};
+            const items = document.querySelectorAll('.podcasts .shelf-item[data-podcast-id]');
+
+            // Collect unique IDs first
+            const ids = [...new Set([...items].map(el => el.dataset.podcastId))];
+
+            await Promise.allSettled(ids.map(async id => {
+                try {
+                    const res = await fetch(
+                        `https://itunes.apple.com/lookup?id=${id}&entity=podcast&limit=1`,
+                        { cache: 'force-cache' }
+                    );
+                    const data = await res.json();
+                    const result = data.results?.find(r => r.wrapperType === 'track' || r.collectionId == id || r.trackId == id)
+                                || data.results?.[0];
+                    const url = result?.artworkUrl600 || result?.artworkUrl100;
+                    if (url) artworkCache[id] = url;
+                } catch (_) { /* keep emoji fallback */ }
+            }));
+
+            items.forEach(item => {
+                const url = artworkCache[item.dataset.podcastId];
+                if (!url) return;
+                const cover = item.querySelector('.shelf-cover');
+                cover.style.backgroundImage = `url('${url}')`;
+                cover.style.backgroundSize = 'cover';
+                cover.style.backgroundPosition = 'center';
+                cover.classList.add('has-artwork');
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadPodcastArtwork);
+    </script>
 
     <!-- Footer -->
     <footer>
