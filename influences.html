@@ -239,7 +239,7 @@
                     <div class="shelf-cover">🎙️</div>
                     <h3>Hard Fork</h3>
                     <p>Kevin Roose & Casey Newton</p>
-                    <p class="episode-title"></p>
+                    <p class="episode-title">'Something Big Is Happening' + A.I. Rocks the Romance Novel Industry</p>
                 </a>
                 <a href="https://podcasts.apple.com/us/podcast/the-ezra-klein-show/id1548604447?i=1000749057142"
                    target="_blank" rel="noopener noreferrer"
@@ -247,7 +247,7 @@
                     <div class="shelf-cover">🎙️</div>
                     <h3>The Ezra Klein Show</h3>
                     <p>Ezra Klein</p>
-                    <p class="episode-title"></p>
+                    <p class="episode-title">George Saunders on Anger, Ambition and Sin</p>
                 </a>
                 <a href="https://podcasts.apple.com/us/podcast/culture-study-podcast/id1718662839?i=1000745116763"
                    target="_blank" rel="noopener noreferrer"
@@ -263,7 +263,7 @@
                     <div class="shelf-cover">🎙️</div>
                     <h3>The Good Fight</h3>
                     <p>Yascha Mounk</p>
-                    <p class="episode-title"></p>
+                    <p class="episode-title">Daniel Diermeier on Why Universities Are Their Own Worst Enemies</p>
                 </a>
                 <a href="https://podcasts.apple.com/us/podcast/hard-fork/id1528594034?i=1000742774838"
                    target="_blank" rel="noopener noreferrer"
@@ -271,7 +271,7 @@
                     <div class="shelf-cover">🎙️</div>
                     <h3>Hard Fork</h3>
                     <p>Kevin Roose & Casey Newton</p>
-                    <p class="episode-title"></p>
+                    <p class="episode-title">Where Is All the A.I.-Driven Scientific Progress?</p>
                 </a>
                 <a href="https://podcasts.apple.com/us/podcast/critics-at-large-the-new-yorker/id1704902371?i=1000742684738"
                    target="_blank" rel="noopener noreferrer"
@@ -328,56 +328,52 @@
     </main>
 
     <script>
-        // Fetch podcast metadata (artwork + episode titles) from the iTunes API
-        // at browser render time. Artwork is keyed by podcast ID; episode titles
-        // are looked up individually by episode ID.
+        // Fetch podcast artwork + episode titles from the iTunes API at browser
+        // render time. One request per unique podcast ID fetches both the show
+        // artwork and its recent episode list; each card's episode title is then
+        // filled in by matching trackId to data-episode-id. Static fallback text
+        // in the HTML is preserved if the card already has a title set.
         async function loadPodcastMetadata() {
-            const items = document.querySelectorAll('.podcasts .shelf-item[data-podcast-id]');
+            const items = [...document.querySelectorAll('.podcasts .shelf-item[data-podcast-id]')];
 
-            // ── Artwork ──────────────────────────────────────────────────────
-            const artworkCache = {};
-            const podcastIds = [...new Set([...items].map(el => el.dataset.podcastId))];
-
-            await Promise.allSettled(podcastIds.map(async id => {
-                try {
-                    const res = await fetch(
-                        `https://itunes.apple.com/lookup?id=${id}&entity=podcast&limit=1`,
-                        { cache: 'force-cache' }
-                    );
-                    const data = await res.json();
-                    const result = data.results?.find(r => String(r.collectionId) === id || String(r.trackId) === id)
-                                || data.results?.[0];
-                    const url = result?.artworkUrl600 || result?.artworkUrl100;
-                    if (url) artworkCache[id] = url;
-                } catch (_) {}
-            }));
-
+            // Group shelf items by podcast ID so we make one API call per show
+            const byPodcast = {};
             items.forEach(item => {
-                const url = artworkCache[item.dataset.podcastId];
-                if (!url) return;
-                const cover = item.querySelector('.shelf-cover');
-                cover.style.backgroundImage = `url('${url}')`;
-                cover.style.backgroundSize = 'cover';
-                cover.style.backgroundPosition = 'center';
-                cover.classList.add('has-artwork');
+                const pid = item.dataset.podcastId;
+                if (!byPodcast[pid]) byPodcast[pid] = [];
+                byPodcast[pid].push(item);
             });
 
-            // ── Episode titles ────────────────────────────────────────────────
-            // The iTunes `lookup` endpoint accepts episode IDs directly and
-            // returns `trackName` (the episode title) in the JSON response.
-            await Promise.allSettled([...items].map(async item => {
-                const episodeId = item.dataset.episodeId;
-                if (!episodeId) return;
+            await Promise.allSettled(Object.entries(byPodcast).map(async ([podcastId, podItems]) => {
                 try {
+                    // entity=podcastEpisode returns the podcast (index 0) + its episodes
                     const res = await fetch(
-                        `https://itunes.apple.com/lookup?id=${episodeId}`,
+                        `https://itunes.apple.com/lookup?id=${podcastId}&entity=podcastEpisode&limit=200`,
                         { cache: 'force-cache' }
                     );
                     const data = await res.json();
-                    const ep = data.results?.[0];
-                    if (!ep?.trackName) return;
-                    const titleEl = item.querySelector('.episode-title');
-                    if (titleEl) titleEl.textContent = ep.trackName;
+                    const results = data.results || [];
+
+                    // The first result with wrapperType 'collection' is the podcast itself
+                    const podcast = results.find(r => r.wrapperType === 'collection') || results[0];
+                    const artUrl = podcast?.artworkUrl600 || podcast?.artworkUrl100;
+
+                    podItems.forEach(item => {
+                        // Apply artwork
+                        if (artUrl) {
+                            const cover = item.querySelector('.shelf-cover');
+                            cover.style.backgroundImage = `url('${artUrl}')`;
+                            cover.style.backgroundSize = 'cover';
+                            cover.style.backgroundPosition = 'center';
+                            cover.classList.add('has-artwork');
+                        }
+
+                        // Fill episode title only if the static fallback isn't already there
+                        const titleEl = item.querySelector('.episode-title');
+                        if (!titleEl || titleEl.textContent.trim()) return;
+                        const ep = results.find(r => String(r.trackId) === item.dataset.episodeId);
+                        if (ep?.trackName) titleEl.textContent = ep.trackName;
+                    });
                 } catch (_) {}
             }));
         }
