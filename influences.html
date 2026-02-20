@@ -138,6 +138,19 @@
             font-size: 0;
         }
 
+        /* Episode title — hidden until JS populates it */
+        .podcasts .episode-title {
+            font-size: 0.75rem;
+            color: var(--slate-light);
+            font-style: italic;
+            margin-top: 3px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .podcasts .episode-title:empty { display: none; }
+
         @media (max-width: 500px) {
             .main {
                 padding: 140px 0 60px;
@@ -222,52 +235,59 @@
                 <!-- Ordered most recent → oldest by Apple Podcasts episode ID -->
                 <a href="https://podcasts.apple.com/us/podcast/hard-fork/id1528594034?i=1000749587690"
                    target="_blank" rel="noopener noreferrer"
-                   class="shelf-item" data-podcast-id="1528594034">
+                   class="shelf-item" data-podcast-id="1528594034" data-episode-id="1000749587690">
                     <div class="shelf-cover">🎙️</div>
                     <h3>Hard Fork</h3>
                     <p>Kevin Roose & Casey Newton</p>
+                    <p class="episode-title"></p>
                 </a>
                 <a href="https://podcasts.apple.com/us/podcast/the-ezra-klein-show/id1548604447?i=1000749057142"
                    target="_blank" rel="noopener noreferrer"
-                   class="shelf-item" data-podcast-id="1548604447">
+                   class="shelf-item" data-podcast-id="1548604447" data-episode-id="1000749057142">
                     <div class="shelf-cover">🎙️</div>
                     <h3>The Ezra Klein Show</h3>
                     <p>Ezra Klein</p>
+                    <p class="episode-title"></p>
                 </a>
                 <a href="https://podcasts.apple.com/us/podcast/culture-study-podcast/id1718662839?i=1000745116763"
                    target="_blank" rel="noopener noreferrer"
-                   class="shelf-item" data-podcast-id="1718662839">
+                   class="shelf-item" data-podcast-id="1718662839" data-episode-id="1000745116763">
                     <div class="shelf-cover">🎙️</div>
                     <h3>Culture Study</h3>
                     <p>Anne Helen Petersen</p>
+                    <p class="episode-title"></p>
                 </a>
                 <a href="https://podcasts.apple.com/us/podcast/the-good-fight/id1198765424?i=1000744981540"
                    target="_blank" rel="noopener noreferrer"
-                   class="shelf-item" data-podcast-id="1198765424">
+                   class="shelf-item" data-podcast-id="1198765424" data-episode-id="1000744981540">
                     <div class="shelf-cover">🎙️</div>
                     <h3>The Good Fight</h3>
                     <p>Yascha Mounk</p>
+                    <p class="episode-title"></p>
                 </a>
                 <a href="https://podcasts.apple.com/us/podcast/hard-fork/id1528594034?i=1000742774838"
                    target="_blank" rel="noopener noreferrer"
-                   class="shelf-item" data-podcast-id="1528594034">
+                   class="shelf-item" data-podcast-id="1528594034" data-episode-id="1000742774838">
                     <div class="shelf-cover">🎙️</div>
                     <h3>Hard Fork</h3>
                     <p>Kevin Roose & Casey Newton</p>
+                    <p class="episode-title"></p>
                 </a>
                 <a href="https://podcasts.apple.com/us/podcast/critics-at-large-the-new-yorker/id1704902371?i=1000742684738"
                    target="_blank" rel="noopener noreferrer"
-                   class="shelf-item" data-podcast-id="1704902371">
+                   class="shelf-item" data-podcast-id="1704902371" data-episode-id="1000742684738">
                     <div class="shelf-cover">🎙️</div>
                     <h3>Critics at Large</h3>
                     <p>The New Yorker</p>
+                    <p class="episode-title"></p>
                 </a>
                 <a href="https://podcasts.apple.com/us/podcast/how-i-write/id1700171470?i=1000734068301"
                    target="_blank" rel="noopener noreferrer"
-                   class="shelf-item" data-podcast-id="1700171470">
+                   class="shelf-item" data-podcast-id="1700171470" data-episode-id="1000734068301">
                     <div class="shelf-cover">🎙️</div>
                     <h3>How I Write</h3>
                     <p>David Perell</p>
+                    <p class="episode-title"></p>
                 </a>
             </div>
         </section>
@@ -308,28 +328,28 @@
     </main>
 
     <script>
-        // Load podcast artwork from the iTunes API at browser render time.
-        // Each unique podcast ID is fetched once; artwork is applied to all
-        // shelf items sharing that ID (e.g. two Hard Fork episodes).
-        async function loadPodcastArtwork() {
-            const artworkCache = {};
+        // Fetch podcast metadata (artwork + episode titles) from the iTunes API
+        // at browser render time. Artwork is keyed by podcast ID; episode titles
+        // are looked up individually by episode ID.
+        async function loadPodcastMetadata() {
             const items = document.querySelectorAll('.podcasts .shelf-item[data-podcast-id]');
 
-            // Collect unique IDs first
-            const ids = [...new Set([...items].map(el => el.dataset.podcastId))];
+            // ── Artwork ──────────────────────────────────────────────────────
+            const artworkCache = {};
+            const podcastIds = [...new Set([...items].map(el => el.dataset.podcastId))];
 
-            await Promise.allSettled(ids.map(async id => {
+            await Promise.allSettled(podcastIds.map(async id => {
                 try {
                     const res = await fetch(
                         `https://itunes.apple.com/lookup?id=${id}&entity=podcast&limit=1`,
                         { cache: 'force-cache' }
                     );
                     const data = await res.json();
-                    const result = data.results?.find(r => r.wrapperType === 'track' || r.collectionId == id || r.trackId == id)
+                    const result = data.results?.find(r => String(r.collectionId) === id || String(r.trackId) === id)
                                 || data.results?.[0];
                     const url = result?.artworkUrl600 || result?.artworkUrl100;
                     if (url) artworkCache[id] = url;
-                } catch (_) { /* keep emoji fallback */ }
+                } catch (_) {}
             }));
 
             items.forEach(item => {
@@ -341,9 +361,28 @@
                 cover.style.backgroundPosition = 'center';
                 cover.classList.add('has-artwork');
             });
+
+            // ── Episode titles ────────────────────────────────────────────────
+            // The iTunes `lookup` endpoint accepts episode IDs directly and
+            // returns `trackName` (the episode title) in the JSON response.
+            await Promise.allSettled([...items].map(async item => {
+                const episodeId = item.dataset.episodeId;
+                if (!episodeId) return;
+                try {
+                    const res = await fetch(
+                        `https://itunes.apple.com/lookup?id=${episodeId}`,
+                        { cache: 'force-cache' }
+                    );
+                    const data = await res.json();
+                    const ep = data.results?.[0];
+                    if (!ep?.trackName) return;
+                    const titleEl = item.querySelector('.episode-title');
+                    if (titleEl) titleEl.textContent = ep.trackName;
+                } catch (_) {}
+            }));
         }
 
-        document.addEventListener('DOMContentLoaded', loadPodcastArtwork);
+        document.addEventListener('DOMContentLoaded', loadPodcastMetadata);
     </script>
 
     <!-- Footer -->
