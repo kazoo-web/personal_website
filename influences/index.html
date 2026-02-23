@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Influences — Katherine Ullman</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../styles.css">
     <style>
         /* Shelf Section */
         .shelf-section {
@@ -171,19 +171,19 @@
     <!-- Background texture elements -->
     <div class="bg-texture bg-blob-1"></div>
     <div class="bg-texture bg-blob-2"></div>
-    <a href="index.html" class="home-logo">
+    <a href="/test/" class="home-logo">
     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
     </svg>
     </a>
     <!-- Top Center Navigation -->
     <nav class="nav-top">
-        <a href="about.html">About</a>
-        <a href="consulting.html">Consulting</a>
-        <a href="projects.html">Projects</a>
-        <a href="writing.html">Writing</a>
-        <a href="influences.html" class="active">Influences</a>
-        <a href="connect.html">Connect</a>
+        <a href="/about/">About</a>
+        <a href="/consulting/">Consulting</a>
+        <a href="/projects/">Projects</a>
+        <a href="/writing/">Writing</a>
+        <a href="/influences/" class="active">Influences</a>
+        <a href="/connect/">Connect</a>
     </nav>
 
     <!-- Main Content -->
@@ -393,25 +393,41 @@
             }));
         }
 
-        // Load book covers from Open Library by ISBN.
-        // Returns a 404 (or tiny placeholder) for unknown ISBNs — the browser
-        // simply won't display a broken background-image, keeping the emoji.
+        // Load book covers: tries Open Library first (fast, no API call),
+        // then falls back to Google Books API for books not yet in Open Library.
         async function loadBookCovers() {
-            const items = document.querySelectorAll('.books .shelf-item[data-isbn]');
-            items.forEach(item => {
+            const items = [...document.querySelectorAll('.books .shelf-item[data-isbn]')];
+            await Promise.allSettled(items.map(async item => {
                 const isbn = item.dataset.isbn;
-                const url = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
-                const img = new Image();
-                img.onload = () => {
-                    // Open Library returns a 1×1 transparent GIF when no cover exists
-                    if (img.naturalWidth > 10) {
-                        const cover = item.querySelector('.shelf-cover');
-                        cover.style.backgroundImage = `url('${url}')`;
-                        cover.classList.add('has-artwork');
-                    }
-                };
-                img.src = url;
-            });
+                let coverUrl = null;
+
+                // 1. Try Open Library (returns 1×1 GIF when no cover exists)
+                const olUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
+                await new Promise(resolve => {
+                    const img = new Image();
+                    img.onload = () => { if (img.naturalWidth > 10) coverUrl = olUrl; resolve(); };
+                    img.onerror = () => resolve();
+                    img.src = olUrl;
+                });
+
+                // 2. Fall back to Google Books API (better coverage for recent books)
+                if (!coverUrl) {
+                    try {
+                        const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&fields=items(volumeInfo/imageLinks)`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            const thumb = data.items?.[0]?.volumeInfo?.imageLinks?.thumbnail;
+                            if (thumb) coverUrl = thumb.replace('&edge=curl', '');
+                        }
+                    } catch (_) {}
+                }
+
+                if (coverUrl) {
+                    const cover = item.querySelector('.shelf-cover');
+                    cover.style.backgroundImage = `url('${coverUrl}')`;
+                    cover.classList.add('has-artwork');
+                }
+            }));
         }
 
         // Load TV show posters from TVMaze (free, no API key) by IMDB ID.
