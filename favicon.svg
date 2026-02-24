@@ -6,5 +6,4 @@
     </linearGradient>
   </defs>
   <path d="M26,1 C12,-1 1,12 1,28 C1,44 10,58 26,62 C36,64 52,58 58,44 C64,30 56,6 42,2 C36,0 32,1 26,1Z" fill="url(#grad)"/>
-  <text x="32" y="43" text-anchor="middle" font-family="Outfit, Arial, Helvetica, sans-serif" font-weight="500" font-size="24" fill="white" letter-spacing="-1">KU</text>
 </svg>
