@@ -326,14 +326,14 @@
                 </a>
                 <a href="https://www.imdb.com/title/tt30144839/"
                    target="_blank" rel="noopener noreferrer"
-                   class="shelf-item">
+                   class="shelf-item" data-poster-url="https://img.youtube.com/vi/kQUPdVxZNPk/hqdefault.jpg">
                     <div class="shelf-cover">🎞️</div>
                     <h3>One Battle After Another</h3>
                     <p>Paul Thomas Anderson</p>
                 </a>
                 <a href="https://www.imdb.com/title/tt27714581/"
                    target="_blank" rel="noopener noreferrer"
-                   class="shelf-item">
+                   class="shelf-item" data-poster-url="https://img.youtube.com/vi/lKbcKQN5Yrw/hqdefault.jpg">
                     <div class="shelf-cover">🎞️</div>
                     <h3>Sentimental Value</h3>
                     <p>Joachim Trier</p>
@@ -430,6 +430,17 @@
             }));
         }
 
+        // Apply poster images that are hardcoded via data-poster-url attributes.
+        // Used for theatrical films not indexed by TVMaze.
+        function loadHardcodedPosters() {
+            document.querySelectorAll('.shelf-item[data-poster-url]').forEach(item => {
+                const url = item.dataset.posterUrl;
+                const cover = item.querySelector('.shelf-cover');
+                cover.style.backgroundImage = `url('${url}')`;
+                cover.classList.add('has-artwork');
+            });
+        }
+
         // Load TV show posters from TVMaze (free, no API key) by IMDB ID.
         async function loadTVPosters() {
             const items = document.querySelectorAll('.movies .shelf-item[data-tvmaze-imdb]');
@@ -452,6 +463,7 @@
             loadPodcastMetadata();
             loadBookCovers();
             loadTVPosters();
+            loadHardcodedPosters();
         });
     </script>
 
