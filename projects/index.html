@@ -20,7 +20,6 @@
         .project-card {
             background: var(--cream-dark);
             border-radius: 24px;
-            padding: 40px;
             border: 1.5px solid transparent;
             transition: all 0.3s ease;
             position: relative;
@@ -38,6 +37,7 @@
             border-radius: 4px 0 0 4px;
             opacity: 0;
             transition: opacity 0.3s ease;
+            z-index: 1;
         }
 
         .project-card:hover {
@@ -49,37 +49,109 @@
             opacity: 1;
         }
 
+        /* Project image placeholder */
+        .project-image {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, var(--slate-deep) 0%, var(--slate) 100%);
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .project-image::before {
+            content: '';
+            position: absolute;
+            bottom: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            background: var(--coral);
+            opacity: 0.22;
+            border-radius: 50%;
+        }
+
+        .project-image::after {
+            content: '';
+            position: absolute;
+            top: -30px;
+            left: 20%;
+            width: 120px;
+            height: 120px;
+            background: var(--cream);
+            opacity: 0.06;
+            border-radius: 50%;
+        }
+
+        /* Project body */
+        .project-body {
+            padding: 28px 40px 36px;
+        }
+
+        .project-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
         .project-card h3 {
             font-size: 1.4rem;
             font-weight: 500;
             color: var(--slate-deep);
-            margin-bottom: 12px;
         }
 
         .project-card p {
             color: var(--warm-gray);
-            margin-bottom: 16px;
             line-height: 1.7;
         }
 
-        .project-card .tags {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+        /* Status badge */
+        .project-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
-        .project-card .tag {
-            background: rgba(74, 102, 112, 0.1);
-            color: var(--slate);
-            padding: 6px 14px;
-            border-radius: 50px;
-            font-size: 0.8rem;
-            font-weight: 500;
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .project-status.complete {
+            background: rgba(61, 85, 94, 0.1);
+            color: var(--slate-deep);
+        }
+
+        .project-status.complete .status-dot {
+            background: var(--slate);
+        }
+
+        .project-status.in-progress {
+            background: rgba(232, 135, 124, 0.15);
+            color: var(--coral-deep);
+        }
+
+        .project-status.in-progress .status-dot {
+            background: var(--coral);
         }
 
         @media (max-width: 900px) {
-            .project-card {
-                padding: 28px;
+            .project-body {
+                padding: 20px 28px 28px;
+            }
+
+            .project-image {
+                height: 150px;
             }
         }
     </style>
@@ -109,38 +181,54 @@
 
         <div class="projects-grid">
             <div class="project-card">
-                <h3>Project One</h3>
-                <p>A brief description of what this project was about, the problem it solved, and your role in making it happen.</p>
-                <div class="tags">
-                    <span class="tag">Tag One</span>
-                    <span class="tag">Tag Two</span>
+                <div class="project-image"></div>
+                <div class="project-body">
+                    <div class="project-header">
+                        <h3>Project One</h3>
+                        <span class="project-status complete">
+                            <span class="status-dot"></span>Complete
+                        </span>
+                    </div>
+                    <p>A brief description of what this project was about, the problem it solved, and your role in making it happen.</p>
                 </div>
             </div>
 
             <div class="project-card">
-                <h3>Project Two</h3>
-                <p>A brief description of what this project was about, the problem it solved, and your role in making it happen.</p>
-                <div class="tags">
-                    <span class="tag">Tag One</span>
-                    <span class="tag">Tag Two</span>
+                <div class="project-image"></div>
+                <div class="project-body">
+                    <div class="project-header">
+                        <h3>Project Two</h3>
+                        <span class="project-status in-progress">
+                            <span class="status-dot"></span>In Progress
+                        </span>
+                    </div>
+                    <p>A brief description of what this project was about, the problem it solved, and your role in making it happen.</p>
                 </div>
             </div>
 
             <div class="project-card">
-                <h3>Project Three</h3>
-                <p>A brief description of what this project was about, the problem it solved, and your role in making it happen.</p>
-                <div class="tags">
-                    <span class="tag">Tag One</span>
-                    <span class="tag">Tag Two</span>
+                <div class="project-image"></div>
+                <div class="project-body">
+                    <div class="project-header">
+                        <h3>Project Three</h3>
+                        <span class="project-status complete">
+                            <span class="status-dot"></span>Complete
+                        </span>
+                    </div>
+                    <p>A brief description of what this project was about, the problem it solved, and your role in making it happen.</p>
                 </div>
             </div>
 
             <div class="project-card">
-                <h3>Project Four</h3>
-                <p>A brief description of what this project was about, the problem it solved, and your role in making it happen.</p>
-                <div class="tags">
-                    <span class="tag">Tag One</span>
-                    <span class="tag">Tag Two</span>
+                <div class="project-image"></div>
+                <div class="project-body">
+                    <div class="project-header">
+                        <h3>Project Four</h3>
+                        <span class="project-status in-progress">
+                            <span class="status-dot"></span>In Progress
+                        </span>
+                    </div>
+                    <p>A brief description of what this project was about, the problem it solved, and your role in making it happen.</p>
                 </div>
             </div>
         </div>
