@@ -59,6 +59,14 @@
             flex-shrink: 0;
         }
 
+        .project-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top;
+            display: block;
+        }
+
         .project-image::before {
             content: '';
             position: absolute;
@@ -81,6 +89,11 @@
             background: var(--cream);
             opacity: 0.06;
             border-radius: 50%;
+        }
+
+        .project-image:has(img)::before,
+        .project-image:has(img)::after {
+            display: none;
         }
 
         /* Project body */
@@ -181,54 +194,47 @@
 
         <div class="projects-grid">
             <div class="project-card">
-                <div class="project-image"></div>
+                <div class="project-image">
+                    <img src="images/baby-betting-pool.png" alt="Baby Sex & Date Betting Pool App screenshot">
+                </div>
                 <div class="project-body">
                     <div class="project-header">
-                        <h3>Project One</h3>
+                        <h3>Baby Sex &amp; Date Betting Pool App</h3>
                         <span class="project-status complete">
                             <span class="status-dot"></span>Complete
                         </span>
                     </div>
-                    <p>A brief description of what this project was about, the problem it solved, and your role in making it happen.</p>
+                    <p>This app is a fun way for expectant parents to get their friends and family in on the excitement. Loved ones can purchase tickets to guess the baby's sex and arrival date and time — and the ticket proceeds go straight to the parents as a little gift to help them after baby arrives.</p>
                 </div>
             </div>
 
             <div class="project-card">
-                <div class="project-image"></div>
+                <div class="project-image">
+                    <img src="images/signalhire.png" alt="SignalHire Job Criteria Tool screenshot">
+                </div>
                 <div class="project-body">
                     <div class="project-header">
-                        <h3>Project Two</h3>
+                        <h3>SignalHire Job Criteria Tool</h3>
                         <span class="project-status in-progress">
                             <span class="status-dot"></span>In Progress
                         </span>
                     </div>
-                    <p>A brief description of what this project was about, the problem it solved, and your role in making it happen.</p>
+                    <p>This is a step-by-step tool that helps you build a smarter hiring process. Paste in a job description and it guides you through four stages: identifying what you're actually looking for in a candidate, deciding how to evaluate those qualities, generating interview questions and assessments tailored to the role, and designing how your interviews should be structured. At the end, you download a ready-to-use hiring guide your whole team can follow.</p>
                 </div>
             </div>
 
             <div class="project-card">
-                <div class="project-image"></div>
+                <div class="project-image">
+                    <img src="images/photo-gallery.png" alt="Year in Review Photo Gallery screenshot">
+                </div>
                 <div class="project-body">
                     <div class="project-header">
-                        <h3>Project Three</h3>
+                        <h3>Year in Review Photo Gallery</h3>
                         <span class="project-status complete">
                             <span class="status-dot"></span>Complete
                         </span>
                     </div>
-                    <p>A brief description of what this project was about, the problem it solved, and your role in making it happen.</p>
-                </div>
-            </div>
-
-            <div class="project-card">
-                <div class="project-image"></div>
-                <div class="project-body">
-                    <div class="project-header">
-                        <h3>Project Four</h3>
-                        <span class="project-status in-progress">
-                            <span class="status-dot"></span>In Progress
-                        </span>
-                    </div>
-                    <p>A brief description of what this project was about, the problem it solved, and your role in making it happen.</p>
+                    <p>Level up your holiday card game with a year in review photo gallery to send to friends and family at the end of the year.</p>
                 </div>
             </div>
         </div>
