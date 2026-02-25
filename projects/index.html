@@ -49,7 +49,7 @@
             opacity: 1;
         }
 
-        /* Project image placeholder */
+        /* Project image */
         .project-image {
             width: 100%;
             height: 180px;
@@ -57,16 +57,49 @@
             position: relative;
             overflow: hidden;
             flex-shrink: 0;
+            cursor: pointer;
         }
 
         .project-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            object-position: top;
             display: block;
+            transition: transform 0.3s ease;
         }
 
+        .project-image:hover img {
+            transform: scale(1.02);
+        }
+
+        /* Hover overlay with expand icon */
+        .image-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(30, 40, 44, 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.25s ease;
+            z-index: 2;
+        }
+
+        .image-overlay svg {
+            opacity: 0;
+            transition: opacity 0.25s ease;
+            color: white;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+        }
+
+        .project-image:hover .image-overlay {
+            background: rgba(30, 40, 44, 0.35);
+        }
+
+        .project-image:hover .image-overlay svg {
+            opacity: 1;
+        }
+
+        /* Gradient placeholder decorations (hidden when image present) */
         .project-image::before {
             content: '';
             position: absolute;
@@ -158,6 +191,62 @@
             background: var(--coral);
         }
 
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(22, 30, 34, 0.92);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            cursor: zoom-out;
+        }
+
+        .lightbox.active {
+            display: flex;
+        }
+
+        .lightbox-img {
+            max-width: 100%;
+            max-height: 90vh;
+            border-radius: 12px;
+            box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6);
+            cursor: default;
+            object-fit: contain;
+            animation: lightbox-in 0.2s ease;
+        }
+
+        @keyframes lightbox-in {
+            from { opacity: 0; transform: scale(0.96); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        .lightbox-close {
+            position: fixed;
+            top: 20px;
+            right: 24px;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 1.4rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+            line-height: 1;
+        }
+
+        .lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.28);
+        }
+
         @media (max-width: 900px) {
             .project-body {
                 padding: 20px 28px 28px;
@@ -194,8 +283,14 @@
 
         <div class="projects-grid">
             <div class="project-card">
+                <!-- object-position: adjust the second value (0%=top, 50%=center, 100%=bottom) to reframe the crop -->
                 <div class="project-image">
-                    <img src="images/baby-betting-pool.png" alt="Baby Sex & Date Betting Pool App screenshot">
+                    <img src="images/baby-betting-pool.png" alt="Baby Sex & Date Betting Pool App screenshot" style="object-position: center 20%;">
+                    <div class="image-overlay">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                        </svg>
+                    </div>
                 </div>
                 <div class="project-body">
                     <div class="project-header">
@@ -209,8 +304,14 @@
             </div>
 
             <div class="project-card">
+                <!-- object-position: adjust the second value (0%=top, 50%=center, 100%=bottom) to reframe the crop -->
                 <div class="project-image">
-                    <img src="images/signalhire.png" alt="SignalHire Job Criteria Tool screenshot">
+                    <img src="images/signalhire.png" alt="SignalHire Job Criteria Tool screenshot" style="object-position: center 15%;">
+                    <div class="image-overlay">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                        </svg>
+                    </div>
                 </div>
                 <div class="project-body">
                     <div class="project-header">
@@ -224,8 +325,14 @@
             </div>
 
             <div class="project-card">
+                <!-- object-position: adjust the second value (0%=top, 50%=center, 100%=bottom) to reframe the crop -->
                 <div class="project-image">
-                    <img src="images/photo-gallery.png" alt="Year in Review Photo Gallery screenshot">
+                    <img src="images/photo-gallery.png" alt="Year in Review Photo Gallery screenshot" style="object-position: center 30%;">
+                    <div class="image-overlay">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                        </svg>
+                    </div>
                 </div>
                 <div class="project-body">
                     <div class="project-header">
@@ -252,5 +359,46 @@
             </div>
         </div>
     </footer>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Full image preview">
+        <button class="lightbox-close" id="lightbox-close" aria-label="Close preview">&times;</button>
+        <img class="lightbox-img" id="lightbox-img" src="" alt="">
+    </div>
+
+    <script>
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const lightboxClose = document.getElementById('lightbox-close');
+
+        function openLightbox(img) {
+            lightboxImg.src = img.src;
+            lightboxImg.alt = img.alt;
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        document.querySelectorAll('.project-image').forEach(container => {
+            container.addEventListener('click', () => {
+                const img = container.querySelector('img');
+                if (img) openLightbox(img);
+            });
+        });
+
+        lightboxClose.addEventListener('click', closeLightbox);
+
+        lightbox.addEventListener('click', e => {
+            if (e.target === lightbox) closeLightbox();
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeLightbox();
+        });
+    </script>
 </body>
 </html>
