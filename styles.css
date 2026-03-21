@@ -163,7 +163,7 @@ body::before {
 
 /* --- Page header --- */
 .page-header {
-    margin-bottom: 20px;
+    margin-bottom: 4px;
 }
 
 .page-header h1 {
@@ -172,7 +172,7 @@ body::before {
     font-weight: 300;
     line-height: 1.15;
     color: var(--charcoal);
-    margin-bottom: 16px;
+    margin-bottom: 8px;
     letter-spacing: -0.02em;
 }
 
