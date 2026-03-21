@@ -11,125 +11,39 @@
     <link rel="stylesheet" href="../styles.css">
     <style>
         .page-header {
-            margin-bottom: 32px;
+            margin-bottom: 36px;
         }
 
-        .content-section {
-            margin-bottom: 0;
+        .about-body p {
+            margin-bottom: 24px;
+            color: var(--charcoal);
+            line-height: 1.8;
         }
 
-        .content-section p {
-            margin-bottom: 20px;
+        /* First paragraph reads slightly larger */
+        .about-body p.lead {
+            font-size: 1.1rem;
+            color: var(--slate-deep);
         }
 
-        /* Pull quote */
-        .pull-quote {
-            border-left: 3px solid var(--coral);
-            padding: 14px 24px;
-            margin: 28px 0;
-            font-size: 1.05rem;
+        /* Key question — indented italic, no border */
+        .about-body p.question {
             font-style: italic;
             color: var(--slate-deep);
-            line-height: 1.7;
+            padding-left: 28px;
+            margin-top: 4px;
         }
 
-        /* Section divider */
-        .section-divider {
-            border: none;
-            height: 1px;
-            background: linear-gradient(to right, transparent, var(--slate-light), transparent);
-            opacity: 0.25;
-            margin: 40px 0;
-        }
-
-        /* Role cards */
-        .role-cards {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin: 24px 0 8px;
-        }
-
-        .role-card {
-            background: var(--cream-dark);
-            border-radius: 16px;
-            padding: 22px 24px;
-            text-decoration: none;
-            color: inherit;
-            border: 1.5px solid transparent;
-            transition: all 0.25s ease;
+        /* Small uppercase section labels — plain text, no decoration */
+        .section-label {
             display: block;
-        }
-
-        .role-card:hover {
-            border-color: var(--slate-light);
-            transform: translateY(-3px);
-        }
-
-        .role-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
-            color: var(--coral);
             text-transform: uppercase;
-            letter-spacing: 0.07em;
-            margin-bottom: 8px;
-        }
-
-        .role-org {
-            font-size: 1rem;
-            font-weight: 500;
-            color: var(--slate-deep);
-            margin-bottom: 4px;
-        }
-
-        .role-desc {
-            font-size: 0.85rem;
-            color: var(--warm-gray);
-            line-height: 1.5;
-        }
-
-        /* Academic callout */
-        .academic-callout {
-            background: linear-gradient(135deg, var(--blush) 0%, var(--cream-dark) 100%);
-            border-radius: 16px;
-            padding: 24px 28px;
-            margin: 32px 0;
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
-
-        .academic-callout .icon {
-            font-size: 1.4rem;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-
-        .academic-callout p {
-            font-size: 0.95rem;
-            color: var(--slate-deep);
-            line-height: 1.7;
-            margin: 0;
-        }
-
-        .academic-callout a {
+            letter-spacing: 0.1em;
             color: var(--coral);
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .academic-callout a:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 600px) {
-            .role-cards {
-                grid-template-columns: 1fr;
-            }
-
-            .academic-callout {
-                padding: 20px;
-            }
+            margin-top: 48px;
+            margin-bottom: 8px;
         }
     </style>
 </head>
@@ -158,44 +72,27 @@
             <h1>Hi, I'm <span>Katherine.</span></h1>
         </header>
 
-        <section class="content-section">
-            <p>I was raised by families of artists and scientists, which probably explains why I get as excited about a well-crafted sentence as I do about a well-structured decision-making process or a dashboard that provides a novel business insight.</p>
+        <div class="about-body">
+            <p class="lead">I was raised by families of artists and scientists, which probably explains why I get as excited about a well-crafted sentence as I do about a well-structured decision-making process or a dashboard that provides a novel business insight.</p>
 
             <p>My work lives at the intersection of organizational design, people strategy, and operations — with a persistent interest in the underlying question:</p>
 
-            <blockquote class="pull-quote">How do we build organizations that actually work effectively toward their missions? Not in theory, but under pressure, with real constraints, across people who don't always agree.</blockquote>
-        </section>
+            <p class="question">How do we build organizations that actually work effectively toward their missions? Not in theory, but under pressure, with real constraints, across people who don't always agree.</p>
 
-        <hr class="section-divider">
+            <span class="section-label">Experience</span>
 
-        <section class="content-section">
-            <p>That question has pulled me across a few different contexts.</p>
+            <p>That question has pulled me across a few different contexts. Most recently, I was VP of Operations at <a href="https://www.electrifiedthermal.com/" target="_blank" rel="noopener noreferrer">Electrified Thermal Solutions</a>, a climate tech startup, where I built the operational infrastructure for a company scaling through a critical growth phase. Before that, I spent five years at <a href="https://www.paradigmiq.com/" target="_blank" rel="noopener noreferrer">Paradigm</a>, a strategy consulting firm, leading data and consulting teams and building one of our core product offerings at the intersection of organizational research and practice.</p>
 
-            <div class="role-cards">
-                <a class="role-card" href="https://www.electrifiedthermal.com/" target="_blank" rel="noopener noreferrer">
-                    <div class="role-label">Most recently</div>
-                    <div class="role-org">Electrified Thermal Solutions</div>
-                    <div class="role-desc">VP of Operations at a climate tech startup — building operational infrastructure through a critical growth phase.</div>
-                </a>
-                <a class="role-card" href="https://www.paradigmiq.com/" target="_blank" rel="noopener noreferrer">
-                    <div class="role-label">Before that · 5 years</div>
-                    <div class="role-org">Paradigm</div>
-                    <div class="role-desc">Led data and consulting teams at a strategy consulting firm, building a core product at the intersection of organizational research and practice.</div>
-                </a>
-            </div>
-        </section>
+            <span class="section-label">Education</span>
 
-        <div class="academic-callout">
-            <div class="icon">🎓</div>
-            <p>My academic grounding is in organizational sociology and quantitative methods. I completed a Master's in Business Science at <a href="https://haas.berkeley.edu/" target="_blank" rel="noopener noreferrer">UC Berkeley's Haas School of Management</a> before leaving the PhD program to do the work directly — which has never felt like the wrong call.</p>
-        </div>
+            <p>My academic grounding is in organizational sociology and quantitative methods — I completed a Master's in Business Science at <a href="https://haas.berkeley.edu/" target="_blank" rel="noopener noreferrer">UC Berkeley's Haas School of Management</a> before leaving the PhD program to do the work directly, which has never felt like the wrong call.</p>
 
-        <hr class="section-divider">
+            <span class="section-label">Approach</span>
 
-        <section class="content-section">
             <p>I'm drawn to mission-driven organizations navigating real complexity: the kind where strategy, people, and operations have to all move together. The problems I find most interesting sit at the intersection of how institutions are designed, how decisions get made, and how people do their best work inside imperfect systems.</p>
+
             <p>Learn more about my work is <a href="https://www.linkedin.com/in/katherineullman/" target="_blank" rel="noopener noreferrer">here</a>.</p>
-        </section>
+        </div>
     </main>
 
     <!-- Footer -->
