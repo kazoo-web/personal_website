@@ -184,7 +184,6 @@ body::before {
 .page-header p {
     font-size: 1.1rem;
     color: var(--warm-gray);
-    max-width: 500px;
 }
 
 /* --- Content sections --- */
