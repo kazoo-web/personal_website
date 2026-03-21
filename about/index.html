@@ -17,85 +17,6 @@
         .content-section {
             margin-bottom: 16px;
         }
-
-        /* Highlight Card */
-        .highlight-card {
-            background: linear-gradient(145deg, var(--cream-dark) 0%, var(--blush) 50%, var(--coral-pink) 100%);
-            border-radius: 24px;
-            padding: 40px;
-            margin: 40px 0;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .highlight-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: linear-gradient(to bottom, var(--coral), var(--coral-pink));
-            border-radius: 4px 0 0 4px;
-        }
-
-        .highlight-card p {
-            font-size: 1.1rem;
-            color: var(--slate-deep);
-            font-style: italic;
-        }
-
-        /* Four Column Layout */
-        .four-column {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 24px;
-            margin: 40px 0;
-        }
-
-        .column-card {
-            background: var(--cream-dark);
-            border-radius: 20px;
-            padding: 28px;
-            border: 1.5px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .column-card:hover {
-            border-color: var(--slate-light);
-            transform: translateY(-4px);
-        }
-
-        .column-card h3 {
-            font-size: 1.05rem;
-            font-weight: 500;
-            color: var(--slate-deep);
-            margin-bottom: 12px;
-        }
-
-        .column-card p {
-            font-size: 0.9rem;
-            color: var(--warm-gray);
-            margin: 0;
-            line-height: 1.6;
-        }
-
-        @media (max-width: 900px) {
-            .four-column {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 20px;
-            }
-        }
-
-        @media (max-width: 500px) {
-            .highlight-card {
-                padding: 28px;
-            }
-
-            .four-column {
-                grid-template-columns: 1fr;
-            }
-        }
     </style>
 </head>
 <body>
@@ -120,42 +41,17 @@
     <!-- Main Content -->
     <main class="main">
         <header class="page-header">
-            <h1>A bit more <span>about me</span></h1>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+            <h1>Hi, I'm <span>Katherine.</span></h1>
         </header>
 
         <section class="content-section">
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
-            <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.</p>
+            <p>I was raised by families of artists and scientists, which probably explains why I get as excited about a well-crafted sentence as I do about a well-structured decision-making process or a dashboard that provides a novel business insight.</p>
+            <p>My work lives at the intersection of organizational design, people strategy, and operations — with a persistent interest in the underlying question: how do we build organizations that actually work effectively toward their missions? Not in theory, but under pressure, with real constraints, across people who don't always agree.</p>
+            <p>That question has pulled me across a few different contexts. Most recently, I was VP of Operations at Electrified Thermal Solutions, a climate tech startup, where I built the operational infrastructure for a company scaling through a critical growth phase. Before that, I spent five years at Paradigm, a strategy consulting firm, leading data and consulting teams and building one of our core product offerings at the intersection of organizational research and practice.</p>
+            <p>My academic grounding is in organizational sociology and quantitative methods — I completed a Master's in Business Science at UC Berkeley's Haas School of Management before leaving the PhD program to do the work directly, which has never felt like the wrong call.</p>
+            <p>I'm drawn to mission-driven organizations navigating real complexity: the kind where strategy, people, and operations have to all move together. The problems I find most interesting sit at the intersection of how institutions are designed, how decisions get made, and how people do their best work inside imperfect systems.</p>
+            <p>Learn more about my work is <a href="https://www.linkedin.com/in/katherineullman/" target="_blank" rel="noopener noreferrer">here</a>.</p>
         </section>
-
-        <div class="highlight-card">
-            <p>"A meaningful quote or personal philosophy statement could go here — something that captures your perspective or approach."</p>
-        </div>
-
-        <section class="content-section">
-            <h2>What I Do</h2>
-            <p>Sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium.</p>
-        </section>
-
-        <div class="four-column">
-            <div class="column-card">
-                <h3>Area One</h3>
-                <p>Brief description of this area of focus.</p>
-            </div>
-            <div class="column-card">
-                <h3>Area Two</h3>
-                <p>Brief description of this area of focus.</p>
-            </div>
-            <div class="column-card">
-                <h3>Area Three</h3>
-                <p>Brief description of this area of focus.</p>
-            </div>
-            <div class="column-card">
-                <h3>Area Four</h3>
-                <p>Brief description of this area of focus.</p>
-            </div>
-        </div>
     </main>
 
     <!-- Footer -->

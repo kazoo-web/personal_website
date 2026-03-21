@@ -1,0 +1,181 @@
+<!--
+  Framework Box Component
+  Originally used on the consulting page.
+  Self-contained: includes its own styles and script.
+  Drop inside a page's <main> and include the <style> in <head> and <script> before </body>.
+-->
+
+<!-- STYLES (paste into <head> or a <style> block) -->
+<!--
+<style>
+    .framework {
+        background: var(--cream-dark);
+        border-radius: 24px;
+        padding: 48px;
+        margin-bottom: 48px;
+    }
+
+    .framework-headline {
+        font-size: 1.8rem;
+        font-weight: 400;
+        color: var(--charcoal);
+        line-height: 2.4;
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .tooltip-word {
+        position: relative;
+        display: inline-block;
+        color: var(--coral);
+        font-weight: 500;
+        cursor: pointer;
+        padding-bottom: 4px;
+    }
+
+    .tooltip-word::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, var(--coral-pink), var(--coral));
+        border-radius: 2px;
+        transform: scaleX(0.3);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+    }
+
+    .tooltip-word:hover::after,
+    .tooltip-word.active::after {
+        transform: scaleX(1);
+    }
+
+    .tooltip-word .num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background: var(--coral-pink);
+        color: white;
+        border-radius: 50%;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-right: 6px;
+        vertical-align: middle;
+        transition: background 0.3s ease;
+    }
+
+    .tooltip-word:hover .num,
+    .tooltip-word.active .num {
+        background: var(--coral);
+    }
+
+    .tooltip-detail {
+        background: white;
+        border-radius: 16px;
+        padding: 0;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        transition: all 0.4s ease;
+        margin-top: 0;
+        border-left: 4px solid var(--coral);
+    }
+
+    .tooltip-detail.visible {
+        padding: 24px 28px;
+        max-height: 150px;
+        opacity: 1;
+        margin-top: 24px;
+    }
+
+    .tooltip-detail .label {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--coral);
+        margin-bottom: 8px;
+    }
+
+    .tooltip-detail .description {
+        color: var(--slate-deep);
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .framework .hint {
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--warm-gray);
+        margin-top: 16px;
+        opacity: 0.7;
+    }
+</style>
+-->
+
+<!-- HTML -->
+<div class="framework">
+    <p class="framework-headline">
+        Get the
+        <span class="tooltip-word" data-target="detail-1"><span class="num">1</span>right people</span>
+        <span class="tooltip-word" data-target="detail-2"><span class="num">2</span>working</span>
+        on the
+        <span class="tooltip-word" data-target="detail-3"><span class="num">3</span>right things</span>
+    </p>
+
+    <div class="tooltip-detail" id="detail-1">
+        <div class="label">Right People</div>
+        <p class="description">Identifying key hires, crafting roles &amp; profiles, recruiting support</p>
+    </div>
+    <div class="tooltip-detail" id="detail-2">
+        <div class="label">Working</div>
+        <p class="description">Designing operating rhythms, clarifying ownership, building collaboration systems</p>
+    </div>
+    <div class="tooltip-detail" id="detail-3">
+        <div class="label">Right Things</div>
+        <p class="description">Defining near-term priorities and long-term strategy</p>
+    </div>
+
+    <p class="hint">Hover or click the highlighted words to explore</p>
+</div>
+
+<!-- SCRIPT (paste before </body>) -->
+<!--
+<script>
+    const words = document.querySelectorAll('.tooltip-word');
+    const details = document.querySelectorAll('.tooltip-detail');
+    let activeDetail = null;
+
+    function showDetail(targetId) {
+        details.forEach(d => d.classList.remove('visible'));
+        const target = document.getElementById(targetId);
+        if (target && activeDetail !== targetId) {
+            target.classList.add('visible');
+            activeDetail = targetId;
+        } else {
+            activeDetail = null;
+        }
+    }
+
+    words.forEach(word => {
+        word.addEventListener('mouseenter', () => {
+            const targetId = word.getAttribute('data-target');
+            details.forEach(d => d.classList.remove('visible'));
+            document.getElementById(targetId).classList.add('visible');
+        });
+
+        word.addEventListener('click', () => {
+            const targetId = word.getAttribute('data-target');
+            showDetail(targetId);
+        });
+    });
+
+    document.querySelector('.framework').addEventListener('mouseleave', () => {
+        if (!activeDetail) {
+            details.forEach(d => d.classList.remove('visible'));
+        }
+    });
+</script>
+-->
