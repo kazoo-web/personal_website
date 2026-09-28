@@ -76,10 +76,10 @@
             overflow-y: auto;
         }
 
-        /* Spacer at top so first message doesn't feel flush */
+        /* Spacer grows once there are messages, pushing them down only when the chat fills */
         .messages::before {
             content: '';
-            flex: 1;
+            flex: 0;
         }
 
         .message-row {
