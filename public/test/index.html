@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Katherine Ullman</title>
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -12,13 +11,10 @@
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
             background: #E9E9EB;
             min-height: 100vh;
-            min-height: 100dvh;
             display: flex;
             justify-content: center;
-            align-items: stretch;
         }
 
-        /* Phone-width container, centered on desktop */
         .phone {
             width: 100%;
             max-width: 460px;
@@ -26,23 +22,17 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            min-height: 100dvh;
         }
 
-        /* ── Header ── */
+        /* Header */
         .chat-header {
             padding: 14px 16px 12px;
-            background: rgba(255,255,255,0.94);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
             border-bottom: 0.5px solid rgba(0,0,0,0.14);
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 5px;
-            position: sticky;
-            top: 0;
-            z-index: 10;
+            flex-shrink: 0;
         }
 
         .header-avatar {
@@ -51,13 +41,13 @@
             border-radius: 50%;
             object-fit: cover;
             object-position: center top;
+            background: #E9E9EB;
         }
 
         .header-name {
             font-size: 13px;
             font-weight: 600;
             color: #000;
-            letter-spacing: -0.01em;
         }
 
         .header-sub {
@@ -66,36 +56,24 @@
             margin-top: -3px;
         }
 
-        /* ── Messages ── */
+        /* Messages */
         .messages {
             flex: 1;
             padding: 16px 12px 10px;
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 6px;
             overflow-y: auto;
-        }
-
-        /* Spacer grows once there are messages, pushing them down only when the chat fills */
-        .messages::before {
-            content: '';
-            flex: 0;
         }
 
         .message-row {
             display: flex;
             align-items: flex-end;
             gap: 6px;
-            animation: pop-in 0.22s ease forwards;
         }
 
         .message-row.from-me {
             flex-direction: row-reverse;
-        }
-
-        @keyframes pop-in {
-            from { opacity: 0; transform: translateY(8px) scale(0.98); }
-            to   { opacity: 1; transform: translateY(0)  scale(1); }
         }
 
         .avatar-slot {
@@ -111,6 +89,7 @@
             object-fit: cover;
             object-position: center top;
             display: block;
+            background: #E9E9EB;
         }
 
         .bubble {
@@ -125,11 +104,6 @@
             background: #E9E9EB;
             color: #000;
             border-radius: 18px 18px 18px 5px;
-        }
-
-        /* Continuation bubbles (not last in a run) get flat corners on the tail side */
-        .message-row.cont .bubble.theirs {
-            border-radius: 5px 18px 18px 5px;
         }
 
         .bubble.mine {
@@ -167,18 +141,18 @@
 
         @keyframes bounce {
             0%, 55%, 100% { transform: translateY(0); }
-            27%           { transform: translateY(-5px); }
+            27%            { transform: translateY(-5px); }
         }
 
-        /* ── Quick replies ── */
+        /* Quick replies */
         .quick-replies {
             padding: 10px 12px 28px;
-            padding-bottom: max(28px, env(safe-area-inset-bottom));
             border-top: 0.5px solid rgba(0,0,0,0.1);
             background: #fff;
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
+            flex-shrink: 0;
         }
 
         .qr-btn {
@@ -189,9 +163,7 @@
             color: #007AFF;
             font-family: inherit;
             font-size: 14px;
-            line-height: 1;
             cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
             transition: background 0.12s, color 0.12s;
         }
 
@@ -201,9 +173,8 @@
 </head>
 <body>
 <div class="phone">
-
     <header class="chat-header">
-        <img src="../headshot.png" alt="Katherine Ullman" class="header-avatar">
+        <img src="../headshot.png" alt="KU" class="header-avatar">
         <div class="header-name">Katherine Ullman</div>
         <div class="header-sub">Operations &amp; People Strategy</div>
     </header>
@@ -211,10 +182,13 @@
     <div class="messages" id="messages"></div>
 
     <div class="quick-replies" id="quick-replies" style="display:none;"></div>
-
 </div>
+
 <script>
 const AVATAR = '../headshot.png';
+const msgs = document.getElementById('messages');
+const qr   = document.getElementById('quick-replies');
+let busy = false;
 
 const TOPICS = [
     {
@@ -224,7 +198,7 @@ const TOPICS = [
             "I grew up between families of artists and scientists — which probably explains why I get as excited about a well-crafted sentence as a well-structured decision.",
             "My work is about building organizations that actually work. Not in theory — under pressure, with real constraints, across people who don't always agree.",
             "Most recently VP of Operations at Electrified Thermal Solutions, a climate tech startup. Before that, five years at Paradigm, a strategy consulting firm.",
-            "My academic background is in organizational sociology — I started a PhD at UC Berkeley's Haas before leaving to do the work directly. Never felt like the wrong call.",
+            "My academic background is in organizational sociology — I started a PhD at UC Berkeley's Haas before leaving to do the work directly.",
         ]
     },
     {
@@ -233,7 +207,6 @@ const TOPICS = [
         responses: [
             "I work at the intersection of organizational design, people strategy, and operations.",
             "The core question I keep returning to: how do we build organizations that actually work toward their missions?",
-            "I'm most interested in the places where strategy, people, and operations all have to move together — and usually aren't.",
             "Lately that's meant working with mission-driven orgs navigating growth phases, team design, operating rhythms, that kind of thing.",
         ]
     },
@@ -251,9 +224,8 @@ const TOPICS = [
         label: "What are you reading?",
         responses: [
             "Right now: Flesh by David Szalay — it just won the Booker Prize and absolutely deserved it.",
-            "Also working through Rachel Cusk's essay collection Coventry, and Sallie Tisdale's Violation.",
+            "Also working through Rachel Cusk's Coventry and Sallie Tisdale's Violation.",
             "On podcasts: a lot of Ezra Klein Show and Hard Fork lately.",
-            "I keep a running list of books, podcasts, and things I've been watching if you want the full picture 👀",
         ]
     },
     {
@@ -267,128 +239,94 @@ const TOPICS = [
     },
 ];
 
-const FOLLOWUP = "Anything else you'd like to know?";
-
-// ── DOM ───────────────────────────────────────────────────────────────────────
-const messagesEl = document.getElementById('messages');
-const quickRepliesEl = document.getElementById('quick-replies');
-let busy = false;
-
-function scrollDown() {
-    messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
-}
-
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// ── Build message elements ────────────────────────────────────────────────────
-function makeRow(side, showAvatar) {
-    const row = document.createElement('div');
-    row.className = 'message-row' + (side === 'mine' ? ' from-me' : '');
-    if (side === 'theirs') {
-        const slot = document.createElement('div');
-        slot.className = 'avatar-slot';
-        if (showAvatar) {
-            const img = document.createElement('img');
-            img.src = AVATAR;
-            img.alt = '';
-            slot.appendChild(img);
-        }
-        row.appendChild(slot);
+function makeAvatarSlot(show) {
+    const slot = document.createElement('div');
+    slot.className = 'avatar-slot';
+    if (show) {
+        const img = document.createElement('img');
+        img.src = AVATAR;
+        img.alt = '';
+        slot.appendChild(img);
     }
-    return row;
+    return slot;
 }
 
-function addBubble(content, side, showAvatar = true, isCont = false) {
-    const row = makeRow(side, showAvatar);
-    if (isCont) row.classList.add('cont');
+function addBubble(content, side, showAvatar) {
+    const row = document.createElement('div');
+    row.className = 'message-row' + (side === 'mine' ? ' from-me' : '');
+
+    if (side === 'theirs') row.appendChild(makeAvatarSlot(showAvatar));
 
     const bubble = document.createElement('div');
     bubble.className = 'bubble ' + side;
 
     if (content && content.link) {
-        const span = document.createElement('span');
-        span.textContent = content.text + ' ';
-        const a = document.createElement('a');
-        a.href = content.href;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        a.textContent = content.href.replace('https://www.', '');
-        bubble.appendChild(span);
-        bubble.appendChild(a);
+        bubble.innerHTML = content.text + ' <a href="' + content.href + '" target="_blank" rel="noopener noreferrer">' + content.href.replace('https://www.', '') + '</a>';
     } else {
         bubble.textContent = content;
     }
 
     row.appendChild(bubble);
-    messagesEl.appendChild(row);
-    scrollDown();
+    msgs.appendChild(row);
+    msgs.scrollTop = msgs.scrollHeight;
     return row;
 }
 
 function addTyping() {
-    const row = makeRow('theirs', true);
+    const row = document.createElement('div');
+    row.className = 'message-row';
+    row.appendChild(makeAvatarSlot(true));
     const tb = document.createElement('div');
     tb.className = 'typing-bubble';
     tb.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
     row.appendChild(tb);
-    messagesEl.appendChild(row);
-    scrollDown();
+    msgs.appendChild(row);
+    msgs.scrollTop = msgs.scrollHeight;
     return row;
 }
 
-// ── Quick replies ─────────────────────────────────────────────────────────────
 function showOptions() {
-    quickRepliesEl.innerHTML = '';
-    TOPICS.forEach(t => {
+    qr.innerHTML = '';
+    TOPICS.forEach(function(t) {
         const btn = document.createElement('button');
         btn.className = 'qr-btn';
         btn.textContent = t.label;
-        btn.onclick = () => { if (!busy) handleTopic(t); };
-        quickRepliesEl.appendChild(btn);
+        btn.onclick = function() { if (!busy) handleTopic(t); };
+        qr.appendChild(btn);
     });
-    quickRepliesEl.style.display = 'flex';
+    qr.style.display = 'flex';
 }
 
-function hideOptions() {
-    quickRepliesEl.style.display = 'none';
-}
-
-// ── Handle topic ──────────────────────────────────────────────────────────────
 async function handleTopic(topic) {
     busy = true;
-    hideOptions();
+    qr.style.display = 'none';
 
-    // User bubble
-    addBubble(topic.label, 'mine');
+    addBubble(topic.label, 'mine', false);
     await delay(500);
 
-    // Katherine's responses in sequence
     for (let i = 0; i < topic.responses.length; i++) {
         const typing = addTyping();
-        await delay(850 + Math.random() * 350);
+        await delay(900 + Math.random() * 300);
         typing.remove();
-        // Continuation bubble if not first (avatar only on last)
-        const isFirst = i === 0;
-        const isLast  = i === topic.responses.length - 1;
-        addBubble(topic.responses[i], 'theirs', isLast, !isLast);
-        await delay(320);
+        addBubble(topic.responses[i], 'theirs', i === topic.responses.length - 1);
+        await delay(300);
     }
 
-    // Follow-up
     await delay(600);
     const typing = addTyping();
     await delay(750);
     typing.remove();
-    addBubble(FOLLOWUP, 'theirs', false, true);
+    addBubble("Anything else you'd like to know?", 'theirs', false);
 
     await delay(350);
     busy = false;
     showOptions();
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
-    const typing = addTyping();   // dots appear immediately
+    const typing = addTyping();
     await delay(900);
     typing.remove();
     addBubble("Hi! 👋 What brings you here today?", 'theirs', true);
