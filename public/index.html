@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Katherine Ullman</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+            background: #E9E9EB;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            justify-content: center;
+        }
+
+        .phone {
+            width: 100%;
+            max-width: 460px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+
+        /* ── Header ── */
+        .chat-header {
+            padding: 14px 16px 12px;
+            background: rgba(255,255,255,0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 0.5px solid rgba(0,0,0,0.14);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .header-avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: center top;
+        }
+
+        .header-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #000;
+            letter-spacing: -0.01em;
+        }
+
+        .header-sub {
+            font-size: 11px;
+            color: #8E8E93;
+            margin-top: -3px;
+        }
+
+        /* ── Messages ── */
+        .messages {
+            flex: 1;
+            padding: 16px 12px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        /* Push messages to bottom */
+        .messages::before {
+            content: '';
+            flex: 1;
+        }
+
+        .message-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            opacity: 0;
+        }
+
+        .message-row.visible {
+            animation: pop-in 0.28s ease forwards;
+        }
+
+        @keyframes pop-in {
+            from { opacity: 0; transform: translateY(10px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0)   scale(1); }
+        }
+
+        .avatar-slot {
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+
+        .avatar-slot img {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: center top;
+            display: block;
+        }
+
+        .bubble {
+            max-width: 75%;
+            padding: 9px 14px;
+            font-size: 16px;
+            line-height: 1.45;
+            background: #E9E9EB;
+            color: #000;
+            border-radius: 18px 18px 18px 5px;
+        }
+
+        .bubble a {
+            color: #007AFF;
+            text-decoration: none;
+        }
+        .bubble a:hover { text-decoration: underline; }
+
+        /* Typing dots */
+        .typing-bubble {
+            background: #E9E9EB;
+            border-radius: 18px 18px 18px 5px;
+            padding: 11px 16px;
+            display: inline-flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            background: #8E8E93;
+            border-radius: 50%;
+            animation: bounce 1.3s infinite ease-in-out;
+        }
+        .dot:nth-child(2) { animation-delay: 0.18s; }
+        .dot:nth-child(3) { animation-delay: 0.36s; }
+
+        @keyframes bounce {
+            0%, 55%, 100% { transform: translateY(0); }
+            27%           { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body>
+<div class="phone">
+    <header class="chat-header">
+        <img src="headshot.png" alt="Katherine Ullman" class="header-avatar">
+        <div class="header-name">Katherine Ullman</div>
+        <div class="header-sub">Operations &amp; People Strategy</div>
+    </header>
+
+    <div class="messages" id="messages"></div>
+</div>
+
+<script>
+const messagesEl = document.getElementById('messages');
+const AVATAR = 'headshot.png';
+
+const MESSAGES = [
+    "Something new is on its way. 🌱",
+    "In the meantime, feel free to say hi — I'm on <a href='https://www.linkedin.com/in/katherineullman/' target='_blank' rel='noopener noreferrer'>LinkedIn</a>.",
+];
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function addTypingRow() {
+    const row = document.createElement('div');
+    row.className = 'message-row visible';
+
+    const slot = document.createElement('div');
+    slot.className = 'avatar-slot';
+    const img = document.createElement('img');
+    img.src = AVATAR; img.alt = '';
+    slot.appendChild(img);
+    row.appendChild(slot);
+
+    const tb = document.createElement('div');
+    tb.className = 'typing-bubble';
+    tb.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+    row.appendChild(tb);
+
+    messagesEl.appendChild(row);
+    return row;
+}
+
+function addMessageRow(html, showAvatar) {
+    const row = document.createElement('div');
+    row.className = 'message-row';
+
+    const slot = document.createElement('div');
+    slot.className = 'avatar-slot';
+    if (showAvatar) {
+        const img = document.createElement('img');
+        img.src = AVATAR; img.alt = '';
+        slot.appendChild(img);
+    }
+    row.appendChild(slot);
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.innerHTML = html;
+    row.appendChild(bubble);
+
+    messagesEl.appendChild(row);
+    // Trigger animation next frame
+    requestAnimationFrame(() => row.classList.add('visible'));
+    return row;
+}
+
+async function init() {
+    // First message
+    const t1 = addTypingRow();
+    await delay(1000);
+    t1.remove();
+    addMessageRow(MESSAGES[0], true);
+
+    // Second message
+    await delay(500);
+    const t2 = addTypingRow();
+    await delay(1100);
+    t2.remove();
+    addMessageRow(MESSAGES[1], false);
+}
+
+init();
+</script>
+</body>
+</html>

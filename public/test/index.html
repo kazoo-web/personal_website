@@ -388,12 +388,11 @@ async function handleTopic(topic) {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
-    await delay(700);
-    const typing = addTyping();
-    await delay(1100);
+    const typing = addTyping();   // dots appear immediately
+    await delay(900);
     typing.remove();
     addBubble("Hi! 👋 What brings you here today?", 'theirs', true);
-    await delay(450);
+    await delay(400);
     showOptions();
 }
 
