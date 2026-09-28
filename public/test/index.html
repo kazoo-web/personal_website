@@ -41,20 +41,11 @@
             border-radius: 50%;
             object-fit: cover;
             object-position: center top;
-            background: #E9E9EB;
+            background: #ddd;
         }
 
-        .header-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: #000;
-        }
-
-        .header-sub {
-            font-size: 11px;
-            color: #8E8E93;
-            margin-top: -3px;
-        }
+        .header-name  { font-size: 13px; font-weight: 600; color: #000; }
+        .header-sub   { font-size: 11px; color: #8E8E93; margin-top: -3px; }
 
         /* Messages */
         .messages {
@@ -66,30 +57,20 @@
             overflow-y: auto;
         }
 
-        .message-row {
+        .row {
             display: flex;
             align-items: flex-end;
             gap: 6px;
         }
+        .row.mine { flex-direction: row-reverse; }
 
-        .message-row.from-me {
-            flex-direction: row-reverse;
+        .av {
+            width: 26px; height: 26px; flex-shrink: 0;
         }
-
-        .avatar-slot {
-            width: 26px;
-            height: 26px;
-            flex-shrink: 0;
-        }
-
-        .avatar-slot img {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            object-fit: cover;
-            object-position: center top;
-            display: block;
-            background: #E9E9EB;
+        .av img {
+            width: 26px; height: 26px; border-radius: 50%;
+            object-fit: cover; object-position: center top;
+            display: block; background: #ddd;
         }
 
         .bubble {
@@ -99,28 +80,18 @@
             line-height: 1.45;
             word-break: break-word;
         }
-
         .bubble.theirs {
-            background: #E9E9EB;
-            color: #000;
+            background: #E9E9EB; color: #000;
             border-radius: 18px 18px 18px 5px;
         }
-
         .bubble.mine {
-            background: #007AFF;
-            color: #fff;
+            background: #007AFF; color: #fff;
             border-radius: 18px 18px 5px 18px;
         }
+        .bubble a { color: inherit; text-decoration: underline; opacity: 0.88; }
 
-        .bubble a {
-            color: inherit;
-            text-decoration: underline;
-            text-underline-offset: 2px;
-            opacity: 0.88;
-        }
-
-        /* Typing indicator */
-        .typing-bubble {
+        /* Typing dots */
+        .typing {
             background: #E9E9EB;
             border-radius: 18px 18px 18px 5px;
             padding: 11px 16px;
@@ -128,17 +99,13 @@
             gap: 4px;
             align-items: center;
         }
-
         .dot {
-            width: 7px;
-            height: 7px;
-            background: #8E8E93;
-            border-radius: 50%;
+            width: 7px; height: 7px;
+            background: #8E8E93; border-radius: 50%;
             animation: bounce 1.3s infinite ease-in-out;
         }
         .dot:nth-child(2) { animation-delay: 0.18s; }
         .dot:nth-child(3) { animation-delay: 0.36s; }
-
         @keyframes bounce {
             0%, 55%, 100% { transform: translateY(0); }
             27%            { transform: translateY(-5px); }
@@ -154,8 +121,7 @@
             gap: 8px;
             flex-shrink: 0;
         }
-
-        .qr-btn {
+        .qr {
             padding: 8px 15px;
             border-radius: 17px;
             border: 1.5px solid #007AFF;
@@ -166,104 +132,97 @@
             cursor: pointer;
             transition: background 0.12s, color 0.12s;
         }
-
-        .qr-btn:hover  { background: rgba(0,122,255,0.07); }
-        .qr-btn:active { background: #007AFF; color: #fff; }
+        .qr:hover  { background: rgba(0,122,255,0.07); }
+        .qr:active { background: #007AFF; color: #fff; }
     </style>
 </head>
 <body>
 <div class="phone">
+
     <header class="chat-header">
         <img src="../headshot.png" alt="KU" class="header-avatar">
         <div class="header-name">Katherine Ullman</div>
         <div class="header-sub">Operations &amp; People Strategy</div>
     </header>
 
-    <div class="messages" id="messages"></div>
+    <!-- Initial greeting baked into HTML — visible without JS -->
+    <div class="messages" id="messages">
+        <div class="row" id="greeting-row">
+            <div class="av"><img src="../headshot.png" alt=""></div>
+            <div class="bubble theirs">Hi! 👋 What brings you here today?</div>
+        </div>
+    </div>
 
-    <div class="quick-replies" id="quick-replies" style="display:none;"></div>
+    <!-- Topic buttons baked into HTML -->
+    <div class="quick-replies" id="qr-bar">
+        <button class="qr" data-topic="about">Who are you?</button>
+        <button class="qr" data-topic="work">What kind of work do you do?</button>
+        <button class="qr" data-topic="together">I'd like to work with you</button>
+        <button class="qr" data-topic="reading">What are you reading?</button>
+        <button class="qr" data-topic="projects">Show me something you've built</button>
+    </div>
+
 </div>
-
 <script>
-const AVATAR = '../headshot.png';
-const msgs = document.getElementById('messages');
-const qr   = document.getElementById('quick-replies');
-let busy = false;
+var AVATAR = '../headshot.png';
+var msgs  = document.getElementById('messages');
+var qrBar = document.getElementById('qr-bar');
+var busy  = false;
 
-const TOPICS = [
-    {
-        id: 'about',
-        label: 'Who are you?',
-        responses: [
-            "I grew up between families of artists and scientists — which probably explains why I get as excited about a well-crafted sentence as a well-structured decision.",
-            "My work is about building organizations that actually work. Not in theory — under pressure, with real constraints, across people who don't always agree.",
-            "Most recently VP of Operations at Electrified Thermal Solutions, a climate tech startup. Before that, five years at Paradigm, a strategy consulting firm.",
-            "My academic background is in organizational sociology — I started a PhD at UC Berkeley's Haas before leaving to do the work directly.",
-        ]
-    },
-    {
-        id: 'work',
-        label: 'What kind of work do you do?',
-        responses: [
-            "I work at the intersection of organizational design, people strategy, and operations.",
-            "The core question I keep returning to: how do we build organizations that actually work toward their missions?",
-            "Lately that's meant working with mission-driven orgs navigating growth phases, team design, operating rhythms, that kind of thing.",
-        ]
-    },
-    {
-        id: 'together',
-        label: "I'd like to work with you",
-        responses: [
-            "I'm glad to hear it — I'm selectively available for consulting with mission-driven organizations.",
-            "I focus on org design, people strategy, and operational infrastructure, especially during growth or transition.",
-            { link: true, text: "Best way to reach me is on LinkedIn →", href: "https://www.linkedin.com/in/katherineullman/" }
-        ]
-    },
-    {
-        id: 'reading',
-        label: "What are you reading?",
-        responses: [
-            "Right now: Flesh by David Szalay — it just won the Booker Prize and absolutely deserved it.",
-            "Also working through Rachel Cusk's Coventry and Sallie Tisdale's Violation.",
-            "On podcasts: a lot of Ezra Klein Show and Hard Fork lately.",
-        ]
-    },
-    {
-        id: 'projects',
-        label: "Show me something you've built",
-        responses: [
-            "Happy to — most of what I build is things I actually wanted to exist.",
-            "There's a baby betting pool app, a few data projects, a photo gallery... a mix of practical and just-for-fun.",
-            "I'm putting together a proper showcase. Check back soon — or find me on LinkedIn in the meantime.",
-        ]
-    },
-];
+var TOPICS = {
+    about: [
+        "I grew up between families of artists and scientists — which probably explains why I get as excited about a well-crafted sentence as a well-structured decision.",
+        "My work is about building organizations that actually work. Not in theory — under pressure, with real constraints, across people who don't always agree.",
+        "Most recently VP of Operations at Electrified Thermal Solutions, a climate tech startup. Before that, five years at Paradigm, a strategy consulting firm.",
+        "My academic background is in organizational sociology — I started a PhD at UC Berkeley's Haas before leaving to do the work directly."
+    ],
+    work: [
+        "I work at the intersection of organizational design, people strategy, and operations.",
+        "The core question I keep returning to: how do we build organizations that actually work toward their missions?",
+        "Lately that's meant working with mission-driven orgs navigating growth phases, team design, operating rhythms, that kind of thing."
+    ],
+    together: [
+        "I'm glad to hear it — I'm selectively available for consulting with mission-driven organizations.",
+        "I focus on org design, people strategy, and operational infrastructure, especially during growth or transition.",
+        {link: "https://www.linkedin.com/in/katherineullman/", text: "Best way to reach me is on LinkedIn →"}
+    ],
+    reading: [
+        "Right now: Flesh by David Szalay — it just won the Booker Prize and absolutely deserved it.",
+        "Also working through Rachel Cusk's Coventry and Sallie Tisdale's Violation.",
+        "On podcasts: a lot of Ezra Klein Show and Hard Fork lately."
+    ],
+    projects: [
+        "Happy to — most of what I build is things I actually wanted to exist.",
+        "There's a baby betting pool app, a few data projects, a photo gallery... a mix of practical and just-for-fun.",
+        "I'm putting together a proper showcase. Check back soon — or find me on LinkedIn in the meantime."
+    ]
+};
 
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+function addRow(content, side, showAv) {
+    var row = document.createElement('div');
+    row.className = 'row' + (side === 'mine' ? ' mine' : '');
 
-function makeAvatarSlot(show) {
-    const slot = document.createElement('div');
-    slot.className = 'avatar-slot';
-    if (show) {
-        const img = document.createElement('img');
-        img.src = AVATAR;
-        img.alt = '';
-        slot.appendChild(img);
+    if (side === 'theirs') {
+        var av = document.createElement('div');
+        av.className = 'av';
+        if (showAv) {
+            var img = document.createElement('img');
+            img.src = AVATAR; img.alt = '';
+            av.appendChild(img);
+        }
+        row.appendChild(av);
     }
-    return slot;
-}
 
-function addBubble(content, side, showAvatar) {
-    const row = document.createElement('div');
-    row.className = 'message-row' + (side === 'mine' ? ' from-me' : '');
-
-    if (side === 'theirs') row.appendChild(makeAvatarSlot(showAvatar));
-
-    const bubble = document.createElement('div');
+    var bubble = document.createElement('div');
     bubble.className = 'bubble ' + side;
 
     if (content && content.link) {
-        bubble.innerHTML = content.text + ' <a href="' + content.href + '" target="_blank" rel="noopener noreferrer">' + content.href.replace('https://www.', '') + '</a>';
+        var a = document.createElement('a');
+        a.href = content.link;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = content.text;
+        bubble.appendChild(a);
     } else {
         bubble.textContent = content;
     }
@@ -274,67 +233,70 @@ function addBubble(content, side, showAvatar) {
     return row;
 }
 
-function addTyping() {
-    const row = document.createElement('div');
-    row.className = 'message-row';
-    row.appendChild(makeAvatarSlot(true));
-    const tb = document.createElement('div');
-    tb.className = 'typing-bubble';
-    tb.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-    row.appendChild(tb);
+function addTypingRow() {
+    var row = document.createElement('div');
+    row.className = 'row';
+    var av = document.createElement('div');
+    av.className = 'av';
+    var img = document.createElement('img');
+    img.src = AVATAR; img.alt = '';
+    av.appendChild(img);
+    row.appendChild(av);
+    var t = document.createElement('div');
+    t.className = 'typing';
+    t.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+    row.appendChild(t);
     msgs.appendChild(row);
     msgs.scrollTop = msgs.scrollHeight;
     return row;
 }
 
-function showOptions() {
-    qr.innerHTML = '';
-    TOPICS.forEach(function(t) {
-        const btn = document.createElement('button');
-        btn.className = 'qr-btn';
-        btn.textContent = t.label;
-        btn.onclick = function() { if (!busy) handleTopic(t); };
-        qr.appendChild(btn);
-    });
-    qr.style.display = 'flex';
+function playResponses(responses, idx, done) {
+    if (idx >= responses.length) { done(); return; }
+    var tr = addTypingRow();
+    setTimeout(function() {
+        tr.remove();
+        addRow(responses[idx], 'theirs', idx === responses.length - 1);
+        setTimeout(function() {
+            playResponses(responses, idx + 1, done);
+        }, 300);
+    }, 900 + Math.floor(Math.random() * 300));
 }
 
-async function handleTopic(topic) {
+function handleTopic(id) {
+    if (busy) return;
     busy = true;
-    qr.style.display = 'none';
+    qrBar.style.display = 'none';
 
-    addBubble(topic.label, 'mine', false);
-    await delay(500);
+    var label = qrBar.querySelector('[data-topic="' + id + '"]').textContent;
+    addRow(label, 'mine', false);
 
-    for (let i = 0; i < topic.responses.length; i++) {
-        const typing = addTyping();
-        await delay(900 + Math.random() * 300);
-        typing.remove();
-        addBubble(topic.responses[i], 'theirs', i === topic.responses.length - 1);
-        await delay(300);
-    }
-
-    await delay(600);
-    const typing = addTyping();
-    await delay(750);
-    typing.remove();
-    addBubble("Anything else you'd like to know?", 'theirs', false);
-
-    await delay(350);
-    busy = false;
-    showOptions();
+    setTimeout(function() {
+        playResponses(TOPICS[id], 0, function() {
+            setTimeout(function() {
+                var tr = addTypingRow();
+                setTimeout(function() {
+                    tr.remove();
+                    addRow("Anything else you'd like to know?", 'theirs', false);
+                    setTimeout(function() {
+                        busy = false;
+                        qrBar.style.display = 'flex';
+                    }, 350);
+                }, 750);
+            }, 600);
+        });
+    }, 500);
 }
 
-async function init() {
-    const typing = addTyping();
-    await delay(900);
-    typing.remove();
-    addBubble("Hi! 👋 What brings you here today?", 'theirs', true);
-    await delay(400);
-    showOptions();
+// Wire up buttons
+var btns = qrBar.querySelectorAll('.qr');
+for (var i = 0; i < btns.length; i++) {
+    (function(btn) {
+        btn.addEventListener('click', function() {
+            handleTopic(btn.getAttribute('data-topic'));
+        });
+    })(btns[i]);
 }
-
-init();
 </script>
 </body>
 </html>
