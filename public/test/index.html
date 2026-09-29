@@ -115,26 +115,35 @@
             27%            { transform: translateY(-5px); }
         }
 
-        /* Mine continuation (not the tail/last bubble) */
+        /* Mine continuation */
         .bubble.mine.cont {
             border-radius: 18px 5px 5px 18px;
         }
 
-        /* Y avatar (visitor, right side) */
-        .y-av {
-            width: 26px; height: 26px; flex-shrink: 0;
-            border-radius: 50%;
-            background: #8E8E93;
-            color: #fff;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 11px; font-weight: 700;
+        /* Options bar — right-aligned ghost pills at the bottom */
+        .options-bar {
+            padding: 10px 14px 20px;
+            border-top: 0.5px solid rgba(0,0,0,0.08);
+            background: #fff;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-shrink: 0;
         }
-
-        /* Option bubbles — appear as visitor's right-aligned blue bubbles */
-        .opt-row { cursor: pointer; }
-        .opt-row .bubble.mine { transition: opacity 0.12s; }
-        .opt-row:hover .bubble.mine  { opacity: 0.72; }
-        .opt-row:active .bubble.mine { background: #0066DD; opacity: 1; }
+        .opt-pill {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1.5px solid #007AFF;
+            background: transparent;
+            color: #007AFF;
+            font-family: inherit;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.12s, color 0.12s;
+        }
+        .opt-pill:hover  { background: rgba(0,122,255,0.07); }
+        .opt-pill:active { background: #007AFF; color: #fff; }
     </style>
 </head>
 <body>
@@ -153,11 +162,14 @@
         </div>
     </div>
 
+    <div class="options-bar" id="options-bar"></div>
+
 </div>
 <script>
 var AVATAR = '../headshot.png';
-var msgs = document.getElementById('messages');
-var busy = false;
+var msgs    = document.getElementById('messages');
+var optBar  = document.getElementById('options-bar');
+var busy    = false;
 
 var TOPICS = [
     {
@@ -256,41 +268,21 @@ function addTyping() {
     return row;
 }
 
-function addGap() {
-    var g = document.createElement('div');
-    g.className = 'msg-gap';
-    msgs.appendChild(g);
-}
-
-// Show options as right-aligned blue bubbles (visitor's side)
 function showOptions() {
-    addGap();
-    TOPICS.forEach(function(t, i) {
-        var isLast = i === TOPICS.length - 1;
-        var row = document.createElement('div');
-        row.className = 'row mine opt-row';
-        row.dataset.optId = t.id;
-
-        // Y avatar — row-reverse means first child is on the far right
-        var yav = document.createElement('div');
-        yav.className = 'y-av';
-        yav.textContent = 'Y';
-        if (!isLast) yav.style.visibility = 'hidden';
-        row.appendChild(yav);
-
-        var b = document.createElement('div');
-        b.className = 'bubble mine' + (isLast ? '' : ' cont');
-        b.textContent = t.label;
-        row.appendChild(b);
-
-        row.addEventListener('click', function() { handleTopic(t); });
-        msgs.appendChild(row);
+    optBar.innerHTML = '';
+    optBar.hidden = false;
+    TOPICS.forEach(function(t) {
+        var btn = document.createElement('button');
+        btn.className = 'opt-pill';
+        btn.textContent = t.label;
+        btn.addEventListener('click', function() { handleTopic(t); });
+        optBar.appendChild(btn);
     });
-    msgs.scrollTop = msgs.scrollHeight;
 }
 
 function clearOptions() {
-    msgs.querySelectorAll('.opt-row, .msg-gap').forEach(function(el) { el.remove(); });
+    optBar.hidden = true;
+    optBar.innerHTML = '';
 }
 
 function playResponses(responses, idx, done) {
@@ -310,6 +302,7 @@ function handleTopic(topic) {
     clearOptions();
 
     addBubble(topic.label, 'mine', false, false);
+    msgs.scrollTop = msgs.scrollHeight;
 
     setTimeout(function() {
         playResponses(topic.responses, 0, function() {
