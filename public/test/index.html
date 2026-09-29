@@ -258,7 +258,7 @@ function addBubble(content, side, showAv, isCont) {
     b.className = 'bubble ' + (side === 'mine' ? 'mine' : 'theirs');
     if (isCont) b.classList.add('cont');
 
-    if (content && content.link) {
+    if (content && typeof content === 'object' && content.link) {
         var a = document.createElement('a');
         a.href = content.link; a.target = '_blank'; a.rel = 'noopener noreferrer';
         a.textContent = content.text;
