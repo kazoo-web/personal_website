@@ -120,6 +120,16 @@
             border-radius: 18px 5px 5px 18px;
         }
 
+        /* Y avatar (visitor, right side) */
+        .y-av {
+            width: 26px; height: 26px; flex-shrink: 0;
+            border-radius: 50%;
+            background: #8E8E93;
+            color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700;
+        }
+
         /* Options bar — right-aligned ghost pills at the bottom */
         .options-bar {
             padding: 10px 14px 20px;
@@ -234,7 +244,15 @@ function addBubble(content, side, showAv, isCont) {
     var row = document.createElement('div');
     row.className = 'row' + (side === 'mine' ? ' mine' : '');
 
-    if (side === 'theirs') row.appendChild(makeAvEl(!!showAv));
+    if (side === 'theirs') {
+        row.appendChild(makeAvEl(!!showAv));
+    } else if (side === 'mine' && showAv) {
+        // row-reverse: first child lands on far right
+        var yav = document.createElement('div');
+        yav.className = 'y-av';
+        yav.textContent = 'Y';
+        row.appendChild(yav);
+    }
 
     var b = document.createElement('div');
     b.className = 'bubble ' + (side === 'mine' ? 'mine' : 'theirs');
@@ -301,7 +319,7 @@ function handleTopic(topic) {
     busy = true;
     clearOptions();
 
-    addBubble(topic.label, 'mine', false, false);
+    addBubble(topic.label, 'mine', true, false);
     msgs.scrollTop = msgs.scrollHeight;
 
     setTimeout(function() {
