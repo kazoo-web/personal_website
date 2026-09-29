@@ -115,13 +115,16 @@
             27%            { transform: translateY(-5px); }
         }
 
-        /* Option bubbles — look like Katherine's messages, but tappable */
-        .opt-row { cursor: pointer; }
-        .opt-row .bubble.theirs {
-            transition: opacity 0.12s;
+        /* Mine continuation (not the tail/last bubble) */
+        .bubble.mine.cont {
+            border-radius: 18px 5px 5px 18px;
         }
-        .opt-row:hover .bubble.theirs { opacity: 0.7; }
-        .opt-row:active .bubble.theirs { background: #D1D1D6; opacity: 1; }
+
+        /* Option bubbles — appear as visitor's right-aligned blue bubbles */
+        .opt-row { cursor: pointer; }
+        .opt-row .bubble.mine { transition: opacity 0.12s; }
+        .opt-row:hover .bubble.mine  { opacity: 0.72; }
+        .opt-row:active .bubble.mine { background: #0066DD; opacity: 1; }
     </style>
 </head>
 <body>
@@ -249,20 +252,17 @@ function addGap() {
     msgs.appendChild(g);
 }
 
-// Show options as Katherine's suggestion bubbles
+// Show options as right-aligned blue bubbles (visitor's side)
 function showOptions() {
     addGap();
     TOPICS.forEach(function(t, i) {
-        var isFirst = i === 0;
-        var isLast  = i === TOPICS.length - 1;
+        var isLast = i === TOPICS.length - 1;
         var row = document.createElement('div');
-        row.className = 'row opt-row';
+        row.className = 'row mine opt-row';
         row.dataset.optId = t.id;
 
-        row.appendChild(makeAvEl(isLast));
-
         var b = document.createElement('div');
-        b.className = 'bubble theirs' + (isFirst ? '' : ' cont');
+        b.className = 'bubble mine' + (isLast ? '' : ' cont');
         b.textContent = t.label;
         row.appendChild(b);
 
