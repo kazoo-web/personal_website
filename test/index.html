@@ -159,6 +159,47 @@
         }
         .opt-pill:hover  { background: rgba(184,104,48,0.07); }
         .opt-pill:active { background: #B86830; color: #fff; }
+
+        /* Compose bar */
+        .compose-bar {
+            padding: 10px 14px 20px;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+            border-top: 0.5px solid rgba(0,0,0,0.06);
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .compose-input {
+            font-family: inherit;
+            font-size: 15px;
+            border: 1.5px solid rgba(0,0,0,0.12);
+            border-radius: 22px;
+            padding: 10px 16px;
+            outline: none;
+            background: transparent;
+            color: #2C1A08;
+            width: 100%;
+            -webkit-appearance: none;
+        }
+        .compose-input::placeholder { color: #B8A898; }
+        .compose-input:focus { border-color: #B86830; }
+        .compose-row { display: flex; gap: 8px; align-items: center; }
+        .compose-row .compose-input { flex: 1; }
+        .compose-send {
+            width: 38px; height: 38px; flex-shrink: 0;
+            border-radius: 50%;
+            background: #B86830;
+            color: #fff;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.12s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .compose-send:disabled { opacity: 0.32; cursor: default; }
     </style>
 </head>
 <body>
@@ -179,12 +220,85 @@
 
     <div class="options-bar" id="options-bar"></div>
 
+    <div class="compose-bar" id="compose-bar" hidden>
+        <input type="email" id="compose-email" class="compose-input" placeholder="Your email address" autocomplete="email">
+        <div class="compose-row">
+            <input type="text" id="compose-msg" class="compose-input" placeholder="Your message…" autocomplete="off">
+            <button class="compose-send" id="compose-send" disabled aria-label="Send">&#8593;</button>
+        </div>
+    </div>
+
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
-var AVATAR = '../headshot.png';
-var msgs    = document.getElementById('messages');
-var optBar  = document.getElementById('options-bar');
-var busy    = false;
+emailjs.init('W-xleQle2O_YXo0w6');
+
+var AVATAR      = '../headshot.png';
+var msgs        = document.getElementById('messages');
+var optBar      = document.getElementById('options-bar');
+var composeBar  = document.getElementById('compose-bar');
+var composeEmail = document.getElementById('compose-email');
+var composeMsg  = document.getElementById('compose-msg');
+var composeSend = document.getElementById('compose-send');
+var busy        = false;
+
+function validateCompose() {
+    var hasEmail = composeEmail.value.trim().indexOf('@') > 0;
+    var hasMsg   = composeMsg.value.trim().length > 0;
+    composeSend.disabled = !(hasEmail && hasMsg);
+}
+composeEmail.addEventListener('input', validateCompose);
+composeMsg.addEventListener('input', validateCompose);
+
+composeMsg.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !composeSend.disabled) { e.preventDefault(); doSend(); }
+});
+
+function showCompose() {
+    composeBar.hidden = false;
+    composeEmail.value = '';
+    composeMsg.value = '';
+    composeSend.disabled = true;
+    setTimeout(function() { composeEmail.focus(); }, 80);
+}
+
+function hideCompose() {
+    composeBar.hidden = true;
+}
+
+function doSend() {
+    var email = composeEmail.value.trim();
+    var message = composeMsg.value.trim();
+    if (!email || !message) return;
+
+    hideCompose();
+    addBubble(message, 'mine', true, false);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    emailjs.send('service_rsar3li', 'template_fvgjjpd', {
+        visitor_email: email,
+        visitor_message: message
+    });
+
+    setTimeout(function() {
+        var tr = addTyping();
+        setTimeout(function() {
+            tr.remove();
+            addBubble("Thanks — I'll follow up soon. 🙏", 'theirs', false, false);
+            setTimeout(function() {
+                var tr2 = addTyping();
+                setTimeout(function() {
+                    tr2.remove();
+                    addBubble("Anything else you'd like to know?", 'theirs', true, false);
+                    setTimeout(function() {
+                        busy = false;
+                        showOptions();
+                    }, 350);
+                }, 750);
+            }, 600);
+        }, 1100);
+    }, 400);
+}
 
 var TOPICS = [
     {
@@ -328,17 +442,28 @@ function handleTopic(topic) {
 
     setTimeout(function() {
         playResponses(topic.responses, 0, function() {
-            setTimeout(function() {
-                var tr = addTyping();
+            if (topic.id === 'together') {
                 setTimeout(function() {
-                    tr.remove();
-                    addBubble("Anything else you'd like to know?", 'theirs', true, false);
+                    var tr = addTyping();
                     setTimeout(function() {
-                        busy = false;
-                        showOptions();
-                    }, 350);
-                }, 750);
-            }, 600);
+                        tr.remove();
+                        addBubble("Send me a note here and I'll follow up:", 'theirs', true, false);
+                        setTimeout(function() { showCompose(); }, 350);
+                    }, 750);
+                }, 600);
+            } else {
+                setTimeout(function() {
+                    var tr = addTyping();
+                    setTimeout(function() {
+                        tr.remove();
+                        addBubble("Anything else you'd like to know?", 'theirs', true, false);
+                        setTimeout(function() {
+                            busy = false;
+                            showOptions();
+                        }, 350);
+                    }, 750);
+                }, 600);
+            }
         });
     }, 500);
 }
