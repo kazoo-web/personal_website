@@ -334,42 +334,42 @@ function doSend() {
 
 var TOPICS = [
     {
-        id: ‘about’,
-        label: ‘Who are you?’,
+        id: 'about',
+        label: 'Who are you?',
         responses: [
             "I grew up in families of artists and scientists, which probably explains why I get as excited about bringing a data and technical lens (the hard stuff) to people and talent (the soft stuff).",
-            "I’m trained as a quantitative organizational sociologist. I started a PhD at UC Berkeley’s Haas before leaving to bring scientific insight directly to companies.",
+            "I'm trained as a quantitative organizational sociologist. I started a PhD at UC Berkeley's Haas before leaving to bring scientific insight directly to companies.",
             "I spent five years at Paradigm leading a people analytics team, helping companies big and small leverage their data to build better people practices. There I also built products and internal tools to assess people programs.",
             "Most recently, I was at Electrified Thermal Solutions, a climate tech startup. I started as a consultant, and, within a few months, joined full-time as their first operational leader. From Seed through Series A, I led people, recruiting, finance, and org strategy, among other things, doubling the team, bringing in $10M+ in non-dilutive funding, and breaking ground on a pilot manufacturing facility."
         ]
     },
     {
-        id: ‘built’,
-        label: "Tell me more about what you’ve built.",
+        id: 'built',
+        label: "Tell me more about what you've built.",
         responses: [
             "I build systems, processes, and tools.",
-            "Most recently, I built the people, recruiting and finance functions for a climate tech startup. But I’ve also built some products and internal tools I’m very proud of.",
+            "Most recently, I built the people, recruiting and finance functions for a climate tech startup. But I've also built some products and internal tools I'm very proud of.",
             "Blueprint — v1 of a people programs assessment platform I designed and launched at Paradigm.",
-            "It turned our services team’s expertise into a product. That year the team had its first profitable year (+$1.2M in revenue), and the firm shifted to a product-first strategy.",
+            "It turned our services team's expertise into a product. That year the team had its first profitable year (+$1.2M in revenue), and the firm shifted to a product-first strategy.",
             "I set the product development and the external development team that built it.",
             {image: "img/blueprint.webp", alt: "Blueprint platform"},
             "Training Impact Dashboard — an internal system for collecting and analysing data to measure whether the employee trainings we ran actually changed how people exercise judgment and make decisions. We shared the results with clients, used them to improve our curriculum, and they became the basis for follow-on work. I built v1 myself and ultimately hired and led developers to support."
         ]
     },
     {
-        id: ‘building’,
+        id: 'building',
         label: "What are you building now?",
         responses: [
-            "I’m currently building a tool that turns a job description into a complete, structured hiring plan — an interview plan, and the questions and rubrics to run it — so startups can make fast and rigorous hiring decisions.",
+            "I'm currently building a tool that turns a job description into a complete, structured hiring plan — an interview plan, and the questions and rubrics to run it — so startups can make fast and rigorous hiring decisions.",
             {image: "img/signalhire.png", alt: "Signal Kit"},
-            "I’ve also built a few things for fun: a baby betting pool and a digital holiday card. Check them out.",
+            "I've also built a few things for fun: a baby betting pool and a digital holiday card. Check them out.",
             {image: "img/baby-betting-pool.png", alt: "Baby betting pool"},
             {image: "img/holiday-card.png", alt: "Digital holiday card"},
-            "Oh, and I’ve built this website!"
+            "Oh, and I've built this website!"
         ]
     },
     {
-        id: ‘looking’,
+        id: 'looking',
         label: "What are you looking for?",
         compose: true,
         responses: [
@@ -380,7 +380,7 @@ var TOPICS = [
         ]
     },
     {
-        id: ‘contact’,
+        id: 'contact',
         label: "How can I get in touch?",
         compose: true,
         responses: [
@@ -495,7 +495,7 @@ function handleTopic(topic) {
                     var tr = addTyping();
                     setTimeout(function() {
                         tr.remove();
-                        addBubble("Or send me a note here and I’ll follow up:", 'theirs', true, false);
+                        addBubble("Or send me a note here and I'll follow up:", 'theirs', true, false);
                         setTimeout(function() {
                             showCompose();
                             busy = false;
