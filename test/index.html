@@ -141,7 +141,7 @@
             background: #fff;
             display: flex;
             flex-wrap: wrap;
-            justify-content: flex-end;
+            justify-content: center;
             gap: 8px;
             flex-shrink: 0;
         }
@@ -334,8 +334,8 @@ function doSend() {
 
 var TOPICS = [
     {
-        id: 'about',
-        label: 'Who are you?',
+        id: ‘about’,
+        label: ‘Who are you?’,
         responses: [
             "I grew up in families of artists and scientists, which probably explains why I get as excited about bringing a data and technical lens (the hard stuff) to people and talent (the soft stuff).",
             "I’m trained as a quantitative organizational sociologist. I started a PhD at UC Berkeley’s Haas before leaving to bring scientific insight directly to companies.",
@@ -344,18 +344,7 @@ var TOPICS = [
         ]
     },
     {
-        id: 'looking',
-        label: "What are you looking for?",
-        compose: true,
-        responses: [
-            "My next full-time role building people programs and systems for high-growth organizations.",
-            "The work I want more: using sound judgement, data and tooling to build best-in-class people and talent functions.",
-            "I also take on a small number of consulting engagements.",
-            {link: "https://www.linkedin.com/in/katherineullman/", text: "Best way to reach me: connect on LinkedIn →"}
-        ]
-    },
-    {
-        id: 'built',
+        id: ‘built’,
         label: "Tell me more about what you’ve built.",
         responses: [
             "I build systems, processes, and tools.",
@@ -368,16 +357,7 @@ var TOPICS = [
         ]
     },
     {
-        id: 'contact',
-        label: "How can I get in touch?",
-        compose: true,
-        responses: [
-            "A few ways!",
-            {link: "https://www.linkedin.com/in/katherineullman/", text: "Connect with me on LinkedIn →"}
-        ]
-    },
-    {
-        id: 'building',
+        id: ‘building’,
         label: "What are you building now?",
         responses: [
             "I’m currently building a tool that turns a job description into a complete, structured hiring plan — an interview plan, and the questions and rubrics to run it — so startups can make fast and rigorous hiring decisions.",
@@ -386,6 +366,26 @@ var TOPICS = [
             {image: "img/baby-betting-pool.png", alt: "Baby betting pool"},
             {image: "img/holiday-card.png", alt: "Digital holiday card"},
             "Oh, and I’ve built this website!"
+        ]
+    },
+    {
+        id: ‘looking’,
+        label: "What are you looking for?",
+        compose: true,
+        responses: [
+            "My next full-time role building people programs and systems for high-growth organizations.",
+            "The work I want more: using sound judgement, data and tooling to build best-in-class people and talent functions.",
+            "I also take on a small number of consulting engagements.",
+            {link: "https://www.linkedin.com/in/katherineullman/", text: "Best way to reach me: connect on LinkedIn →"}
+        ]
+    },
+    {
+        id: ‘contact’,
+        label: "How can I get in touch?",
+        compose: true,
+        responses: [
+            "A few ways!",
+            {link: "https://www.linkedin.com/in/katherineullman/", text: "Connect with me on LinkedIn →"}
         ]
     }
 ];
