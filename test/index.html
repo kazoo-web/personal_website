@@ -213,7 +213,7 @@
     <header class="chat-header">
         <img src="../headshot.png" alt="KU" class="header-avatar">
         <div class="header-name">Katherine Ullman</div>
-        <div class="header-sub">Operations &amp; People Strategy</div>
+        <div class="header-sub">welcome to my little corner of the internet</div>
     </header>
 
     <div class="messages" id="messages">
@@ -255,19 +255,18 @@ var composeMsg  = document.getElementById('compose-msg');
 var composeSend = document.getElementById('compose-send');
 var busy        = false;
 
-// Smart auto-scroll: follow new messages unless user has scrolled up
+// Auto-scroll: follow new messages unless user has scrolled up
 var autoScroll  = true;
 var progScroll  = false;
 msgs.addEventListener('scroll', function() {
     if (progScroll) return;
-    autoScroll = (msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight) < 80;
+    autoScroll = (msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight) < 60;
 });
-function scrollToEl(el) {
+function scrollToEl() {
     if (!autoScroll) return;
     progScroll = true;
-    var top = el.offsetTop + el.offsetHeight - msgs.clientHeight * 0.62;
-    msgs.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-    setTimeout(function() { progScroll = false; }, 700);
+    msgs.scrollTop = msgs.scrollHeight;
+    setTimeout(function() { progScroll = false; }, 100);
 }
 
 // Typing delay scales with message length (like a real text)
@@ -435,7 +434,7 @@ function addBubble(content, side, showAv, isCont) {
 
     row.appendChild(b);
     msgs.appendChild(row);
-    scrollToEl(row);
+    scrollToEl();
     return row;
 }
 
@@ -448,7 +447,7 @@ function addTyping() {
     t.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
     row.appendChild(t);
     msgs.appendChild(row);
-    scrollToEl(row);
+    scrollToEl();
     return row;
 }
 
