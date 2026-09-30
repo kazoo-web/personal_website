@@ -485,6 +485,7 @@ function handleTopic(topic) {
     if (busy) return;
     busy = true;
     clearOptions();
+    hideCompose();
 
     addBubble(topic.label, 'mine', true, false);
 
@@ -496,7 +497,11 @@ function handleTopic(topic) {
                     setTimeout(function() {
                         tr.remove();
                         addBubble("Or send me a note here and I’ll follow up:", 'theirs', true, false);
-                        setTimeout(function() { showCompose(); }, 350);
+                        setTimeout(function() {
+                            showCompose();
+                            busy = false;
+                            showOptions();
+                        }, 350);
                     }, 750);
                 }, 600);
             } else {
