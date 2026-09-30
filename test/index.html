@@ -201,6 +201,10 @@
             -webkit-tap-highlight-color: transparent;
         }
         .compose-send:disabled { opacity: 0.32; cursor: default; }
+
+        /* Image bubbles */
+        .bubble.img-bubble { padding: 0; overflow: hidden; }
+        .bubble.img-bubble img { display: block; width: 100%; height: auto; max-height: 280px; object-fit: cover; }
     </style>
 </head>
 <body>
@@ -251,6 +255,27 @@ var composeMsg  = document.getElementById('compose-msg');
 var composeSend = document.getElementById('compose-send');
 var busy        = false;
 
+// Smart auto-scroll: follow new messages unless user has scrolled up
+var autoScroll  = true;
+var progScroll  = false;
+msgs.addEventListener('scroll', function() {
+    if (progScroll) return;
+    autoScroll = (msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight) < 80;
+});
+function scrollToEl(el) {
+    if (!autoScroll) return;
+    progScroll = true;
+    var top = el.offsetTop + el.offsetHeight - msgs.clientHeight * 0.62;
+    msgs.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    setTimeout(function() { progScroll = false; }, 700);
+}
+
+// Typing delay scales with message length (like a real text)
+function typingDelay(content) {
+    if (!content || typeof content !== 'string') return 1100;
+    return Math.min(2600, Math.max(640, Math.round(content.length * 16)));
+}
+
 function validateCompose() {
     var hasEmail = composeEmail.value.trim().indexOf('@') > 0;
     var hasMsg   = composeMsg.value.trim().length > 0;
@@ -282,7 +307,6 @@ function doSend() {
 
     hideCompose();
     addBubble(message, 'mine', true, false);
-    msgs.scrollTop = msgs.scrollHeight;
 
     emailjs.send('service_rsar3li', 'template_fvgjjpd', {
         visitor_email: email,
@@ -339,6 +363,7 @@ var TOPICS = [
             "Blueprint — v1 of a people programs assessment platform I designed and launched at Paradigm.",
             "It turned our services team’s expertise into a product. That year the team had its first profitable year (+$1.2M in revenue), and the firm shifted to a product-first strategy.",
             "I set the product development and the external development team that built it.",
+            {image: "img/blueprint.webp", alt: "Blueprint platform"},
             "Training Impact Dashboard — an internal system for collecting and analysing data to measure whether the employee trainings we ran actually changed how people exercise judgment and make decisions. We shared the results with clients, used them to improve our curriculum, and they became the basis for follow-on work. I built v1 myself and ultimately hired and led developers to support."
         ]
     },
@@ -347,7 +372,9 @@ var TOPICS = [
         label: "What are you building now?",
         responses: [
             "I’m currently building a tool that turns a job description into a complete, structured hiring plan — an interview plan, and the questions and rubrics to run it — so startups can make fast and rigorous hiring decisions.",
+            {image: "img/signalhire.png", alt: "Signal Kit"},
             "I’ve also built a few things for fun: a baby betting pool and a digital holiday card. Check them out.",
+            {image: "img/baby-betting-pool.png", alt: "Baby betting pool"},
             "Oh, and I’ve built this website!"
         ]
     }
@@ -381,7 +408,12 @@ function addBubble(content, side, showAv, isCont) {
     b.className = 'bubble ' + (side === 'mine' ? 'mine' : 'theirs');
     if (isCont) b.classList.add('cont');
 
-    if (content && typeof content === 'object' && content.link) {
+    if (content && typeof content === 'object' && content.image) {
+        b.classList.add('img-bubble');
+        var im = document.createElement('img');
+        im.src = content.image; im.alt = content.alt || '';
+        b.appendChild(im);
+    } else if (content && typeof content === 'object' && content.link) {
         var a = document.createElement('a');
         a.href = content.link; a.target = '_blank'; a.rel = 'noopener noreferrer';
         a.textContent = content.text;
@@ -392,7 +424,7 @@ function addBubble(content, side, showAv, isCont) {
 
     row.appendChild(b);
     msgs.appendChild(row);
-    msgs.scrollTop = msgs.scrollHeight;
+    scrollToEl(row);
     return row;
 }
 
@@ -405,7 +437,7 @@ function addTyping() {
     t.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
     row.appendChild(t);
     msgs.appendChild(row);
-    msgs.scrollTop = msgs.scrollHeight;
+    scrollToEl(row);
     return row;
 }
 
@@ -428,12 +460,14 @@ function clearOptions() {
 
 function playResponses(responses, idx, done) {
     if (idx >= responses.length) { done(); return; }
+    var content = responses[idx];
+    var delay = typingDelay(typeof content === 'string' ? content : null) + Math.floor(Math.random() * 160);
     var tr = addTyping();
     setTimeout(function() {
         tr.remove();
-        addBubble(responses[idx], 'theirs', false, idx > 0);
-        setTimeout(function() { playResponses(responses, idx + 1, done); }, 320);
-    }, 880 + Math.floor(Math.random() * 280));
+        addBubble(content, 'theirs', false, idx > 0);
+        setTimeout(function() { playResponses(responses, idx + 1, done); }, 300);
+    }, delay);
 }
 
 function handleTopic(topic) {
@@ -442,7 +476,6 @@ function handleTopic(topic) {
     clearOptions();
 
     addBubble(topic.label, 'mine', true, false);
-    msgs.scrollTop = msgs.scrollHeight;
 
     setTimeout(function() {
         playResponses(topic.responses, 0, function() {
