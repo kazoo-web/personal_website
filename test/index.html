@@ -347,6 +347,7 @@ var TOPICS = [
     {
         id: 'looking',
         label: "What are you looking for?",
+        compose: true,
         responses: [
             "My next full-time role building people programs and systems for high-growth organizations.",
             "The work I want more: using sound judgement, data and tooling to build best-in-class people and talent functions.",
@@ -365,6 +366,15 @@ var TOPICS = [
             "I set the product development and the external development team that built it.",
             {image: "img/blueprint.webp", alt: "Blueprint platform"},
             "Training Impact Dashboard — an internal system for collecting and analysing data to measure whether the employee trainings we ran actually changed how people exercise judgment and make decisions. We shared the results with clients, used them to improve our curriculum, and they became the basis for follow-on work. I built v1 myself and ultimately hired and led developers to support."
+        ]
+    },
+    {
+        id: 'contact',
+        label: "How can I get in touch?",
+        compose: true,
+        responses: [
+            "A few ways!",
+            {link: "https://www.linkedin.com/in/katherineullman/", text: "Connect with me on LinkedIn →"}
         ]
     },
     {
@@ -479,7 +489,7 @@ function handleTopic(topic) {
 
     setTimeout(function() {
         playResponses(topic.responses, 0, function() {
-            if (topic.id === 'looking') {
+            if (topic.compose) {
                 setTimeout(function() {
                     var tr = addTyping();
                     setTimeout(function() {
