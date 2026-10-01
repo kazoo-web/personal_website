@@ -446,7 +446,7 @@ var TOPICS = [
         label: "What are you building now?",
         responses: [
             "I'm currently building a tool that turns a job description into a complete, structured hiring plan — an interview plan, and the questions and rubrics to run it — so startups can make fast and rigorous hiring decisions.",
-            {image: "img/signalhire.png", alt: "Signal Kit"},
+            {image: "img/signalhire.png", alt: "Signal Kit", objectPosition: "center top"},
             "I've also built a few things for fun: a baby betting pool and a digital holiday card. Check them out.",
             {images: [{src: "img/baby-betting-pool.webp", alt: "Baby betting pool"}, {src: "img/holiday-card.webp", alt: "Digital holiday card"}]},
             "Oh, and I've built this website!"
@@ -517,6 +517,7 @@ function addBubble(content, side, showAv, isCont) {
         b.classList.add('img-bubble');
         var im = document.createElement('img');
         im.src = content.image; im.alt = content.alt || '';
+        if (content.objectPosition) im.style.objectPosition = content.objectPosition;
         im.addEventListener('click', (function(s, a) {
             return function() { openLightbox(s, a); };
         })(content.image, content.alt || ''));
