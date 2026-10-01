@@ -94,6 +94,7 @@
         .bubble.mine {
             background: #B86830; color: #fff;
             border-radius: 18px 18px 5px 18px;
+            white-space: pre-wrap;
         }
         .bubble a { color: inherit; text-decoration: underline; opacity: 0.88; }
 
@@ -420,7 +421,7 @@ function doSend() {
     if (!email || !message) return;
 
     hideCompose();
-    addBubble(message, 'mine', true, false);
+    addBubble('from: ' + email + '\nmessage: ' + message, 'mine', true, false);
 
     emailjs.send('service_rsar3li', 'template_fvgjjpd', {
         visitor_email: email,
