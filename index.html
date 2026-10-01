@@ -307,20 +307,7 @@
         <div class="header-sub">welcome to my little corner of the internet</div>
     </header>
 
-    <div class="messages" id="messages">
-        <div class="row">
-            <div class="av" style="visibility:hidden"><img src="headshot.png" alt=""></div>
-            <div class="bubble theirs">Hi! I'm Katherine</div>
-        </div>
-        <div class="row">
-            <div class="av" style="visibility:hidden"><img src="headshot.png" alt=""></div>
-            <div class="bubble theirs cont">I love building the systems and tools that make organizations work.</div>
-        </div>
-        <div class="row">
-            <div class="av"><img src="headshot.png" alt=""></div>
-            <div class="bubble theirs cont">What would you like to know?</div>
-        </div>
-    </div>
+    <div class="messages" id="messages"></div>
 
     <div class="compose-bar" id="compose-bar" hidden>
         <input type="email" id="compose-email" class="compose-input" placeholder="Your email address" autocomplete="email">
@@ -667,7 +654,26 @@ function handleTopic(topic) {
     }, 500);
 }
 
-showOptions();
+function playIntro() {
+    var steps = [
+        { text: "Hi! I'm Katherine",  showAv: false, isCont: false },
+        { text: "I love building the systems and tools that make organizations work.", showAv: false, isCont: true },
+        { text: "What would you like to know?", showAv: true,  isCont: true }
+    ];
+    function next(i) {
+        if (i >= steps.length) { setTimeout(showOptions, 350); return; }
+        var s = steps[i];
+        var tr = addTyping();
+        setTimeout(function() {
+            tr.remove();
+            addBubble(s.text, 'theirs', s.showAv, s.isCont);
+            setTimeout(function() { next(i + 1); }, 300);
+        }, typingDelay(s.text) + Math.floor(Math.random() * 120));
+    }
+    setTimeout(function() { next(0); }, 500);
+}
+
+playIntro();
 </script>
 </body>
 </html>
