@@ -358,18 +358,18 @@ var composeMsg  = document.getElementById('compose-msg');
 var composeSend = document.getElementById('compose-send');
 var busy        = false;
 
-// Auto-scroll: follow new messages unless user has scrolled up
-var autoScroll  = true;
-var progScroll  = false;
+// Auto-scroll: always scroll during bot responses; respect user scroll otherwise
+var progScroll = false;
 msgs.addEventListener('scroll', function() {
     if (progScroll) return;
-    autoScroll = (msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight) < 60;
+    // user manually scrolled — no action needed, we always scroll during responses
 });
 function scrollToEl() {
-    if (!autoScroll) return;
     progScroll = true;
-    msgs.scrollTop = msgs.scrollHeight;
-    setTimeout(function() { progScroll = false; }, 100);
+    requestAnimationFrame(function() {
+        msgs.scrollTop = msgs.scrollHeight;
+        setTimeout(function() { progScroll = false; }, 150);
+    });
 }
 
 // Typing delay scales with message length (like a real text)
@@ -563,7 +563,6 @@ function addTyping() {
 
 function showOptions() {
     optBar.innerHTML = '';
-    optBar.hidden = false;
     TOPICS.forEach(function(t) {
         var btn = document.createElement('button');
         btn.className = 'opt-pill';
@@ -571,11 +570,11 @@ function showOptions() {
         btn.addEventListener('click', function() { handleTopic(t); });
         optBar.appendChild(btn);
     });
-    // Scroll after layout reflows to account for the options bar shrinking the message area
+    progScroll = true;           // guard before layout reflow
+    optBar.hidden = false;
     requestAnimationFrame(function() {
-        progScroll = true;
         msgs.scrollTop = msgs.scrollHeight;
-        setTimeout(function() { progScroll = false; }, 100);
+        setTimeout(function() { progScroll = false; }, 150);
     });
 }
 
