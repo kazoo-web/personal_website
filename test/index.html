@@ -400,6 +400,7 @@ composeMsg.addEventListener('input', validateCompose);
 composeMsg.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !composeSend.disabled) { e.preventDefault(); doSend(); }
 });
+composeSend.addEventListener('click', function() { if (!composeSend.disabled) doSend(); });
 
 function showCompose() {
     composeBar.hidden = false;
