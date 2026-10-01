@@ -658,15 +658,8 @@ function handleTopic(topic) {
                 }, 600);
             } else {
                 setTimeout(function() {
-                    var tr = addTyping();
-                    setTimeout(function() {
-                        tr.remove();
-                        addBubble("Anything else you'd like to know?", 'theirs', true, false);
-                        setTimeout(function() {
-                            busy = false;
-                            showOptions();
-                        }, 350);
-                    }, 750);
+                    busy = false;
+                    showOptions();
                 }, 600);
             }
         });
