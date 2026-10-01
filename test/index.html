@@ -233,6 +233,15 @@
         .bubble.img-stack .stack-img:nth-child(1) { top: 10px; left: 0; transform: rotate(3deg); z-index: 1; }
         .bubble.img-stack .stack-img:nth-child(2) { top: 28px; left: 18px; transform: rotate(-1.5deg); z-index: 2; }
 
+        /* Emoji-only bubble (like iMessage large emoji) */
+        .bubble.emoji-only {
+            background: transparent !important;
+            box-shadow: none;
+            padding: 2px 4px;
+            font-size: 44px;
+            line-height: 1;
+        }
+
         /* Clickable single image */
         .bubble.img-bubble img { cursor: pointer; transition: opacity 0.12s; }
         .bubble.img-bubble img:hover { opacity: 0.88; }
@@ -466,6 +475,7 @@ var TOPICS = [
         label: "How can I get in touch?",
         compose: true,
         responses: [
+            {emoji: "🧡"},
             "A few ways!",
             {link: "https://www.linkedin.com/in/katherineullman/", text: "Connect with me on LinkedIn →"}
         ]
@@ -500,7 +510,10 @@ function addBubble(content, side, showAv, isCont) {
     b.className = 'bubble ' + (side === 'mine' ? 'mine' : 'theirs');
     if (isCont) b.classList.add('cont');
 
-    if (content && typeof content === 'object' && content.images) {
+    if (content && typeof content === 'object' && content.emoji) {
+        b.classList.add('emoji-only');
+        b.textContent = content.emoji;
+    } else if (content && typeof content === 'object' && content.images) {
         b.classList.add('img-stack');
         content.images.forEach(function(imgData) {
             var im = document.createElement('img');
