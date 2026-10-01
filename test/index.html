@@ -242,6 +242,26 @@
             line-height: 1;
         }
 
+        /* Tapback reaction attached to a mine bubble */
+        .bubble.mine { position: relative; overflow: visible; }
+        .tapback {
+            position: absolute;
+            top: -16px; left: -16px;
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            background: #fff;
+            border: 1.5px solid rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.16);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            z-index: 2;
+            transform: scale(0);
+            transform-origin: bottom right;
+            transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+        }
+        .tapback.show { transform: scale(1); }
+
         /* Clickable single image */
         .bubble.img-bubble img { cursor: pointer; transition: opacity 0.12s; }
         .bubble.img-bubble img:hover { opacity: 0.88; }
@@ -475,7 +495,7 @@ var TOPICS = [
         label: "How can I get in touch?",
         compose: true,
         responses: [
-            {emoji: "🧡"},
+            {emoji: "🧡", tapback: true},
             "A few ways!",
             {link: "https://www.linkedin.com/in/katherineullman/", text: "Connect with me on LinkedIn →"}
         ]
@@ -578,14 +598,45 @@ function clearOptions() {
     optBar.innerHTML = '';
 }
 
+function addTapback(emoji) {
+    var rows = msgs.querySelectorAll('.row.mine');
+    if (!rows.length) return;
+    var mineRow = rows[rows.length - 1];
+    mineRow.style.marginTop = '18px';
+    var bubble = mineRow.querySelector('.bubble.mine');
+    if (!bubble) return;
+    var tb = document.createElement('div');
+    tb.className = 'tapback';
+    tb.textContent = emoji;
+    bubble.appendChild(tb);
+    requestAnimationFrame(function() {
+        requestAnimationFrame(function() { tb.classList.add('show'); });
+    });
+    scrollToEl();
+}
+
 function playResponses(responses, idx, done) {
     if (idx >= responses.length) { done(); return; }
     var content = responses[idx];
+
+    if (content && typeof content === 'object' && content.tapback) {
+        setTimeout(function() {
+            addTapback(content.emoji);
+            setTimeout(function() { playResponses(responses, idx + 1, done); }, 500);
+        }, 400);
+        return;
+    }
+
+    // Count only non-tapback responses before this index for isCont
+    var theirsBefore = responses.slice(0, idx).filter(function(r) {
+        return !(r && typeof r === 'object' && r.tapback);
+    }).length;
+
     var delay = typingDelay(typeof content === 'string' ? content : null) + Math.floor(Math.random() * 160);
     var tr = addTyping();
     setTimeout(function() {
         tr.remove();
-        addBubble(content, 'theirs', false, idx > 0);
+        addBubble(content, 'theirs', false, theirsBefore > 0);
         setTimeout(function() { playResponses(responses, idx + 1, done); }, 300);
     }, delay);
 }
