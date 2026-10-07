@@ -339,6 +339,7 @@ var lightboxClose = document.getElementById('lightbox-close');
 function openLightbox(src, alt) {
     lightboxImg.src = src;
     lightboxImg.alt = alt || '';
+    lightbox.style.display = '';
     lightbox.hidden = false;
 }
 function closeLightbox() {
@@ -392,6 +393,7 @@ composeMsg.addEventListener('keydown', function(e) {
 composeSend.addEventListener('click', function() { if (!composeSend.disabled) doSend(); });
 
 function showCompose() {
+    composeBar.style.display = '';
     composeBar.hidden = false;
     composeEmail.value = '';
     composeMsg.value = '';
@@ -455,7 +457,7 @@ var TOPICS = [
         label: "What are you building now?",
         responses: [
             "I'm currently building a tool that turns a job description into a complete, structured hiring plan — an interview plan, and the questions and rubrics to run it — so startups can make fast and rigorous hiring decisions.",
-            {image: "img/signalhire.png", alt: "Signal Kit", objectPosition: "center top"},
+            {link: "https://hirewithwinnow.com", text: "Check it out →"},
             "I've also built a few things for fun: a baby betting pool and a digital holiday card. Check them out.",
             {images: [{src: "img/baby-betting-pool.webp", alt: "Baby betting pool"}, {src: "img/holiday-card.webp", alt: "Digital holiday card"}]},
             "Oh, and I've built this website!"
