@@ -161,3 +161,31 @@ input.pct.auto:focus { font-style: normal; color: var(--ink); }
 .dempty { color: var(--faint); font-size: 13px; text-align: center; padding: 40px 0; border: 1.5px dashed rgba(184,152,128,.5); border-radius: 12px; }
 .rnum { margin-bottom: 2px; }
 @media (max-width: 640px) { .dboard, .dboard.three { grid-template-columns: 1fr; } }
+
+/* title buttons */
+.star.n { font-size: 13px; font-weight: 700; }
+
+/* 2×2 */
+.quad-wrap { display: grid; grid-template-columns: 250px 1fr; gap: 20px; align-items: start; }
+.quad-side { background: var(--sand); border-radius: 16px; padding: 12px; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; }
+.tray { display: flex; flex-direction: column; gap: 6px; min-height: 80px; }
+.quad-main { display: grid; grid-template-columns: 22px 1fr; grid-template-rows: auto 22px; gap: 6px; }
+.yaxis { grid-row: 1; display: flex; align-items: center; justify-content: center; }
+.yaxis span { transform: rotate(-90deg); white-space: nowrap; font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: .04em; }
+.xaxis { grid-column: 2; text-align: center; font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: .04em; }
+.plot { position: relative; aspect-ratio: 1 / 0.9; background: var(--card); border-radius: 16px; box-shadow: var(--shadow);
+  background-image: linear-gradient(var(--line), var(--line)), linear-gradient(var(--line), var(--line));
+  background-size: 1.5px 100%, 100% 1.5px; background-position: center, center; background-repeat: no-repeat; transition: box-shadow .12s; }
+.plot.hover { box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+.q { position: absolute; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); font-weight: 600; pointer-events: none; }
+.q-tl { top: 12px; left: 14px; } .q-tr { top: 12px; right: 14px; } .q-bl { bottom: 12px; left: 14px; } .q-br { bottom: 12px; right: 14px; }
+.q-tr { color: var(--ok); } .q-br { color: var(--accent); }
+.chip { position: relative; background: var(--card); border-radius: 10px; padding: 7px 10px; font-size: 12.5px; line-height: 1.3; font-weight: 500; box-shadow: var(--shadow);
+  border-left: 3px solid var(--c); cursor: grab; touch-action: none; user-select: none; }
+.chip.onplot { position: absolute; transform: translate(-50%, -50%); width: 150px; font-size: 11.5px; padding: 5px 8px; z-index: 1; }
+.chip.onplot:hover { z-index: 3; box-shadow: 0 4px 16px rgba(40,14,4,.16); }
+.chip.lifted { opacity: .3; }
+.chip.ghost { position: fixed; transform: translate(-50%, -50%) rotate(-2deg); z-index: 100; pointer-events: none; box-shadow: 0 10px 28px rgba(40,14,4,.25); cursor: grabbing; }
+.chipmark { display: inline-block; margin-left: 5px; font-size: 9.5px; font-weight: 700; color: #fff; background: var(--faint); border-radius: 4px; padding: 0 4px; vertical-align: 1px; }
+.chipmark.inline { margin: 0 2px; }
+@media (max-width: 760px) { .quad-wrap { grid-template-columns: 1fr; } .quad-side { position: static; max-height: none; } }

@@ -158,11 +158,11 @@ function save(key) {
 function tabs() {
   return VIEW === 'natan'
     ? [['edit', '1 · Review the role'], ['time', '2 · Time'], ['bring', '3 · Day 1 vs. learn'], ['rank', '4 · Rank']]
-    : [['role', 'The role'], ['natan', 'Natan’s input'], ['combined', 'Combined']];
+    : [['role', 'The role'], ['combined', 'Combined']];
 }
 function render() {
   $('#titlebar').innerHTML = `<h1>Tulip · Chief of Staff</h1>${VIEW === 'katherine'
-    ? `<button class="star ${tab === 'who' ? 'on' : ''}" data-tab="who" title="Who I am — my notes">★</button>` : ''}`;
+    ? `<button class="star ${tab === 'who' ? 'on' : ''}" data-tab="who" title="Who I am — my notes">★</button><button class="star n ${tab === 'natan' ? 'on' : ''}" data-tab="natan" title="Natan’s input">N</button>` : ''}`;
   $('#subtitle').textContent = VIEW === 'natan' ? 'The role, in its parts. Everything saves as you go.' : 'Katherine’s workspace';
   $('#tabs').innerHTML = tabs().map(([k, l]) => `<button data-tab="${k}" class="${k === tab ? 'on' : ''}">${l}</button>`).join('');
   const views = { edit: vEdit, time: vTime, bring: vBring, rank: vRank, who: vWho, role: vRole, natan: vNatanInput, combined: vCombined };
@@ -345,17 +345,65 @@ function vWho() {
     <div class="toolbar"><button class="small" data-toggleedita="1">${editA ? 'Done editing wording' : 'Edit wording (paste exact JD text)'}</button>${editA ? '<button class="small" data-aadd="1">+ Add item</button>' : ''}</div>${html}`;
 }
 
-// ---- Katherine: the role -------------------------------------------------------------------
-function vRole() {
-  const body = grouped(active(), (c) => {
-    const r = S.katherine.b[c.id] || {}, st = statusOf(c);
-    return `<div class="item" style="--c:${areaColor(c.area)}"><div class="text">${esc(c.text)}${st ? `<span class="badge">${st === 'edited' ? 'Natan edited' : 'Natan added'}</span>` : ''}</div><div class="controls">
-      <span class="ctl"><span class="lbl">Can do</span>${seg(`katherine.b.${c.id}.can`, r.can, ONE_FIVE)}</span>
-      <span class="ctl"><span class="lbl">Want to do</span>${seg(`katherine.b.${c.id}.want`, r.want, ONE_FIVE)}</span>
-    </div>${note(`katherine.b.${c.id}.note`, r.note, 'Add a note')}</div>`;
-  });
-  return `<div class="intro">The <b>what you’ll do</b> half, as Natan left it. How well I <b>can do</b> each today, and how much I <b>want to</b> (1–5).</div>${body}`;
+// ---- Katherine: the role, as a 2×2 (x = can do, y = want to do; both stored on a 1–5 scale) ----
+const placed = (id) => { const r = S.katherine.b[id] || {}; return r.can != null && r.want != null; };
+const short = (t, n = 60) => t.length > n ? t.slice(0, n - 1).trimEnd() + '…' : t;
+function chip(c, inPlot) {
+  const r = S.katherine.b[c.id] || {}, st = statusOf(c);
+  let pos = '';
+  if (inPlot) {
+    const fx = (r.can - 1) / 4, fy = 1 - (r.want - 1) / 4;
+    const tx = fx < 0.2 ? '0%' : fx > 0.8 ? '-100%' : '-50%', ty = fy < 0.1 ? '0%' : fy > 0.9 ? '-100%' : '-50%';
+    pos = `left:${fx * 100}%;top:${fy * 100}%;transform:translate(${tx},${ty});`;
+  }
+  return `<div class="chip ${inPlot ? 'onplot' : ''}" data-chip="${c.id}" title="${esc(c.text)}" style="--c:${areaColor(c.area)};${pos}">${esc(short(c.text))}${st ? '<span class="chipmark">N</span>' : ''}</div>`;
 }
+function vRole() {
+  const items = active(), on = items.filter((c) => placed(c.id)), off = items.filter((c) => !placed(c.id));
+  return `<div class="intro">Drag each part of the role onto the grid: <b>left → right</b> is how well I can do it today, <b>bottom → top</b> is how much I want to. Drag a card back to the list to clear it. <span class="chipmark inline">N</span> = Natan edited or added it.</div>
+    <div class="quad-wrap">
+      <div class="quad-side"><div class="dhead"><b>To place</b><span class="dcount">${off.length}</span></div>
+        <div class="tray" id="tray">${off.map((c) => chip(c, false)).join('') || '<div class="dempty">All placed</div>'}</div></div>
+      <div class="quad-main">
+        <div class="yaxis"><span>Want to do →</span></div>
+        <div class="plot" id="plot">
+          <div class="q q-tl">Want to — can’t yet</div><div class="q q-tr">Want to and can</div>
+          <div class="q q-bl">Neither</div><div class="q q-br">Can — don’t want to</div>
+          ${on.map((c) => chip(c, true)).join('')}
+        </div>
+        <div class="xaxis">Can do →</div>
+      </div>
+    </div>`;
+}
+// pointer-based dragging (free placement; works with mouse and touch)
+let drag = null;
+document.addEventListener('pointerdown', (e) => {
+  const el = e.target.closest('.chip'); if (!el) return;
+  e.preventDefault();
+  const r = el.getBoundingClientRect();
+  const ghost = el.cloneNode(true); ghost.classList.add('ghost'); ghost.classList.remove('onplot');
+  ghost.style.cssText = `--c:${el.style.getPropertyValue('--c')};width:${r.width}px;left:${e.clientX}px;top:${e.clientY}px;`;
+  document.body.appendChild(ghost); el.classList.add('lifted');
+  drag = { id: el.dataset.chip, ghost };
+});
+document.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  drag.ghost.style.left = e.clientX + 'px'; drag.ghost.style.top = e.clientY + 'px';
+  const plot = $('#plot'); if (plot) { const p = plot.getBoundingClientRect(); plot.classList.toggle('hover', e.clientX >= p.left && e.clientX <= p.right && e.clientY >= p.top && e.clientY <= p.bottom); }
+});
+document.addEventListener('pointerup', (e) => {
+  if (!drag) return;
+  const { id, ghost } = drag; drag = null; ghost.remove();
+  const plot = $('#plot'), rec = (S.katherine.b[id] = S.katherine.b[id] || {});
+  if (plot) {
+    const p = plot.getBoundingClientRect();
+    if (e.clientX >= p.left && e.clientX <= p.right && e.clientY >= p.top && e.clientY <= p.bottom) {
+      const fx = (e.clientX - p.left) / p.width, fy = (e.clientY - p.top) / p.height;
+      rec.can = r1(1 + 4 * fx); rec.want = r1(1 + 4 * (1 - fy));
+    } else { delete rec.can; delete rec.want; }
+  }
+  save('katherine'); render();
+});
 
 // ---- Katherine: Natan's input ----------------------------------------------------------------
 function changesHtml() {
@@ -385,7 +433,7 @@ function analyze() {
     const imp = n > 1 ? 1 - i / (n - 1) : 1;
     const w = useTime ? Math.min(3, Math.max(0.25, (t || 0) / (100 / n))) : 1;
     const base = { c, nt, k, t, rank: i + 1, imp, w, n };
-    if (!(k.can && k.want)) return { ...base, complete: false };
+    if (k.can == null || k.want == null) return { ...base, complete: false };
     const learn = nt.dayone === 'learn' ? 0.5 : 1;
     const canGap = ((5 - k.can) / 4) * learn, wantGap = (5 - k.want) / 4;
     return { ...base, complete: true, canGap, wantGap, score: imp * Math.max(canGap, wantGap) * w };
@@ -403,18 +451,18 @@ function natanLine(a) {
 }
 function vCombined() {
   const rows = analyze(), done = rows.filter((r) => r.complete);
-  if (!done.length) return `<p class="empty">Rate the role (can do / want to do) to see the combined view.</p>`;
+  if (!done.length) return `<p class="empty">Place the role’s parts on the 2×2 to see the combined view.</p>`;
   const concerns = done.filter((r) => r.score > 0.08).sort((a, b) => b.score - a.score).slice(0, 7);
   const max = Math.max(...concerns.map((r) => r.score), 0.01);
   const concernHtml = concerns.length ? concerns.map((a) => `<div class="flag"><span class="t"><span class="swatch" style="background:${areaColor(a.c.area)}"></span>${esc(a.c.text)}</span><span class="pill warn">${concernType(a)}</span>
       <div class="meter"><i style="width:${Math.round((a.score / max) * 100)}%"></i></div>
-      <div class="why">${natanLine(a)} Katherine: can do ${a.k.can}/5, want ${a.k.want}/5.${a.k.note ? ` Note: “${esc(a.k.note)}”` : ''}</div></div>`).join('')
+      <div class="why">${natanLine(a)} Katherine: can do ${r1(a.k.can)}/5, want ${r1(a.k.want)}/5.${a.k.note ? ` Note: “${esc(a.k.note)}”` : ''}</div></div>`).join('')
     : '<p class="sub">No meaningful tensions on what’s rated so far.</p>';
 
   const third = Math.ceil(rows.length / 3);
   const under = done.filter((a) => a.k.can >= 4 && a.k.want >= 4 && a.rank > rows.length - third);
   const underHtml = under.length ? under.map((a) => `<div class="flag"><span class="t">${esc(a.c.text)}</span><span class="pill ok">Strength, low priority</span>
-      <div class="why">${natanLine(a)} Katherine: can do ${a.k.can}/5, want ${a.k.want}/5.</div></div>`).join('') : '<p class="sub">None.</p>';
+      <div class="why">${natanLine(a)} Katherine: can do ${r1(a.k.can)}/5, want ${r1(a.k.want)}/5.</div></div>`).join('') : '<p class="sub">None.</p>';
 
   const eq = 100 / rows.length;
   const lever = rows.filter((a) => a.rank <= third && a.t != null && a.t < eq);
@@ -422,7 +470,7 @@ function vCombined() {
   const li = (l) => l.length ? `<ul>${l.map((a) => `<li>${esc(a.c.text)} — #${a.rank}, ~${r1(a.t)}%</li>`).join('')}</ul>` : '<p class="sub">None.</p>';
   const shapeHtml = anyTime() ? `<div class="lev"><div><h4>High priority, small share of time</h4>${li(lever)}</div><div><h4>Low priority, large share of time</h4>${li(drag)}</div></div>` : '<p class="sub">Needs time estimates.</p>';
 
-  const cell = (v) => !v ? '<span class="dot mid">–</span>' : `<span class="dot ${v >= 4 ? 'hi' : v <= 2 ? 'lo' : 'mid'}">${v}</span>`;
+  const cell = (v) => v == null ? '<span class="dot mid">–</span>' : `<span class="dot ${v >= 4 ? 'hi' : v <= 2 ? 'lo' : 'mid'}">${r1(v)}</span>`;
   const table = `<table><thead><tr><th class="n">Rank</th><th>Item</th><th class="n">% time</th><th class="n">Day 1 / learn</th><th class="n">Can do</th><th class="n">Want</th></tr></thead><tbody>${
     rows.map((a) => `<tr><td class="n">${a.rank}</td><td><span class="swatch" style="background:${areaColor(a.c.area)}"></span>${esc(a.c.text)}</td><td class="n">${a.t == null ? '–' : r1(a.t)}</td>
       <td class="n">${bringLabel(a.nt.dayone)}</td><td class="n">${cell(a.k.can)}</td><td class="n">${cell(a.k.want)}</td></tr>`).join('')}</tbody></table>`;
