@@ -82,19 +82,42 @@ function rankOrder() {
   return ord;
 }
 
-// ---- time model: % per area, split evenly unless items are adjusted -------------
+// ---- time model ------------------------------------------------------------------
+// A section's % (typed, or assumed when it's the only one left blank) is split evenly
+// across its items that haven't been set individually. Set items are kept as typed.
+// A section's total is the larger of its target and its items' sum, so going over is allowed and flagged.
 const itemsIn = (area) => active().filter((c) => c.area === area);
 const nItem = (id) => (S.natan.items[id] = S.natan.items[id] || {});
-function areaAdjusted(area) { return itemsIn(area).some((c) => (S.natan.items[c.id] || {}).time != null); }
-function areaTotal(area) {
-  if (areaAdjusted(area)) return itemsIn(area).reduce((s, c) => s + (Number((S.natan.items[c.id] || {}).time) || 0), 0);
-  return Number((S.natan.areaTime || {})[area]) || 0;
+const typedArea = (area) => { const v = (S.natan.areaTime || {})[area]; return v == null || v === '' ? null : Number(v); };
+const itemSet = (id) => (S.natan.items[id] || {}).time != null;
+const explicitSum = (area) => itemsIn(area).reduce((s, c) => s + (itemSet(c.id) ? Number(S.natan.items[c.id].time) : 0), 0);
+const unsetCount = (area) => itemsIn(area).filter((c) => !itemSet(c.id)).length;
+const sectionStarted = (area) => typedArea(area) != null || unsetCount(area) < itemsIn(area).length;
+function assumedArea(area) {
+  // only one section left blank → it gets whatever is left of 100%
+  const blank = areas().filter((a) => !sectionStarted(a));
+  if (blank.length !== 1 || blank[0] !== area || areas().length < 2) return null;
+  const others = areas().filter((a) => a !== area).reduce((s, a) => s + areaTotalRaw(a, typedArea(a)), 0);
+  return Math.max(0, 100 - others);
 }
+function areaTarget(area) { const t = typedArea(area); return t != null ? t : assumedArea(area); }
+function areaTotalRaw(area, target) {
+  const E = explicitSum(area), U = unsetCount(area);
+  if (U === 0) return E;
+  return target == null ? E : Math.max(target, E);
+}
+const areaTotal = (area) => areaTotalRaw(area, areaTarget(area));
 function effTime(id) {
-  const c = byId(id); if (!c || c.removed) return null;
-  if (areaAdjusted(c.area)) { const t = (S.natan.items[id] || {}).time; return t == null ? 0 : Number(t); }
-  const at = (S.natan.areaTime || {})[c.area];
-  return at == null || at === '' ? null : Number(at) / itemsIn(c.area).length;
+  const c = byId(id); if (!c || c.removed || !c.text.trim()) return null;
+  if (itemSet(id)) return Number(S.natan.items[id].time);
+  const T = areaTarget(c.area); if (T == null) return null;
+  return Math.max(0, T - explicitSum(c.area)) / unsetCount(c.area);
+}
+function areaAlert(area) {
+  const T = typedArea(area), E = explicitSum(area), U = unsetCount(area);
+  if (T != null && E > T) return `Items add up to ${r1(E)}% — over the ${r1(T)}% set for this section, so the section now counts as ${r1(E)}%.`;
+  if (T != null && U === 0 && E < T) return `Items add up to ${r1(E)}% — under the ${r1(T)}% set for this section.`;
+  return '';
 }
 const grandTotal = () => areas().reduce((s, a) => s + areaTotal(a), 0);
 const anyTime = () => areas().some((a) => areaTotal(a) > 0);
@@ -134,7 +157,7 @@ function save(key) {
 // ---- tabs ----------------------------------------------------------------------
 function tabs() {
   return VIEW === 'natan'
-    ? [['edit', '1 · Review the role'], ['time', '2 · Time'], ['bring', '3 · Bring in vs. learn'], ['rank', '4 · Rank']]
+    ? [['edit', '1 · Review the role'], ['time', '2 · Time'], ['bring', '3 · Day 1 vs. learn'], ['rank', '4 · Rank']]
     : [['role', 'The role'], ['natan', 'Natan’s input'], ['combined', 'Combined']];
 }
 function render() {
@@ -197,48 +220,64 @@ function vEdit() {
 
 // ---- Natan 2: time ------------------------------------------------------------------
 function vTime() {
-  const total = grandTotal();
-  const cards = areas().map((area) => {
-    const adj = areaAdjusted(area), at = areaTotal(area);
-    const items = itemsIn(area).map((c) => {
-      const t = effTime(c.id);
-      return `<div class="titem"><span>${esc(c.text)}</span><span class="pctwrap"><input class="pct sm" type="number" min="0" max="100" step="1" data-itime="${c.id}" value="${t == null ? '' : r1(t)}"><i>%</i></span></div>`;
-    }).join('');
-    return `<div class="tcard" style="--c:${areaColor(area)}">
-      <div class="thead"><span class="tname"><span class="swatch" style="background:${areaColor(area)}"></span>${esc(area)}</span>
-        <span class="pctwrap"><input class="pct" type="number" min="0" max="100" step="1" data-atime="${esc(area)}" value="${adj || (S.natan.areaTime[area] != null && S.natan.areaTime[area] !== '') ? r1(at) : ''}"><i>%</i></span></div>
-      <div class="titems">${items}</div>
-      <div class="tfoot">${adj ? `Adjusted by item · <button class="linkbtn" data-reeven="${esc(area)}">split evenly again</button>` : 'Split evenly across items — adjust any line to change it'}</div></div>`;
-  }).join('');
-  const left = r1(100 - total);
-  return `<div class="intro">Roughly <b>what share of the job</b> is each area? Each area’s time is split evenly across its items; adjust a line if one item takes more. The total can’t go over 100%.</div>
-    <div class="tgrid">${cards}</div>
-    <div class="total" id="totalbar"><b id="tot">${r1(total)}%</b> allocated · <span id="left">${left}% left</span></div>`;
+  const cards = areas().map((area) => timeCard(area)).join('');
+  return `<div class="intro">Roughly <b>what share of the job</b> is each section? Each section’s % is split evenly across its items — change any line if one item takes more, and the rest rebalance. Leave one section blank and it gets whatever’s left. Going over is allowed; you’ll see where.</div>
+    <div class="tgrid" id="tgrid">${cards}</div><div class="total" id="totalbar">${totalHtml()}</div>`;
 }
-function clampTo(el, v, max) { if (v > max) { v = Math.max(0, r1(max)); el.value = v; flash(); } return v; }
-function flash() { const t = $('#totalbar'); if (t) { t.classList.remove('flash'); void t.offsetWidth; t.classList.add('flash'); } }
+function timeCard(area) {
+  const T = typedArea(area), assumed = T == null ? assumedArea(area) : null, total = areaTotal(area), alert = areaAlert(area);
+  const anySet = unsetCount(area) < itemsIn(area).length;
+  const items = itemsIn(area).map((c) => {
+    const set = itemSet(c.id), t = effTime(c.id);
+    return `<div class="titem"><span>${esc(c.text)}</span><span class="pctwrap"><input class="pct sm ${set ? '' : 'auto'}" type="number" min="0" step="1" data-itime="${c.id}" value="${t == null ? '' : r1(t)}"><i>%</i></span></div>`;
+  }).join('');
+  const shown = T != null ? r1(Math.max(T, total)) : assumed != null ? r1(Math.max(assumed, total)) : anySet ? r1(total) : '';
+  const foot = assumed != null && T == null ? 'Assumed from what’s left of 100% — type to change it'
+    : anySet ? `Some lines set by hand · <button class="linkbtn" data-reeven="${esc(area)}">split evenly again</button>` : 'Split evenly across items';
+  return `<div class="tcard ${alert ? 'warn' : ''}" data-area="${esc(area)}" style="--c:${areaColor(area)}">
+    <div class="thead"><span class="tname"><span class="swatch" style="background:${areaColor(area)}"></span>${esc(area)}</span>
+      <span class="pctwrap"><input class="pct ${T == null ? 'auto' : ''}" type="number" min="0" step="1" data-atime="${esc(area)}" value="${shown}"><i>%</i></span></div>
+    ${alert ? `<div class="talert">${alert}</div>` : ''}
+    <div class="titems">${items}</div><div class="tfoot">${foot}</div></div>`;
+}
+function totalHtml() {
+  const t = r1(grandTotal());
+  if (t > 100) return `<span class="over"><b>${t}%</b> — over 100% by ${r1(t - 100)}%</span>`;
+  if (t === 100) return `<b>100%</b> allocated ✓`;
+  return `<b>${t}%</b> allocated · <span class="left">${r1(100 - t)}% left</span>`;
+}
 function refreshTime(except) {
-  // update computed numbers in place without re-rendering the focused input
+  // re-render every card except the input being typed in, so the cursor stays put
   areas().forEach((area) => {
-    const a = document.querySelector(`input[data-atime="${CSS.escape(area)}"]`);
-    if (a && a !== except) a.value = areaTotal(area) ? r1(areaTotal(area)) : (S.natan.areaTime[area] ?? '');
-    itemsIn(area).forEach((c) => {
-      const i = document.querySelector(`input[data-itime="${c.id}"]`); const t = effTime(c.id);
-      if (i && i !== except) i.value = t == null ? '' : r1(t);
-    });
+    const card = document.querySelector(`.tcard[data-area="${CSS.escape(area)}"]`); if (!card) return;
+    const tmp = document.createElement('div'); tmp.innerHTML = timeCard(area); const fresh = tmp.firstElementChild;
+    if (except && card.contains(except)) {
+      card.className = fresh.className;
+      card.querySelectorAll('input').forEach((inp) => {
+        if (inp === except) return;
+        const sel = inp.dataset.atime !== undefined ? `input[data-atime="${CSS.escape(inp.dataset.atime)}"]` : `input[data-itime="${inp.dataset.itime}"]`;
+        const f = fresh.querySelector(sel); if (f) { inp.value = f.value; inp.className = f.className; }
+      });
+      const oldAlert = card.querySelector('.talert'), newAlert = fresh.querySelector('.talert');
+      if (oldAlert) oldAlert.remove(); if (newAlert) card.querySelector('.thead').after(newAlert);
+      card.querySelector('.tfoot').innerHTML = fresh.querySelector('.tfoot').innerHTML;
+    } else card.replaceWith(fresh);
   });
-  const total = grandTotal();
-  $('#tot').textContent = r1(total) + '%'; $('#left').textContent = r1(100 - total) + '% left';
+  $('#totalbar').innerHTML = totalHtml();
+  $('#totalbar').classList.toggle('over', grandTotal() > 100.05);
 }
 
-// ---- Natan 3: bring in vs. learn --------------------------------------------------------
+// ---- Natan 3: needed on day 1 vs. can learn ------------------------------------------------
 function vBring() {
-  const body = grouped(active(), (c) => {
-    const r = S.natan.items[c.id] || {};
-    return `<div class="item row2" style="--c:${areaColor(c.area)}"><div class="text">${esc(c.text)}</div>
-      ${seg(`natan.items.${c.id}.dayone`, r.dayone, [['day1', 'Must bring in'], ['learn', 'Can learn']])}</div>`;
-  });
-  return `<div class="intro">For each part: does the person need to <b>bring it in</b> on arrival, or is it something they <b>can learn</b> in the role?</div>${body}`;
+  const card = (c) => `<div class="dcard" draggable="true" data-did="${c.id}" style="--c:${areaColor(c.area)}"><div>${esc(c.text)}</div><div class="rarea">${esc(c.area)}</div></div>`;
+  const col = (key, title, sub) => {
+    const list = active().filter((c) => ((S.natan.items[c.id] || {}).dayone || '') === key);
+    return `<div class="dcol" data-col="${key}"><div class="dhead"><b>${title}</b><span>${sub}</span><span class="dcount">${list.length}</span></div>
+      <div class="dlist">${list.map(card).join('') || '<div class="dempty">Drag items here</div>'}</div></div>`;
+  };
+  const unsorted = active().filter((c) => !(S.natan.items[c.id] || {}).dayone);
+  return `<div class="intro">Drag each part into a column: is it <b>needed on day 1</b>, or something the right person <b>can learn</b> in the role?</div>
+    <div class="dboard ${unsorted.length ? 'three' : ''}">${unsorted.length ? `<div class="dcol pool" data-col=""><div class="dhead"><b>Not sorted yet</b><span class="dcount">${unsorted.length}</span></div><div class="dlist">${unsorted.map(card).join('')}</div></div>` : ''}${col('day1', 'Needed on day 1', 'Has to come in the door with it')}${col('learn', 'Can learn', 'Fine to build in the role')}</div>`;
 }
 
 // ---- Natan 4: rank -----------------------------------------------------------------------
@@ -246,17 +285,13 @@ function vRank() {
   const ord = rankOrder();
   const cards = ord.map((id, i) => {
     const c = byId(id), t = effTime(id), dn = (S.natan.items[id] || {}).dayone;
-    const meta = [t != null ? `~${r1(t)}% of time` : null, dn === 'day1' ? 'must bring in' : dn === 'learn' ? 'can learn' : null].filter(Boolean).join(' · ');
+    const meta = [t != null ? `~${r1(t)}% of time` : null, dn === 'day1' ? 'needed day 1' : dn === 'learn' ? 'can learn' : null].filter(Boolean).join(' · ');
     return `<div class="rcard" draggable="true" data-rid="${id}" style="--c:${areaColor(c.area)}">
-      <div class="rtop"><span class="rnum">${i + 1}</span><span class="rbtns">
-        <button class="mini" data-mv="${id}" data-dir="-1" ${i === 0 ? 'disabled' : ''} title="Move earlier">←</button>
-        <button class="mini" data-mv="${id}" data-dir="1" ${i === ord.length - 1 ? 'disabled' : ''} title="Move later">→</button></span></div>
-      <div class="rtext">${esc(c.text)}</div>
+      <span class="rnum">${i + 1}</span><div class="rtext">${esc(c.text)}</div>
       <div class="rarea">${esc(c.area)}</div>${meta ? `<div class="rmeta">${meta}</div>` : ''}</div>`;
   }).join('');
-  const legend = areas().map((a) => `<span class="leg"><span class="swatch" style="background:${areaColor(a)}"></span>${esc(a)}</span>`).join('');
-  return `<div class="intro">Put these in order from <b>most</b> to <b>least important</b> to get right — drag a card, or use the arrows. Reads left to right, top to bottom. No ties.</div>
-    <div class="legend">${legend}</div><div class="rgrid">${cards}</div>`;
+  return `<div class="intro">Drag the cards into order from <b>most</b> to <b>least important</b> to get right. Reads left to right, top to bottom. No ties.</div>
+    <div class="rgrid">${cards}</div>`;
 }
 function moveRank(id, toIndex) {
   const ord = rankOrder(), from = ord.indexOf(id);
@@ -264,16 +299,30 @@ function moveRank(id, toIndex) {
   ord.splice(from, 1); ord.splice(Math.max(0, Math.min(ord.length, toIndex)), 0, id);
   S.natan.order = ord; S.natan.ranked = true; save('natan'); render();
 }
-document.addEventListener('dragstart', (e) => { const c = e.target.closest('.rcard'); if (c) { dragId = c.dataset.rid; c.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragId); } });
-document.addEventListener('dragend', () => { dragId = null; document.querySelectorAll('.rcard').forEach((c) => c.classList.remove('dragging', 'before', 'after')); });
+document.addEventListener('dragstart', (e) => {
+  const c = e.target.closest('.rcard, .dcard'); if (!c) return;
+  dragId = c.dataset.rid || c.dataset.did; c.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragId);
+});
+document.addEventListener('dragend', () => { dragId = null; document.querySelectorAll('.rcard, .dcard, .dcol').forEach((c) => c.classList.remove('dragging', 'before', 'after', 'hover')); });
 document.addEventListener('dragover', (e) => {
-  const c = e.target.closest('.rcard'); if (!c || !dragId) return; e.preventDefault();
+  if (!dragId) return;
+  const col = e.target.closest('.dcol');
+  if (col) { e.preventDefault(); document.querySelectorAll('.dcol').forEach((x) => x.classList.toggle('hover', x === col)); return; }
+  const c = e.target.closest('.rcard'); if (!c) return; e.preventDefault();
   const r = c.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
   document.querySelectorAll('.rcard').forEach((x) => x.classList.remove('before', 'after'));
   if (c.dataset.rid !== dragId) c.classList.add(after ? 'after' : 'before');
 });
 document.addEventListener('drop', (e) => {
-  const c = e.target.closest('.rcard'); if (!c || !dragId) return; e.preventDefault();
+  if (!dragId) return;
+  const col = e.target.closest('.dcol');
+  if (col) {
+    e.preventDefault(); const key = col.dataset.col;
+    if (key) nItem(dragId).dayone = key; else delete nItem(dragId).dayone;
+    save('natan'); render(); return;
+  }
+  const c = e.target.closest('.rcard'); if (!c) return; e.preventDefault();
   const ord = rankOrder(), r = c.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
   let to = ord.indexOf(c.dataset.rid) + (after ? 1 : 0);
   if (ord.indexOf(dragId) < to) to -= 1;
@@ -315,7 +364,7 @@ function changesHtml() {
   return ch.map(({ c, st }) => `<div class="flag"><span class="t">${esc(c.text)}</span><span class="pill ${st === 'removed' ? 'neutral' : 'ok'}">${st[0].toUpperCase() + st.slice(1)}</span>
     ${st === 'edited' ? `<div class="why">Posting said: “${esc(DEFAULT_B_TEXT[c.id])}”</div>` : ''}</div>`).join('');
 }
-const bringLabel = (d) => d === 'day1' ? 'Bring in' : d === 'learn' ? 'Learn' : '–';
+const bringLabel = (d) => d === 'day1' ? 'Day 1' : d === 'learn' ? 'Can learn' : '–';
 function vNatanInput() {
   const rows = rankOrder().map((id, i) => {
     const c = byId(id), r = S.natan.items[id] || {}, t = effTime(id);
@@ -325,7 +374,7 @@ function vNatanInput() {
   return `<div class="intro">${S.updated.natan ? 'Last saved ' + timeStr(S.updated.natan) + '.' : 'Nothing entered yet.'}${S.natan.ranked ? '' : ' The ranking hasn’t been adjusted yet — it’s still in the posting’s order.'}</div>
     <div class="card"><h3>Changes to the posting</h3>${changesHtml()}</div>
     <div class="card"><h3>Time by area</h3>${at}<p class="sub" style="margin-top:8px">Total ${r1(grandTotal())}%.</p></div>
-    <div class="card"><h3>Priorities</h3><table><thead><tr><th class="n">Rank</th><th>Item</th><th class="n">% time</th><th class="n">Bring in / learn</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    <div class="card"><h3>Priorities</h3><table><thead><tr><th class="n">Rank</th><th>Item</th><th class="n">% time</th><th class="n">Day 1 / learn</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 // ---- Katherine: combined ---------------------------------------------------------------------
@@ -345,12 +394,12 @@ function analyze() {
 function concernType(a) {
   const s = a.canGap >= 0.5, w = a.wantGap >= 0.5;
   if (s && w) return 'Can-do + want gap';
-  if (s) return a.nt.dayone === 'day1' ? 'Can-do gap, must bring in' : 'Can-do gap';
+  if (s) return a.nt.dayone === 'day1' ? 'Can-do gap, needed day 1' : 'Can-do gap';
   if (w) return 'Low want';
   return 'Moderate gap';
 }
 function natanLine(a) {
-  return `Natan: #${a.rank} of ${a.n}${a.t != null ? `, ~${r1(a.t)}% of time` : ''}${a.nt.dayone === 'day1' ? ', must bring in' : a.nt.dayone === 'learn' ? ', can learn' : ''}.`;
+  return `Natan: #${a.rank} of ${a.n}${a.t != null ? `, ~${r1(a.t)}% of time` : ''}${a.nt.dayone === 'day1' ? ', needed day 1' : a.nt.dayone === 'learn' ? ', can learn' : ''}.`;
 }
 function vCombined() {
   const rows = analyze(), done = rows.filter((r) => r.complete);
@@ -374,7 +423,7 @@ function vCombined() {
   const shapeHtml = anyTime() ? `<div class="lev"><div><h4>High priority, small share of time</h4>${li(lever)}</div><div><h4>Low priority, large share of time</h4>${li(drag)}</div></div>` : '<p class="sub">Needs time estimates.</p>';
 
   const cell = (v) => !v ? '<span class="dot mid">–</span>' : `<span class="dot ${v >= 4 ? 'hi' : v <= 2 ? 'lo' : 'mid'}">${v}</span>`;
-  const table = `<table><thead><tr><th class="n">Rank</th><th>Item</th><th class="n">% time</th><th class="n">Bring in / learn</th><th class="n">Can do</th><th class="n">Want</th></tr></thead><tbody>${
+  const table = `<table><thead><tr><th class="n">Rank</th><th>Item</th><th class="n">% time</th><th class="n">Day 1 / learn</th><th class="n">Can do</th><th class="n">Want</th></tr></thead><tbody>${
     rows.map((a) => `<tr><td class="n">${a.rank}</td><td><span class="swatch" style="background:${areaColor(a.c.area)}"></span>${esc(a.c.text)}</td><td class="n">${a.t == null ? '–' : r1(a.t)}</td>
       <td class="n">${bringLabel(a.nt.dayone)}</td><td class="n">${cell(a.k.can)}</td><td class="n">${cell(a.k.want)}</td></tr>`).join('')}</tbody></table>`;
 
@@ -406,8 +455,7 @@ document.addEventListener('click', (e) => {
     save('partB'); render();
     const inp = document.querySelector(d.newarea ? `input[data-areaname="${CSS.escape(item.area)}"]` : `textarea[data-btext="${item.id}"]`); inp && (inp.focus(), inp.select && d.newarea && inp.select());
   }
-  else if (d.reeven) { itemsIn(d.reeven).forEach((c) => { delete nItem(c.id).time; }); save('natan'); render(); }
-  else if (d.mv) { const ord = rankOrder(); moveRank(d.mv, ord.indexOf(d.mv) + Number(d.dir)); }
+  else if (d.reeven) { itemsIn(d.reeven).forEach((c) => { delete nItem(c.id).time; }); save('natan'); refreshTime(null); }
   else if (d.toggleedita) { editA = !editA; render(); }
   else if (d.aadd) { const ids = S.partA.map((c) => parseInt(c.id.replace(/\D/g, '')) || 0); S.partA.push({ id: 'a' + (Math.max(0, ...ids) + 1), group: S.partA.length ? S.partA[S.partA.length - 1].group : 'About you', text: '' }); save('partA'); render(); }
   else if (d.adel !== undefined) { S.partA.splice(Number(d.adel), 1); save('partA'); render(); }
@@ -433,23 +481,13 @@ document.addEventListener('input', (e) => {
   }
   else if (d.atime !== undefined) {
     const area = d.atime;
-    let v = el.value === '' ? null : Math.max(0, Number(el.value));
-    if (v != null) v = clampTo(el, v, 100 - (grandTotal() - areaTotal(area)));
-    itemsIn(area).forEach((c) => { delete nItem(c.id).time; });
-    if (v == null) delete S.natan.areaTime[area]; else S.natan.areaTime[area] = v;
+    if (el.value === '') delete S.natan.areaTime[area]; else S.natan.areaTime[area] = Math.max(0, Number(el.value));
     save('natan'); refreshTime(el);
-    const foot = el.closest('.tcard').querySelector('.tfoot'); if (foot) foot.textContent = 'Split evenly across items — adjust any line to change it';
   }
   else if (d.itime) {
-    const c = byId(d.itime), area = c.area;
-    if (!areaAdjusted(area)) { const ev = itemsIn(area).map((x) => [x.id, r1(effTime(x.id) || 0)]); ev.forEach(([id, t]) => { nItem(id).time = t; }); }
-    const others = grandTotal() - (Number(nItem(c.id).time) || 0);
-    let v = el.value === '' ? 0 : Math.max(0, Number(el.value));
-    v = clampTo(el, v, 100 - others);
-    nItem(c.id).time = v; S.natan.areaTime[area] = areaTotal(area);
+    if (el.value === '') delete nItem(d.itime).time; else nItem(d.itime).time = Math.max(0, Number(el.value));
+    el.classList.toggle('auto', el.value === '');
     save('natan'); refreshTime(el);
-    const foot = el.closest('.tcard').querySelector('.tfoot');
-    if (foot) foot.innerHTML = `Adjusted by item · <button class="linkbtn" data-reeven="${esc(area)}">split evenly again</button>`;
   }
   else if (d.atext !== undefined) { S.partA[Number(d.atext)].text = el.value; save('partA'); }
 });
