@@ -57,7 +57,7 @@ const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const setStatus = (t) => ($('#status').textContent = t);
 const timeStr = (iso) => iso ? new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
-const r1 = (x) => Math.round(x * 10) / 10;
+const r1 = (x) => Math.round(x); // time is shown and entered in whole percents
 const active = () => S.partB.filter((c) => !c.removed && c.text.trim());
 const byId = (id) => S.partB.find((c) => c.id === id);
 const areas = () => [...new Set(active().map((c) => c.area))];
@@ -81,18 +81,17 @@ function rankOrder() {
   ids.forEach((id) => { if (!ord.includes(id)) ord.push(id); });
   return ord;
 }
-// consecutive items from the same section form one block
-function rankRuns() {
-  const runs = [];
-  rankOrder().forEach((id, i) => {
-    const a = byId(id).area, last = runs[runs.length - 1];
-    if (last && last.area === a) last.ids.push(id); else runs.push({ area: a, ids: [id], start: i });
-  });
-  return runs;
+function splitWhole(total, n) {
+  const t = Math.round(total), base = Math.floor(t / n), extra = t - base * n;
+  return Array.from({ length: n }, (_, i) => base + (i < extra ? 1 : 0));
 }
 function baselineNatan() {
   const all = DEFAULT_B, areaTime = {};
-  DEFAULT_AREAS.forEach((a) => { areaTime[a] = (all.filter((c) => c.area === a).length * 100) / all.length; });
+  // whole percents per section, largest remainders first, so sections add up to exactly 100
+  const raw = DEFAULT_AREAS.map((a) => (all.filter((c) => c.area === a).length * 100) / all.length);
+  const fl = raw.map(Math.floor); let left = 100 - fl.reduce((x, y) => x + y, 0);
+  raw.map((v, i) => [v - fl[i], i]).sort((x, y) => y[0] - x[0]).forEach(([, i]) => { if (left > 0) { fl[i]++; left--; } });
+  DEFAULT_AREAS.forEach((a, i) => { areaTime[a] = fl[i]; });
   return { items: {}, areaTime, order: [], catOrder: [], ranked: false };
 }
 
@@ -125,7 +124,8 @@ function effTime(id) {
   const c = byId(id); if (!c || c.removed || !c.text.trim()) return null;
   if (itemSet(id)) return Number(S.natan.items[id].time);
   const T = areaTarget(c.area); if (T == null) return null;
-  return Math.max(0, T - explicitSum(c.area)) / unsetCount(c.area);
+  const unset = itemsIn(c.area).filter((x) => !itemSet(x.id));
+  return splitWhole(Math.max(0, T - explicitSum(c.area)), unset.length)[unset.findIndex((x) => x.id === id)];
 }
 function areaAlert(area) {
   const T = typedArea(area), E = explicitSum(area), U = unsetCount(area);
@@ -215,7 +215,7 @@ $('#refresh').addEventListener('click', () => {
   }
   clearTimeout(resetArmed); resetArmed = null;
   if (tab === 'edit') { S.partB = clone(DEFAULT_B); save('partB'); }
-  else if (tab === 'rank') { S.natan.order = []; S.natan.ranked = false; save('natan'); }
+  else if (tab === 'rank') { S.natan.order = []; S.natan.secOrder = []; S.natan.ranked = false; save('natan'); }
   else if (tab === 'bring') { Object.values(S.natan.items).forEach((r) => delete r.dayone); save('natan'); }
   else if (tab === 'time') { Object.values(S.natan.items).forEach((r) => delete r.time); S.natan.areaTime = baselineNatan().areaTime; save('natan'); }
   else if (tab === 'role') { S.katherine.b = {}; save('katherine'); }
@@ -330,40 +330,86 @@ function vBring() {
   return `<div class="dboard ${unsorted.length ? 'three' : ''}">${unsorted.length ? col('', 'Not sorted yet') : ''}${col('day1', 'Needed on day 1')}${col('learn', 'Can learn in the role')}</div>`;
 }
 
-// ---- Natan 4 (shown second): prioritization — drag a whole section, or any single item anywhere ----
-function vRank() {
-  const runs = rankRuns();
-  return `<div class="rboard flow">${runs.map((run) => `<div class="rcol" draggable="true" data-rrun="${run.start}" style="--c:${areaColor(run.area)}">
-      <div class="rchead" title="Drag to move this whole block"><span class="rcname">${esc(run.area)}</span></div>
-      <div class="rclist">${run.ids.map((id, i) => `<div class="rcard" draggable="true" data-rid="${id}"><span class="rsub">${run.start + i + 1}</span><span class="rtext">${esc(byId(id).text)}</span></div>`).join('')}</div></div>`).join('')}</div>`;
+// ---- Natan 4 (shown second): prioritization — rank sections on the left, fine-tune items on the right ----
+const SHORT = { 'Strategic planning & operating rhythm': 'Planning', 'Business process design & improvement': 'Process',
+  'Cross-functional strategy & program management': 'Cross-functional', 'Executive operations & decision support': 'Exec ops' };
+const shortName = (a) => SHORT[a] || (a.length > 18 ? a.slice(0, 17) + '…' : a);
+function secOrder() {
+  const as = areas(), ord = (S.natan.secOrder || []).filter((a) => as.includes(a));
+  as.forEach((a) => { if (!ord.includes(a)) ord.push(a); });
+  return ord;
 }
-function setOrder(ord) { S.natan.order = ord; S.natan.ranked = true; save('natan'); render(); }
+let pdrag = null; // { kind: 'sec'|'item', id, target }
+function vRank() {
+  const secs = secOrder().filter((a) => !(pdrag && pdrag.kind === 'sec' && pdrag.id === a));
+  const ord = rankOrder().filter((id) => !(pdrag && pdrag.kind === 'item' && pdrag.id === id));
+  const ph = '<div class="ph"></div>', st = pdrag && pdrag.target;
+  let left = '', right = '';
+  secs.forEach((a, i) => {
+    if (st && st.c === 'sec' && st.i === i) left += ph;
+    left += `<div class="prow" data-psec="${esc(a)}" style="--c:${areaColor(a)}"><span class="pn">${i + 1}</span><span class="pt">${esc(a)}</span></div>`;
+  });
+  if (st && st.c === 'sec' && st.i === secs.length) left += ph;
+  ord.forEach((id, i) => {
+    if (st && st.c === 'list' && st.i === i) right += ph;
+    const c = byId(id);
+    right += `<div class="prow" data-pid="${id}" style="--c:${areaColor(c.area)}"><span class="pn">${i + 1}</span><span class="pt">${esc(c.text)}</span><span class="ptag">${esc(shortName(c.area))}</span></div>`;
+  });
+  if (st && st.c === 'list' && st.i === ord.length) right += ph;
+  return `<div class="pboard"><div class="pcol" data-pc="sec"><h3>Sections</h3>${left}</div><div class="pcol" data-pc="list"><h3>Overall order</h3>${right}</div></div>`;
+}
+let pghost = null, plastY = 0;
+document.addEventListener('pointerdown', (e) => {
+  const el = e.target.closest('.prow'); if (!el || tab !== 'rank') return;
+  e.preventDefault();
+  pdrag = el.dataset.psec ? { kind: 'sec', id: el.dataset.psec } : { kind: 'item', id: el.dataset.pid };
+  pdrag.target = { c: pdrag.kind === 'sec' ? 'sec' : 'list', i: pdrag.kind === 'sec' ? secOrder().indexOf(pdrag.id) : rankOrder().indexOf(pdrag.id) };
+  const r = el.getBoundingClientRect();
+  pghost = el.cloneNode(true); pghost.classList.add('pghost'); pghost.style.width = r.width + 'px';
+  document.body.appendChild(pghost); pmove(e); render();
+});
+function pmove(e) {
+  if (!pdrag) return;
+  plastY = e.clientY;
+  pghost.style.left = e.clientX + 'px'; pghost.style.top = e.clientY + 'px';
+  const under = document.elementFromPoint(e.clientX, e.clientY), col = under && under.closest('.pcol');
+  const want = pdrag.kind === 'sec' ? 'sec' : 'list';
+  if (!col || col.dataset.pc !== want) return;
+  const rows = [...col.querySelectorAll('.prow')];
+  let i = rows.length;
+  for (let k = 0; k < rows.length; k++) { const r = rows[k].getBoundingClientRect(); if (e.clientY < r.top + r.height / 2) { i = k; break; } }
+  if (!pdrag.target || pdrag.target.i !== i) { pdrag.target = { c: want, i }; render(); }
+}
+document.addEventListener('pointermove', pmove);
+setInterval(() => { if (!pdrag) return; if (plastY < 70) scrollBy(0, -14); else if (plastY > innerHeight - 70) scrollBy(0, 14); }, 16);
+document.addEventListener('pointerup', () => {
+  if (!pdrag) return;
+  const { kind, id, target } = pdrag; pdrag = null; pghost.remove(); pghost = null;
+  if (kind === 'sec') {
+    const secs = secOrder().filter((a) => a !== id); secs.splice(target.i, 0, id); S.natan.secOrder = secs;
+    // re-sort the overall list by section rank, keeping each section's internal order
+    const rank = Object.fromEntries(secs.map((a, i) => [a, i])), cur = rankOrder();
+    S.natan.order = cur.map((x, i) => [x, i]).sort((x, y) => rank[byId(x[0]).area] - rank[byId(y[0]).area] || x[1] - y[1]).map((x) => x[0]);
+  } else {
+    const ord = rankOrder().filter((x) => x !== id); ord.splice(target.i, 0, id); S.natan.order = ord;
+  }
+  S.natan.ranked = true; save('natan'); render();
+});
 
 // ---- drag and drop (HTML5) for day-1 readiness and prioritization --------------------------------
 let dragKind = null;
 const clearMarks = () => document.querySelectorAll('.dragging, .before, .after, .hover').forEach((c) => c.classList.remove('dragging', 'before', 'after', 'hover'));
 document.addEventListener('dragstart', (e) => {
-  const t = e.target.closest('[data-did], [data-dcat], [data-rid], [data-rrun]'); if (!t) return;
+  const t = e.target.closest('[data-did], [data-dcat]'); if (!t) return;
   e.stopPropagation();
   if (t.dataset.did) { dragKind = 'ditem'; dragId = t.dataset.did; }
   else if (t.dataset.dcat !== undefined) { dragKind = 'dcat'; dragId = t.dataset.dcat; }
-  else if (t.dataset.rid) { dragKind = 'ritem'; dragId = t.dataset.rid; }
-  else { dragKind = 'rrun'; dragId = t.dataset.rrun; }
   (dragKind === 'dcat' ? t.parentElement : t).classList.add('dragging');
   e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragId);
 });
 document.addEventListener('dragend', () => { dragId = null; dragKind = null; clearMarks(); });
 function dropTarget(e) {
   if (dragKind === 'ditem' || dragKind === 'dcat') { const col = e.target.closest('.dcol'); return col && { el: col }; }
-  if (dragKind === 'ritem') {
-    const card = e.target.closest('.rcard');
-    if (card) { if (card.dataset.rid === dragId) return null; const r = card.getBoundingClientRect(); return { el: card, after: e.clientY > r.top + r.height / 2 }; }
-    const col = e.target.closest('.rcol'); return col && { el: col, end: true };
-  }
-  if (dragKind === 'rrun') {
-    const col = e.target.closest('.rcol'); if (!col || col.dataset.rrun === dragId) return null;
-    const r = col.getBoundingClientRect(); return { el: col, after: e.clientX > r.left + r.width / 2 };
-  }
   return null;
 }
 document.addEventListener('dragover', (e) => {
@@ -383,19 +429,7 @@ document.addEventListener('drop', (e) => {
     ids.forEach((id) => { if (key) nItem(id).dayone = key; else delete nItem(id).dayone; });
     save('natan'); render(); return;
   }
-  if (dragKind === 'ritem') {
-    const ord = rankOrder().filter((id) => id !== dragId);
-    let at;
-    if (t.end) { const run = rankRuns().find((r) => String(r.start) === t.el.dataset.rrun); const others = run.ids.filter((id) => id !== dragId); if (!others.length) return; at = ord.indexOf(others[others.length - 1]) + 1; }
-    else at = ord.indexOf(t.el.dataset.rid) + (t.after ? 1 : 0);
-    ord.splice(at, 0, dragId); setOrder(ord); return;
-  }
-  if (dragKind === 'rrun') {
-    const runs = rankRuns(), moving = runs.find((r) => String(r.start) === dragId), target = runs.find((r) => String(r.start) === t.el.dataset.rrun);
-    const rest = runs.filter((r) => r !== moving);
-    rest.splice(rest.indexOf(target) + (t.after ? 1 : 0), 0, moving);
-    setOrder(rest.flatMap((r) => r.ids));
-  }
+
 });
 
 // ---- Katherine: who I am (behind the star) ----------------------------------------------
@@ -583,11 +617,11 @@ document.addEventListener('input', (e) => {
   }
   else if (d.atime !== undefined) {
     const area = d.atime;
-    if (el.value === '') delete S.natan.areaTime[area]; else S.natan.areaTime[area] = Math.max(0, Number(el.value));
+    if (el.value === '') delete S.natan.areaTime[area]; else S.natan.areaTime[area] = Math.max(0, Math.round(Number(el.value)));
     save('natan'); refreshTime(el);
   }
   else if (d.itime) {
-    if (el.value === '') delete nItem(d.itime).time; else nItem(d.itime).time = Math.max(0, Number(el.value));
+    if (el.value === '') delete nItem(d.itime).time; else nItem(d.itime).time = Math.max(0, Math.round(Number(el.value)));
     el.classList.toggle('auto', el.value === '');
     save('natan'); refreshTime(el);
   }
@@ -596,3 +630,5 @@ document.addEventListener('input', (e) => {
 
 tab = tabs()[0][0];
 load();
+// whole percents only: tidy a typed decimal once the field is left
+document.addEventListener('change', (e) => { const el = e.target; if ((el.dataset.itime || el.dataset.atime !== undefined) && el.value !== '') el.value = Math.round(Number(el.value)); });
