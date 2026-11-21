@@ -134,6 +134,7 @@ const anyTime = () => areas().some((a) => areaTotal(a) > 0);
 
 // ---- server --------------------------------------------------------------------
 async function load() {
+  await flushSaves();
   setStatus('Loading…');
   try {
     const r = await fetch(TABLE + '?select=key,data,updated_at', { headers: HEADERS });
@@ -151,17 +152,23 @@ async function load() {
   } catch (e) { setStatus('Couldn’t load — try Refresh.'); }
 }
 
+const pending = {};
+async function post(key) {
+  const now = new Date().toISOString();
+  try {
+    const r = await fetch(TABLE, { method: 'POST', headers: { ...HEADERS, Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ key, data: S[key], updated_at: now }) });
+    setStatus(r.ok ? 'Saved · ' + timeStr(now) : 'Save failed (' + r.status + ') — edit again to retry.');
+  } catch (e) { setStatus('Save failed — check your connection and edit again.'); }
+}
 function save(key) {
   if (key === 'partB') S.partB.forEach((c) => (c.status = statusOf(c)));
-  clearTimeout(timers[key]);
+  clearTimeout(timers[key]); pending[key] = true;
   setStatus('Saving…');
-  timers[key] = setTimeout(async () => {
-    try {
-      const now = new Date().toISOString();
-      const r = await fetch(TABLE, { method: 'POST', headers: { ...HEADERS, Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ key, data: S[key], updated_at: now }) });
-      setStatus(r.ok ? 'Saved · ' + timeStr(now) : 'Save failed (' + r.status + ') — edit again to retry.');
-    } catch (e) { setStatus('Save failed — check your connection and edit again.'); }
-  }, 700);
+  timers[key] = setTimeout(() => { delete pending[key]; post(key); }, 700);
+}
+// send anything still waiting before reloading, so a reload never overwrites fresh edits
+function flushSaves() {
+  return Promise.all(Object.keys(pending).map((k) => { clearTimeout(timers[k]); delete pending[k]; return post(k); }));
 }
 
 // ---- tabs ----------------------------------------------------------------------
@@ -179,20 +186,32 @@ function render() {
   const views = { edit: vEdit, time: vTime, bring: vBring, rank: vRank, who: vWho, role: vRole, combined: vCombined };
   $('#main').innerHTML = views[tab]();
   document.querySelectorAll('textarea.grow').forEach(autoGrow);
+  syncResetButton();
 }
-document.addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (b) { tab = b.dataset.tab; render(); window.scrollTo(0, 0); } });
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-tab]'); if (!b) return;
+  tab = b.dataset.tab;
+  if (tab === 'combined') load(); else render(); // combined always pulls the latest from both pages
+  window.scrollTo(0, 0);
+});
 let resetArmed = null;
-if (VIEW === 'natan') { $('#refresh').textContent = 'Reset to the posting'; $('#refresh').title = 'Back to the job as posted, with time split evenly'; }
+const resetLabel = () => VIEW === 'natan' ? 'Reset to the posting' : tab === 'role' ? 'Reset board' : '';
+function syncResetButton() {
+  const b = $('#refresh'), label = resetLabel();
+  b.style.visibility = label ? 'visible' : 'hidden';
+  if (!resetArmed) { b.textContent = label; b.classList.remove('armed'); }
+}
 $('#refresh').addEventListener('click', () => {
-  if (VIEW !== 'natan') return load();
   const b = $('#refresh');
   if (!resetArmed) {
-    b.textContent = 'Click again to reset everything'; b.classList.add('armed');
-    resetArmed = setTimeout(() => { resetArmed = null; b.textContent = 'Reset to the posting'; b.classList.remove('armed'); }, 4000);
+    b.textContent = 'Click again to reset'; b.classList.add('armed');
+    resetArmed = setTimeout(() => { resetArmed = null; syncResetButton(); }, 4000);
     return;
   }
-  clearTimeout(resetArmed); resetArmed = null; b.textContent = 'Reset to the posting'; b.classList.remove('armed');
-  S.partB = clone(DEFAULT_B); S.natan = baselineNatan(); save('partB'); save('natan'); render();
+  clearTimeout(resetArmed); resetArmed = null;
+  if (VIEW === 'natan') { S.partB = clone(DEFAULT_B); S.natan = baselineNatan(); save('partB'); save('natan'); }
+  else if (tab === 'role') { S.katherine.b = {}; save('katherine'); }
+  render();
 });
 function autoGrow(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
 
@@ -410,13 +429,12 @@ function vRole() {
   for (let want = 5; want >= 1; want--) {
     for (let can = 1; can <= 5; can++) {
       const here = items.filter((c) => placed(c.id) && snap(S.katherine.b[c.id].can) === can && snap(S.katherine.b[c.id].want) === want);
-      const q = can === 3 || want === 3 ? 'mid' : (can > 3 ? 'r' : 'l') + (want > 3 ? 't' : 'b');
-      cells += `<div class="cell q${q} ${roleMode}" data-can="${can}" data-want="${want}">${here.map((c) => chip(c, 'cell')).join('')}</div>`;
+      cells += `<div class="cell ${roleMode}" data-can="${can}" data-want="${want}">${here.map((c) => chip(c, 'cell')).join('')}</div>`;
     }
   }
   const ticks = [1, 2, 3, 4, 5];
   return `<div class="intro">Drag each part of the role onto the grid: <b>left → right</b> is how well I can do it today (1–5), <b>bottom → top</b> is how much I want to (1–5). Drag back to the list to clear. <span class="chipmark inline">N</span> = Natan edited or added it.</div>
-    <div class="toolbar" style="justify-content:flex-end">${seg('_mode', roleMode, [['dots', 'Dots'], ['cards', 'Cards']]).replace(/data-set="_mode"/g, 'data-mode="1"')}</div>
+    <div class="toolbar quadbar"><div class="legend">${areas().map((a) => `<span class="leg"><span class="swatch" style="background:${areaColor(a)}"></span>${esc(a)}</span>`).join('')}</div>${seg('_mode', roleMode, [['dots', 'Dots'], ['cards', 'Cards']]).replace(/data-set="_mode"/g, 'data-mode="1"')}</div>
     <div class="quad-wrap">
       <div class="quad-side">${roleMode === 'dots'
         ? `<div class="dhead"><b>All parts</b><span>${off.length} to place</span></div><div class="tray" id="tray">${items.map((c) => chip(c, 'list')).join('')}</div>`
@@ -425,8 +443,6 @@ function vRole() {
         <div class="yaxis"><span>Want to do →</span></div>
         <div class="yticks">${ticks.slice().reverse().map((t) => `<span>${t}</span>`).join('')}</div>
         <div class="plot" id="plot">
-          <div class="q q-tl">Want to — can’t yet</div><div class="q q-tr">Want to and can</div>
-          <div class="q q-bl">Neither</div><div class="q q-br">Can — don’t want to</div>
           ${cells}
         </div>
         <div></div><div></div><div class="xticks">${ticks.map((t) => `<span>${t}</span>`).join('')}</div>
@@ -505,38 +521,17 @@ function natanLine(a) {
 }
 function vCombined() {
   const rows = analyze(), done = rows.filter((r) => r.complete);
-  if (!done.length) return `<p class="empty">Place the role’s parts on the 2×2 to see the combined view.</p>`;
-  const concerns = done.filter((r) => r.score > 0.08).sort((a, b) => b.score - a.score).slice(0, 7);
-  const max = Math.max(...concerns.map((r) => r.score), 0.01);
-  const concernHtml = concerns.length ? concerns.map((a) => `<div class="flag"><span class="t"><span class="swatch" style="background:${areaColor(a.c.area)}"></span>${esc(a.c.text)}</span><span class="pill warn">${concernType(a)}</span>
-      <div class="meter"><i style="width:${Math.round((a.score / max) * 100)}%"></i></div>
-      <div class="why">${natanLine(a)} Katherine: can do ${snap(a.k.can)}/5, want ${snap(a.k.want)}/5.${a.k.note ? ` Note: “${esc(a.k.note)}”` : ''}</div></div>`).join('')
-    : '<p class="sub">No meaningful tensions on what’s rated so far.</p>';
-
-  const third = Math.ceil(rows.length / 3);
-  const under = done.filter((a) => a.k.can >= 4 && a.k.want >= 4 && a.rank > rows.length - third);
-  const underHtml = under.length ? under.map((a) => `<div class="flag"><span class="t">${esc(a.c.text)}</span><span class="pill ok">Strength, low priority</span>
-      <div class="why">${natanLine(a)} Katherine: can do ${snap(a.k.can)}/5, want ${snap(a.k.want)}/5.</div></div>`).join('') : '<p class="sub">None.</p>';
-
-  const eq = 100 / rows.length;
-  const lever = rows.filter((a) => a.rank <= third && a.t != null && a.t < eq);
-  const drag = rows.filter((a) => a.rank > rows.length - third && a.t != null && a.t > eq);
-  const li = (l) => l.length ? `<ul>${l.map((a) => `<li>${esc(a.c.text)} — #${a.rank}, ~${r1(a.t)}%</li>`).join('')}</ul>` : '<p class="sub">None.</p>';
-  const shapeHtml = anyTime() ? `<div class="lev"><div><h4>High priority, small share of time</h4>${li(lever)}</div><div><h4>Low priority, large share of time</h4>${li(drag)}</div></div>` : '<p class="sub">Needs time estimates.</p>';
-
   const cell = (v) => v == null ? '<span class="dot mid">–</span>' : `<span class="dot ${v >= 4 ? 'hi' : v <= 2 ? 'lo' : 'mid'}">${snap(v)}</span>`;
   const table = `<table><thead><tr><th class="n">Rank</th><th>Item</th><th class="n">% time</th><th class="n">Day 1 / learn</th><th class="n">Can do</th><th class="n">Want</th></tr></thead><tbody>${
     rows.map((a) => `<tr><td class="n">${a.rank}</td><td><span class="swatch" style="background:${areaColor(a.c.area)}"></span>${esc(a.c.text)}</td><td class="n">${a.t == null ? '–' : r1(a.t)}</td>
       <td class="n">${bringLabel(a.nt.dayone)}</td><td class="n">${cell(a.k.can)}</td><td class="n">${cell(a.k.want)}</td></tr>`).join('')}</tbody></table>`;
-
-  return `<div class="intro">Not a verdict — where the role as Natan sees it and Katherine pull in different directions. ${done.length} of ${rows.length} items rated by both.</div>
-    <div class="card"><h3>Biggest areas of concern</h3><p class="sub">High in Natan’s ranking, and either a can-do gap (counted at half if it can be learned) or low want — scaled by share of time.</p>${concernHtml}</div>
-    <div class="card"><h3>Changes to the posting</h3>${changesHtml()}</div>
-    <div class="card"><h3>Shape of the job</h3><p class="sub">Where priority and time diverge (top/bottom third of the ranking vs. an equal share, ~${Math.round(eq)}%).</p>${shapeHtml}</div>
-    <div class="card"><h3>Strengths the role doesn’t lean on</h3><p class="sub">Can do and want to do (4+), but in the bottom third of Natan’s ranking.</p>${underHtml}</div>
-    <div class="card"><h3>Side by side, in Natan’s order</h3>${table}</div>
-    <details class="method"><summary>How the concern score works</summary>
-      <p>score = importance × max(can-do gap, want gap) × time weight. Importance comes from rank: #1 = 1, last = 0, evenly spaced. Can-do gap = (5 − can do) / 4, halved if marked “can learn”. Want gap = (5 − want) / 4. Time weight = the item’s % ÷ an equal share (100 / ${rows.length}), capped at 0.25×–3×; 1× for everything if no times are entered. Items under 0.08 aren’t flagged.</p></details>`;
+  const top = done.filter((r) => r.score > 0.08).sort((a, b) => b.score - a.score).slice(0, 3);
+  const flagged = !done.length ? '<p class="sub">Place items on the 2×2 to see these.</p>'
+    : top.length ? `<ul class="flags">${top.map((a) => `<li><b>${esc(a.c.text)}</b> — ${concernType(a).toLowerCase()}. ${natanLine(a)} Katherine: can do ${snap(a.k.can)}, want ${snap(a.k.want)}.</li>`).join('')}</ul>`
+    : '<p class="sub">Nothing stands out.</p>';
+  return `<div class="card"><h3>Side by side, in Natan’s order</h3>${table}</div>
+    <div class="card quiet"><h3>Top misalignments <span class="auto-tag">auto-flagged</span></h3>${flagged}
+      <details class="method"><summary>How these are picked</summary><p>A formula, not judgment: items high in Natan’s order where Katherine’s can-do (counted at half if it can be learned) or want is low, weighted by share of time.</p></details></div>`;
 }
 
 // ---- events ----------------------------------------------------------------------------------

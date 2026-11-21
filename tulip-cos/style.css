@@ -88,7 +88,7 @@ input.pct:focus { outline: none; border-color: var(--accent); background: #fff; 
 @keyframes flash { 0%, 100% { background: var(--ink); } 40% { background: var(--accent); } }
 
 /* rank */
-.legend-unused { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: -6px 0 16px; font-size: 12px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: -6px 0 16px; font-size: 12px; color: var(--muted); }
 .leg { display: inline-flex; align-items: center; }
 .rgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
 .rcard { position: relative; background: var(--card); border-radius: 14px; padding: 12px 14px 14px; box-shadow: var(--shadow); border-top: 4px solid var(--c); cursor: grab; display: flex; flex-direction: column; gap: 6px; transition: transform .12s, box-shadow .12s, opacity .12s; min-height: 150px; }
@@ -241,3 +241,11 @@ input.pct.auto:focus { font-style: normal; color: var(--ink); }
 @media (max-width: 900px) { .rboard { grid-template-columns: 1fr 1fr; } }
 
 a.star { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+
+.quadbar { justify-content: space-between; align-items: center; margin: -6px 0 12px; }
+.quadbar .legend { margin: 0; }
+.card.quiet h3 { font-size: 14px; color: var(--muted); }
+.auto-tag { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); background: var(--bg); border-radius: 999px; padding: 2px 8px; margin-left: 6px; vertical-align: 1px; }
+ul.flags { margin: 6px 0 10px; padding-left: 18px; font-size: 13.5px; color: var(--muted); }
+ul.flags li { margin-bottom: 6px; }
+ul.flags b { color: var(--ink); font-weight: 600; }
