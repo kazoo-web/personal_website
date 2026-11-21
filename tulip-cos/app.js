@@ -179,7 +179,7 @@ function flushSaves() {
 function tabs() {
   return VIEW === 'natan'
     ? [['edit', '1 · Review'], ['rank', '2 · Prioritization'], ['bring', '3 · Day-1 readiness'], ['time', '4 · Time allocation']]
-    : [['role', 'The role'], ['combined', 'Combined']];
+    : [['role', 'Can do / want to'], ['combined', 'Combined']];
 }
 function render() {
   $('#titlebar').innerHTML = `<h1>Tulip · Chief of Staff</h1>${VIEW === 'katherine'
@@ -494,6 +494,16 @@ document.addEventListener('mouseover', (e) => {
   const el = e.target.closest('[data-chip]'); const id = el && el.dataset.chip;
   document.querySelectorAll('.hl').forEach((x) => x.dataset.chip !== id && x.classList.remove('hl'));
   if (id && !drag) document.querySelectorAll(`[data-chip="${id}"]`).forEach((x) => x.classList.add('hl'));
+  // hovering a dot on the grid brings its row in the list into view
+  if (id && !drag && el.classList.contains('dotc')) {
+    const box = document.querySelector('.quad-side'), row = box && box.querySelector(`.listrow[data-chip="${id}"]`);
+    if (row) {
+      // only the part of the list that's actually on screen counts as visible
+      const b = box.getBoundingClientRect(), r = row.getBoundingClientRect();
+      const visTop = Math.max(b.top, 0), visBottom = Math.min(b.bottom, innerHeight);
+      if (r.top < visTop || r.bottom > visBottom) box.scrollBy({ top: r.top + r.height / 2 - (visTop + visBottom) / 2, behavior: 'smooth' });
+    }
+  }
 });
 // pointer-based dragging; drops snap to the 1–5 cell under the pointer
 let drag = null;
@@ -632,3 +642,12 @@ tab = tabs()[0][0];
 load();
 // whole percents only: tidy a typed decimal once the field is left
 document.addEventListener('change', (e) => { const el = e.target; if ((el.dataset.itime || el.dataset.atime !== undefined) && el.value !== '') el.value = Math.round(Number(el.value)); });
+// keep the 2×2's list panel inside the visible window, so scrolling it can always reach any row
+function fitSide() {
+  const b = document.querySelector('.quad-side'); if (!b || innerWidth <= 760) return;
+  const top = Math.max(16, b.getBoundingClientRect().top);
+  b.style.maxHeight = Math.max(240, innerHeight - top - 16) + 'px';
+}
+addEventListener('scroll', fitSide, { passive: true });
+addEventListener('resize', fitSide);
+new MutationObserver(fitSide).observe(document.getElementById('main'), { childList: true });
