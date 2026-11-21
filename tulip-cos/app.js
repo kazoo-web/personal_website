@@ -75,17 +75,21 @@ function statusOf(c) {
   if (c.text.trim() !== DEFAULT_B_TEXT[c.id]) return 'edited';
   return '';
 }
-function catOrder() {
-  const as = areas();
-  const ord = (S.natan.catOrder || []).filter((a) => as.includes(a));
-  as.forEach((a) => { if (!ord.includes(a)) ord.push(a); });
+function rankOrder() {
+  const ids = active().map((c) => c.id);
+  const ord = (S.natan.order || []).filter((id) => ids.includes(id));
+  ids.forEach((id) => { if (!ord.includes(id)) ord.push(id); });
   return ord;
 }
-function itemOrderIn(area) {
-  const ids = itemsIn(area).map((c) => c.id), pref = S.natan.order || [];
-  return ids.slice().sort((a, b) => { const ia = pref.indexOf(a), ib = pref.indexOf(b); return (ia < 0 ? 1e6 + ids.indexOf(a) : ia) - (ib < 0 ? 1e6 + ids.indexOf(b) : ib); });
+// consecutive items from the same section form one block
+function rankRuns() {
+  const runs = [];
+  rankOrder().forEach((id, i) => {
+    const a = byId(id).area, last = runs[runs.length - 1];
+    if (last && last.area === a) last.ids.push(id); else runs.push({ area: a, ids: [id], start: i });
+  });
+  return runs;
 }
-function rankOrder() { return catOrder().flatMap(itemOrderIn); }
 function baselineNatan() {
   const all = DEFAULT_B, areaTime = {};
   DEFAULT_AREAS.forEach((a) => { areaTime[a] = (all.filter((c) => c.area === a).length * 100) / all.length; });
@@ -174,7 +178,7 @@ function flushSaves() {
 // ---- tabs ----------------------------------------------------------------------
 function tabs() {
   return VIEW === 'natan'
-    ? [['edit', '1 · Review'], ['time', '2 · Time allocation'], ['bring', '3 · Day-1 readiness'], ['rank', '4 · Prioritization']]
+    ? [['edit', '1 · Review'], ['rank', '2 · Prioritization'], ['bring', '3 · Day-1 readiness'], ['time', '4 · Time allocation']]
     : [['role', 'The role'], ['combined', 'Combined']];
 }
 function render() {
@@ -195,7 +199,8 @@ document.addEventListener('click', (e) => {
   window.scrollTo(0, 0);
 });
 let resetArmed = null;
-const resetLabel = () => VIEW === 'natan' ? 'Reset to the posting' : tab === 'role' ? 'Reset board' : '';
+const RESET_LABELS = { edit: 'Reset review', rank: 'Reset prioritization', bring: 'Reset day-1 readiness', time: 'Reset time allocation', role: 'Reset board' };
+const resetLabel = () => RESET_LABELS[tab] || '';
 function syncResetButton() {
   const b = $('#refresh'), label = resetLabel();
   b.style.visibility = label ? 'visible' : 'hidden';
@@ -209,7 +214,10 @@ $('#refresh').addEventListener('click', () => {
     return;
   }
   clearTimeout(resetArmed); resetArmed = null;
-  if (VIEW === 'natan') { S.partB = clone(DEFAULT_B); S.natan = baselineNatan(); save('partB'); save('natan'); }
+  if (tab === 'edit') { S.partB = clone(DEFAULT_B); save('partB'); }
+  else if (tab === 'rank') { S.natan.order = []; S.natan.ranked = false; save('natan'); }
+  else if (tab === 'bring') { Object.values(S.natan.items).forEach((r) => delete r.dayone); save('natan'); }
+  else if (tab === 'time') { Object.values(S.natan.items).forEach((r) => delete r.time); S.natan.areaTime = baselineNatan().areaTime; save('natan'); }
   else if (tab === 'role') { S.katherine.b = {}; save('katherine'); }
   render();
 });
@@ -310,7 +318,7 @@ function refreshTime(except) {
 // ---- Natan 3: day-1 readiness (sections or single items) -----------------------------------
 function vBring() {
   const colItems = (key) => active().filter((c) => ((S.natan.items[c.id] || {}).dayone || '') === key);
-  const groups = (list) => catOrder().map((a) => {
+  const groups = (list) => areas().map((a) => {
     const its = list.filter((c) => c.area === a); if (!its.length) return '';
     return `<div class="dgroup" style="--c:${areaColor(a)}"><div class="dghead" draggable="true" data-dcat="${esc(a)}" title="Drag to move the whole section">${esc(a)}<span>${its.length}</span></div>
       ${its.map((c) => `<div class="dcard" draggable="true" data-did="${c.id}" style="--c:${areaColor(c.area)}">${esc(c.text)}</div>`).join('')}</div>`;
@@ -322,30 +330,25 @@ function vBring() {
   return `<div class="dboard ${unsorted.length ? 'three' : ''}">${unsorted.length ? col('', 'Not sorted yet') : ''}${col('day1', 'Needed on day 1')}${col('learn', 'Can learn in the role')}</div>`;
 }
 
-// ---- Natan 4: prioritization — order the sections, then the items within each ------------------
+// ---- Natan 4 (shown second): prioritization — drag a whole section, or any single item anywhere ----
 function vRank() {
-  const cats = catOrder();
-  const cols = cats.map((a, ci) => {
-    const ids = itemOrderIn(a);
-    return `<div class="rcol" draggable="true" data-rcat="${esc(a)}" style="--c:${areaColor(a)}">
-      <div class="rchead"><span class="rnum">${ci + 1}</span><span class="rcname">${esc(a)}</span></div>
-      <div class="rclist">${ids.map((id, i) => { const c = byId(id);
-        return `<div class="rcard" draggable="true" data-rid="${id}" data-rarea="${esc(a)}"><span class="rsub">${ci + 1}.${i + 1}</span><span class="rtext">${esc(c.text)}</span></div>`; }).join('')}</div></div>`;
-  }).join('');
-  return `<div class="rboard" style="--n:${cats.length}">${cols}</div>`;
+  const runs = rankRuns();
+  return `<div class="rboard flow">${runs.map((run) => `<div class="rcol" draggable="true" data-rrun="${run.start}" style="--c:${areaColor(run.area)}">
+      <div class="rchead" title="Drag to move this whole block"><span class="rcname">${esc(run.area)}</span></div>
+      <div class="rclist">${run.ids.map((id, i) => `<div class="rcard" draggable="true" data-rid="${id}"><span class="rsub">${run.start + i + 1}</span><span class="rtext">${esc(byId(id).text)}</span></div>`).join('')}</div></div>`).join('')}</div>`;
 }
-function markRanked() { S.natan.order = rankOrder(); S.natan.catOrder = catOrder(); S.natan.ranked = true; save('natan'); render(); }
+function setOrder(ord) { S.natan.order = ord; S.natan.ranked = true; save('natan'); render(); }
 
 // ---- drag and drop (HTML5) for day-1 readiness and prioritization --------------------------------
 let dragKind = null;
 const clearMarks = () => document.querySelectorAll('.dragging, .before, .after, .hover').forEach((c) => c.classList.remove('dragging', 'before', 'after', 'hover'));
 document.addEventListener('dragstart', (e) => {
-  const t = e.target.closest('[data-did], [data-dcat], [data-rid], [data-rcat]'); if (!t) return;
+  const t = e.target.closest('[data-did], [data-dcat], [data-rid], [data-rrun]'); if (!t) return;
   e.stopPropagation();
   if (t.dataset.did) { dragKind = 'ditem'; dragId = t.dataset.did; }
   else if (t.dataset.dcat !== undefined) { dragKind = 'dcat'; dragId = t.dataset.dcat; }
   else if (t.dataset.rid) { dragKind = 'ritem'; dragId = t.dataset.rid; }
-  else { dragKind = 'rcat'; dragId = t.dataset.rcat; }
+  else { dragKind = 'rrun'; dragId = t.dataset.rrun; }
   (dragKind === 'dcat' ? t.parentElement : t).classList.add('dragging');
   e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragId);
 });
@@ -353,11 +356,12 @@ document.addEventListener('dragend', () => { dragId = null; dragKind = null; cle
 function dropTarget(e) {
   if (dragKind === 'ditem' || dragKind === 'dcat') { const col = e.target.closest('.dcol'); return col && { el: col }; }
   if (dragKind === 'ritem') {
-    const card = e.target.closest('.rcard'); if (!card || card.dataset.rarea !== byId(dragId).area || card.dataset.rid === dragId) return null;
-    const r = card.getBoundingClientRect(); return { el: card, after: e.clientY > r.top + r.height / 2 };
+    const card = e.target.closest('.rcard');
+    if (card) { if (card.dataset.rid === dragId) return null; const r = card.getBoundingClientRect(); return { el: card, after: e.clientY > r.top + r.height / 2 }; }
+    const col = e.target.closest('.rcol'); return col && { el: col, end: true };
   }
-  if (dragKind === 'rcat') {
-    const col = e.target.closest('.rcol'); if (!col || col.dataset.rcat === dragId) return null;
+  if (dragKind === 'rrun') {
+    const col = e.target.closest('.rcol'); if (!col || col.dataset.rrun === dragId) return null;
     const r = col.getBoundingClientRect(); return { el: col, after: e.clientX > r.left + r.width / 2 };
   }
   return null;
@@ -367,7 +371,7 @@ document.addEventListener('dragover', (e) => {
   const t = dropTarget(e);
   document.querySelectorAll('.before, .after, .hover').forEach((x) => x.classList.remove('before', 'after', 'hover'));
   if (!t) return; e.preventDefault();
-  t.el.classList.add(dragKind.startsWith('d') ? 'hover' : t.after ? 'after' : 'before');
+  t.el.classList.add(dragKind.startsWith('d') || t.end ? 'hover' : t.after ? 'after' : 'before');
 });
 document.addEventListener('drop', (e) => {
   if (!dragKind) return;
@@ -380,15 +384,17 @@ document.addEventListener('drop', (e) => {
     save('natan'); render(); return;
   }
   if (dragKind === 'ritem') {
-    const area = byId(dragId).area, ids = itemOrderIn(area).filter((id) => id !== dragId);
-    let at = ids.indexOf(t.el.dataset.rid) + (t.after ? 1 : 0); ids.splice(at, 0, dragId);
-    const all = rankOrder().filter((id) => byId(id).area !== area);
-    S.natan.order = all.concat(ids); markRanked(); return;
+    const ord = rankOrder().filter((id) => id !== dragId);
+    let at;
+    if (t.end) { const run = rankRuns().find((r) => String(r.start) === t.el.dataset.rrun); const others = run.ids.filter((id) => id !== dragId); if (!others.length) return; at = ord.indexOf(others[others.length - 1]) + 1; }
+    else at = ord.indexOf(t.el.dataset.rid) + (t.after ? 1 : 0);
+    ord.splice(at, 0, dragId); setOrder(ord); return;
   }
-  if (dragKind === 'rcat') {
-    const cats = catOrder().filter((a) => a !== dragId);
-    cats.splice(cats.indexOf(t.el.dataset.rcat) + (t.after ? 1 : 0), 0, dragId);
-    S.natan.catOrder = cats; S.natan.order = cats.flatMap(itemOrderIn); S.natan.ranked = true; save('natan'); render();
+  if (dragKind === 'rrun') {
+    const runs = rankRuns(), moving = runs.find((r) => String(r.start) === dragId), target = runs.find((r) => String(r.start) === t.el.dataset.rrun);
+    const rest = runs.filter((r) => r !== moving);
+    rest.splice(rest.indexOf(target) + (t.after ? 1 : 0), 0, moving);
+    setOrder(rest.flatMap((r) => r.ids));
   }
 });
 

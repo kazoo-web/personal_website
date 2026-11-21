@@ -249,3 +249,7 @@ a.star { display: inline-flex; align-items: center; justify-content: center; tex
 ul.flags { margin: 6px 0 10px; padding-left: 18px; font-size: 13.5px; color: var(--muted); }
 ul.flags li { margin-bottom: 6px; }
 ul.flags b { color: var(--ink); font-weight: 600; }
+
+.rboard.flow { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.rboard.flow .rchead { cursor: grab; }
+.rcol.hover { box-shadow: 0 0 0 2px var(--accent); }
