@@ -439,8 +439,7 @@ function vRole() {
     }
   }
   const ticks = [1, 2, 3, 4, 5];
-  return `<div class="intro">Drag each part of the role onto the grid: <b>left → right</b> is how well I can do it today (1–5), <b>bottom → top</b> is how much I want to (1–5). Drag back to the list to clear. <span class="chipmark inline">N</span> = Natan edited or added it.</div>
-    <div class="toolbar quadbar"><div class="legend">${areas().map((a) => `<span class="leg"><span class="swatch" style="background:${areaColor(a)}"></span>${esc(a)}</span>`).join('')}</div>${seg('_mode', roleMode, [['dots', 'Dots'], ['cards', 'Cards']]).replace(/data-set="_mode"/g, 'data-mode="1"')}</div>
+  return `<div class="toolbar quadbar legendbar"><div class="legend">${areas().map((a) => `<span class="leg"><span class="swatch" style="background:${areaColor(a)}"></span>${esc(a)}</span>`).join('')}</div>${seg('_mode', roleMode, [['dots', 'Dots'], ['cards', 'Cards']]).replace(/data-set="_mode"/g, 'data-mode="1"')}</div>
     <div class="quad-wrap">
       <div class="quad-side">${roleMode === 'dots'
         ? `<div class="dhead"><b>All parts</b><span>${off.length} to place</span></div><div class="tray" id="tray">${items.map((c) => chip(c, 'list')).join('')}</div>`
@@ -528,8 +527,8 @@ function natanLine(a) {
 function vCombined() {
   const rows = analyze(), done = rows.filter((r) => r.complete);
   const cell = (v) => v == null ? '<span class="dot mid">–</span>' : `<span class="dot ${v >= 4 ? 'hi' : v <= 2 ? 'lo' : 'mid'}">${snap(v)}</span>`;
-  const table = `<table><thead><tr><th class="n">Rank</th><th>Item</th><th class="n">% time</th><th class="n">Day 1 / learn</th><th class="n">Can do</th><th class="n">Want</th></tr></thead><tbody>${
-    rows.map((a) => `<tr><td class="n">${a.rank}</td><td><span class="swatch" style="background:${areaColor(a.c.area)}"></span>${esc(a.c.text)}</td><td class="n">${a.t == null ? '–' : r1(a.t)}</td>
+  const table = `<table><thead><tr><th>Item</th><th class="n">Rank</th><th class="n">% time</th><th class="n">Day 1 / learn</th><th class="n">Can do</th><th class="n">Want</th></tr></thead><tbody>${
+    rows.map((a) => `<tr><td><span class="swatch" style="background:${areaColor(a.c.area)}"></span>${esc(a.c.text)}</td><td class="n">${a.rank}</td><td class="n">${a.t == null ? '–' : r1(a.t)}</td>
       <td class="n">${bringLabel(a.nt.dayone)}</td><td class="n">${cell(a.k.can)}</td><td class="n">${cell(a.k.want)}</td></tr>`).join('')}</tbody></table>`;
   const top = done.filter((r) => r.score > 0.08).sort((a, b) => b.score - a.score).slice(0, 3);
   const flagged = !done.length ? '<p class="sub">Place items on the 2×2 to see these.</p>'
