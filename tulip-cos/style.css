@@ -209,3 +209,33 @@ input.pct.auto:focus { font-style: normal; color: var(--ink); }
 .chip.ghost .readout { white-space: nowrap; }
 .chip.ghost.dotc .readout { position: absolute; top: 38px; left: 50%; transform: translateX(-50%); background: #fff; padding: 2px 7px; border-radius: 6px; box-shadow: var(--shadow); }
 .quad-wrap { grid-template-columns: 290px 1fr; }
+
+/* reset button */
+#refresh.armed { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* day-1 readiness: section groups inside columns */
+.dgroup { background: rgba(255,255,255,.45); border-radius: 12px; padding: 6px; display: flex; flex-direction: column; gap: 6px; }
+.dgroup.dragging { opacity: .4; }
+.dghead { display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em; font-weight: 700;
+  color: var(--c); padding: 5px 7px; border-radius: 8px; cursor: grab; }
+.dghead:hover { background: #fff; box-shadow: inset 3px 0 0 var(--c); }
+.dghead span { color: var(--faint); }
+.dlist { gap: 10px; }
+.dcard { font-size: 13px; padding: 8px 10px; }
+
+/* prioritization: sections as columns, items stacked within */
+.rboard { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 12px; align-items: start; }
+.rcol { background: var(--sand); border-radius: 16px; padding: 10px; border-top: 4px solid var(--c); cursor: grab; transition: box-shadow .12s, opacity .12s; }
+.rcol.dragging { opacity: .4; }
+.rcol.before { box-shadow: -4px 0 0 var(--accent); }
+.rcol.after { box-shadow: 4px 0 0 var(--accent); }
+.rchead { display: flex; align-items: baseline; gap: 8px; padding: 2px 4px 10px; }
+.rchead .rnum { font-size: 22px; font-weight: 700; color: var(--c); line-height: 1; }
+.rcname { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; color: var(--ink); line-height: 1.3; }
+.rclist { display: flex; flex-direction: column; gap: 6px; }
+.rcol .rcard { display: flex; gap: 8px; align-items: flex-start; min-height: 0; padding: 9px 10px; border-top: none; border-left: 3px solid var(--c); border-radius: 10px; cursor: grab; flex-direction: row; }
+.rcol .rcard.before { box-shadow: 0 -3px 0 var(--accent), var(--shadow); }
+.rcol .rcard.after { box-shadow: 0 3px 0 var(--accent), var(--shadow); }
+.rsub { flex: none; font-size: 11px; font-weight: 700; color: var(--c); margin-top: 1px; font-variant-numeric: tabular-nums; }
+.rcol .rtext { font-size: 12.5px; }
+@media (max-width: 900px) { .rboard { grid-template-columns: 1fr 1fr; } }

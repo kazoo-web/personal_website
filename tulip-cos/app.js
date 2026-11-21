@@ -75,11 +75,21 @@ function statusOf(c) {
   if (c.text.trim() !== DEFAULT_B_TEXT[c.id]) return 'edited';
   return '';
 }
-function rankOrder() {
-  const ids = active().map((c) => c.id);
-  const ord = (S.natan.order || []).filter((id) => ids.includes(id));
-  ids.forEach((id) => { if (!ord.includes(id)) ord.push(id); });
+function catOrder() {
+  const as = areas();
+  const ord = (S.natan.catOrder || []).filter((a) => as.includes(a));
+  as.forEach((a) => { if (!ord.includes(a)) ord.push(a); });
   return ord;
+}
+function itemOrderIn(area) {
+  const ids = itemsIn(area).map((c) => c.id), pref = S.natan.order || [];
+  return ids.slice().sort((a, b) => { const ia = pref.indexOf(a), ib = pref.indexOf(b); return (ia < 0 ? 1e6 + ids.indexOf(a) : ia) - (ib < 0 ? 1e6 + ids.indexOf(b) : ib); });
+}
+function rankOrder() { return catOrder().flatMap(itemOrderIn); }
+function baselineNatan() {
+  const all = DEFAULT_B, areaTime = {};
+  DEFAULT_AREAS.forEach((a) => { areaTime[a] = (all.filter((c) => c.area === a).length * 100) / all.length; });
+  return { items: {}, areaTime, order: [], catOrder: [], ranked: false };
 }
 
 // ---- time model ------------------------------------------------------------------
@@ -132,7 +142,7 @@ async function load() {
     const get = (k) => d[k] && d[k].data;
     S.partA = get('partA') || clone(DEFAULT_A);
     S.partB = get('partB') || clone(DEFAULT_B);
-    S.natan = Object.assign({ items: {}, areaTime: {}, order: [], ranked: false }, get('natan') || {});
+    S.natan = Object.assign({ items: {}, areaTime: {}, order: [], catOrder: [], ranked: false }, get('natan') || baselineNatan());
     S.natan.areaTime = S.natan.areaTime || {};
     S.katherine = Object.assign({ a: {}, b: {} }, get('katherine') || {});
     S.updated = Object.fromEntries(['partB', 'natan', 'katherine'].map((k) => [k, d[k] && d[k].updated_at]));
@@ -157,20 +167,32 @@ function save(key) {
 // ---- tabs ----------------------------------------------------------------------
 function tabs() {
   return VIEW === 'natan'
-    ? [['edit', '1 · Review the role'], ['time', '2 · Time'], ['bring', '3 · Day 1 vs. learn'], ['rank', '4 · Rank']]
+    ? [['edit', '1 · Review'], ['time', '2 · Time allocation'], ['bring', '3 · Day-1 readiness'], ['rank', '4 · Prioritization']]
     : [['role', 'The role'], ['combined', 'Combined']];
 }
 function render() {
   $('#titlebar').innerHTML = `<h1>Tulip · Chief of Staff</h1>${VIEW === 'katherine'
     ? `<button class="star ${tab === 'who' ? 'on' : ''}" data-tab="who" title="Who I am — my notes">★</button><button class="star n ${tab === 'natan' ? 'on' : ''}" data-tab="natan" title="Natan’s input">N</button>` : ''}`;
-  $('#subtitle').textContent = VIEW === 'natan' ? 'The role, in its parts. Everything saves as you go.' : 'Katherine’s workspace';
+  $('#subtitle').textContent = VIEW === 'natan' ? '' : 'Katherine’s workspace';
   $('#tabs').innerHTML = tabs().map(([k, l]) => `<button data-tab="${k}" class="${k === tab ? 'on' : ''}">${l}</button>`).join('');
   const views = { edit: vEdit, time: vTime, bring: vBring, rank: vRank, who: vWho, role: vRole, natan: vNatanInput, combined: vCombined };
   $('#main').innerHTML = views[tab]();
   document.querySelectorAll('textarea.grow').forEach(autoGrow);
 }
 document.addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (b) { tab = b.dataset.tab; render(); window.scrollTo(0, 0); } });
-$('#refresh').addEventListener('click', load);
+let resetArmed = null;
+if (VIEW === 'natan') { $('#refresh').textContent = 'Reset to the posting'; $('#refresh').title = 'Back to the job as posted, with time split evenly'; }
+$('#refresh').addEventListener('click', () => {
+  if (VIEW !== 'natan') return load();
+  const b = $('#refresh');
+  if (!resetArmed) {
+    b.textContent = 'Click again to reset everything'; b.classList.add('armed');
+    resetArmed = setTimeout(() => { resetArmed = null; b.textContent = 'Reset to the posting'; b.classList.remove('armed'); }, 4000);
+    return;
+  }
+  clearTimeout(resetArmed); resetArmed = null; b.textContent = 'Reset to the posting'; b.classList.remove('armed');
+  S.partB = clone(DEFAULT_B); S.natan = baselineNatan(); save('partB'); save('natan'); render();
+});
 function autoGrow(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
 
 // ---- widgets -------------------------------------------------------------------
@@ -214,15 +236,13 @@ function vEdit() {
     });
     html += `<button class="addlink" data-addto="${esc(area)}">+ Add to this area</button>`;
   });
-  return `<div class="intro">The <b>what you’ll do</b> half of the posting, in parts. Make it match the job as it really is: <b>reword</b>, <b>remove</b>, or <b>add</b>. Changes are tracked.</div>
-    ${html}<div class="newarea"><button class="btn" data-newarea="1">+ Add an item in a new area</button></div>`;
+  return `${html}<div class="newarea"><button class="btn" data-newarea="1">+ Add an item in a new area</button></div>`;
 }
 
 // ---- Natan 2: time ------------------------------------------------------------------
 function vTime() {
   const cards = areas().map((area) => timeCard(area)).join('');
-  return `<div class="intro">Roughly <b>what share of the job</b> is each section? Each section’s % is split evenly across its items — change any line if one item takes more, and the rest rebalance. Leave one section blank and it gets whatever’s left. Going over is allowed; you’ll see where.</div>
-    <div class="tgrid" id="tgrid">${cards}</div><div class="total" id="totalbar">${totalHtml()}</div>`;
+  return `<div class="tgrid" id="tgrid">${cards}</div><div class="total" id="totalbar">${totalHtml()}</div>`;
 }
 function timeCard(area) {
   const T = typedArea(area), assumed = T == null ? assumedArea(area) : null, total = areaTotal(area), alert = areaAlert(area);
@@ -267,66 +287,89 @@ function refreshTime(except) {
   $('#totalbar').classList.toggle('over', grandTotal() > 100.05);
 }
 
-// ---- Natan 3: needed on day 1 vs. can learn ------------------------------------------------
+// ---- Natan 3: day-1 readiness (sections or single items) -----------------------------------
 function vBring() {
-  const card = (c) => `<div class="dcard" draggable="true" data-did="${c.id}" style="--c:${areaColor(c.area)}"><div>${esc(c.text)}</div><div class="rarea">${esc(c.area)}</div></div>`;
-  const col = (key, title, sub) => {
-    const list = active().filter((c) => ((S.natan.items[c.id] || {}).dayone || '') === key);
-    return `<div class="dcol" data-col="${key}"><div class="dhead"><b>${title}</b><span>${sub}</span><span class="dcount">${list.length}</span></div>
-      <div class="dlist">${list.map(card).join('') || '<div class="dempty">Drag items here</div>'}</div></div>`;
-  };
-  const unsorted = active().filter((c) => !(S.natan.items[c.id] || {}).dayone);
-  return `<div class="intro">Drag each part into a column: is it <b>needed on day 1</b>, or something the right person <b>can learn</b> in the role?</div>
-    <div class="dboard ${unsorted.length ? 'three' : ''}">${unsorted.length ? `<div class="dcol pool" data-col=""><div class="dhead"><b>Not sorted yet</b><span class="dcount">${unsorted.length}</span></div><div class="dlist">${unsorted.map(card).join('')}</div></div>` : ''}${col('day1', 'Needed on day 1', 'Has to come in the door with it')}${col('learn', 'Can learn', 'Fine to build in the role')}</div>`;
+  const colItems = (key) => active().filter((c) => ((S.natan.items[c.id] || {}).dayone || '') === key);
+  const groups = (list) => catOrder().map((a) => {
+    const its = list.filter((c) => c.area === a); if (!its.length) return '';
+    return `<div class="dgroup" style="--c:${areaColor(a)}"><div class="dghead" draggable="true" data-dcat="${esc(a)}" title="Drag to move the whole section">${esc(a)}<span>${its.length}</span></div>
+      ${its.map((c) => `<div class="dcard" draggable="true" data-did="${c.id}" style="--c:${areaColor(c.area)}">${esc(c.text)}</div>`).join('')}</div>`;
+  }).join('');
+  const col = (key, title) => { const list = colItems(key);
+    return `<div class="dcol ${key ? '' : 'pool'}" data-col="${key}"><div class="dhead"><b>${title}</b><span class="dcount">${list.length}</span></div>
+      <div class="dlist">${groups(list) || '<div class="dempty">Drag a section or an item here</div>'}</div></div>`; };
+  const unsorted = colItems('');
+  return `<div class="dboard ${unsorted.length ? 'three' : ''}">${unsorted.length ? col('', 'Not sorted yet') : ''}${col('day1', 'Needed on day 1')}${col('learn', 'Can learn in the role')}</div>`;
 }
 
-// ---- Natan 4: rank -----------------------------------------------------------------------
+// ---- Natan 4: prioritization — order the sections, then the items within each ------------------
 function vRank() {
-  const ord = rankOrder();
-  const cards = ord.map((id, i) => {
-    const c = byId(id), t = effTime(id), dn = (S.natan.items[id] || {}).dayone;
-    const meta = [t != null ? `~${r1(t)}% of time` : null, dn === 'day1' ? 'needed day 1' : dn === 'learn' ? 'can learn' : null].filter(Boolean).join(' · ');
-    return `<div class="rcard" draggable="true" data-rid="${id}" style="--c:${areaColor(c.area)}">
-      <span class="rnum">${i + 1}</span><div class="rtext">${esc(c.text)}</div>
-      <div class="rarea">${esc(c.area)}</div>${meta ? `<div class="rmeta">${meta}</div>` : ''}</div>`;
+  const cats = catOrder();
+  const cols = cats.map((a, ci) => {
+    const ids = itemOrderIn(a);
+    return `<div class="rcol" draggable="true" data-rcat="${esc(a)}" style="--c:${areaColor(a)}">
+      <div class="rchead"><span class="rnum">${ci + 1}</span><span class="rcname">${esc(a)}</span></div>
+      <div class="rclist">${ids.map((id, i) => { const c = byId(id);
+        return `<div class="rcard" draggable="true" data-rid="${id}" data-rarea="${esc(a)}"><span class="rsub">${ci + 1}.${i + 1}</span><span class="rtext">${esc(c.text)}</span></div>`; }).join('')}</div></div>`;
   }).join('');
-  return `<div class="intro">Drag the cards into order from <b>most</b> to <b>least important</b> to get right. Reads left to right, top to bottom. No ties.</div>
-    <div class="rgrid">${cards}</div>`;
+  return `<div class="rboard" style="--n:${cats.length}">${cols}</div>`;
 }
-function moveRank(id, toIndex) {
-  const ord = rankOrder(), from = ord.indexOf(id);
-  if (from < 0 || toIndex === from) return;
-  ord.splice(from, 1); ord.splice(Math.max(0, Math.min(ord.length, toIndex)), 0, id);
-  S.natan.order = ord; S.natan.ranked = true; save('natan'); render();
-}
+function markRanked() { S.natan.order = rankOrder(); S.natan.catOrder = catOrder(); S.natan.ranked = true; save('natan'); render(); }
+
+// ---- drag and drop (HTML5) for day-1 readiness and prioritization --------------------------------
+let dragKind = null;
+const clearMarks = () => document.querySelectorAll('.dragging, .before, .after, .hover').forEach((c) => c.classList.remove('dragging', 'before', 'after', 'hover'));
 document.addEventListener('dragstart', (e) => {
-  const c = e.target.closest('.rcard, .dcard'); if (!c) return;
-  dragId = c.dataset.rid || c.dataset.did; c.classList.add('dragging');
+  const t = e.target.closest('[data-did], [data-dcat], [data-rid], [data-rcat]'); if (!t) return;
+  e.stopPropagation();
+  if (t.dataset.did) { dragKind = 'ditem'; dragId = t.dataset.did; }
+  else if (t.dataset.dcat !== undefined) { dragKind = 'dcat'; dragId = t.dataset.dcat; }
+  else if (t.dataset.rid) { dragKind = 'ritem'; dragId = t.dataset.rid; }
+  else { dragKind = 'rcat'; dragId = t.dataset.rcat; }
+  (dragKind === 'dcat' ? t.parentElement : t).classList.add('dragging');
   e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragId);
 });
-document.addEventListener('dragend', () => { dragId = null; document.querySelectorAll('.rcard, .dcard, .dcol').forEach((c) => c.classList.remove('dragging', 'before', 'after', 'hover')); });
+document.addEventListener('dragend', () => { dragId = null; dragKind = null; clearMarks(); });
+function dropTarget(e) {
+  if (dragKind === 'ditem' || dragKind === 'dcat') { const col = e.target.closest('.dcol'); return col && { el: col }; }
+  if (dragKind === 'ritem') {
+    const card = e.target.closest('.rcard'); if (!card || card.dataset.rarea !== byId(dragId).area || card.dataset.rid === dragId) return null;
+    const r = card.getBoundingClientRect(); return { el: card, after: e.clientY > r.top + r.height / 2 };
+  }
+  if (dragKind === 'rcat') {
+    const col = e.target.closest('.rcol'); if (!col || col.dataset.rcat === dragId) return null;
+    const r = col.getBoundingClientRect(); return { el: col, after: e.clientX > r.left + r.width / 2 };
+  }
+  return null;
+}
 document.addEventListener('dragover', (e) => {
-  if (!dragId) return;
-  const col = e.target.closest('.dcol');
-  if (col) { e.preventDefault(); document.querySelectorAll('.dcol').forEach((x) => x.classList.toggle('hover', x === col)); return; }
-  const c = e.target.closest('.rcard'); if (!c) return; e.preventDefault();
-  const r = c.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
-  document.querySelectorAll('.rcard').forEach((x) => x.classList.remove('before', 'after'));
-  if (c.dataset.rid !== dragId) c.classList.add(after ? 'after' : 'before');
+  if (!dragKind) return;
+  const t = dropTarget(e);
+  document.querySelectorAll('.before, .after, .hover').forEach((x) => x.classList.remove('before', 'after', 'hover'));
+  if (!t) return; e.preventDefault();
+  t.el.classList.add(dragKind.startsWith('d') ? 'hover' : t.after ? 'after' : 'before');
 });
 document.addEventListener('drop', (e) => {
-  if (!dragId) return;
-  const col = e.target.closest('.dcol');
-  if (col) {
-    e.preventDefault(); const key = col.dataset.col;
-    if (key) nItem(dragId).dayone = key; else delete nItem(dragId).dayone;
+  if (!dragKind) return;
+  const t = dropTarget(e); if (!t) return; e.preventDefault();
+  if (dragKind === 'ditem' || dragKind === 'dcat') {
+    const key = t.el.dataset.col;
+    const from = dragKind === 'dcat' ? e.dataTransfer && document.querySelector(`.dragging`)?.closest('.dcol')?.dataset.col : null;
+    const ids = dragKind === 'ditem' ? [dragId] : itemsIn(dragId).filter((c) => from == null || ((S.natan.items[c.id] || {}).dayone || '') === from).map((c) => c.id);
+    ids.forEach((id) => { if (key) nItem(id).dayone = key; else delete nItem(id).dayone; });
     save('natan'); render(); return;
   }
-  const c = e.target.closest('.rcard'); if (!c) return; e.preventDefault();
-  const ord = rankOrder(), r = c.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
-  let to = ord.indexOf(c.dataset.rid) + (after ? 1 : 0);
-  if (ord.indexOf(dragId) < to) to -= 1;
-  moveRank(dragId, to);
+  if (dragKind === 'ritem') {
+    const area = byId(dragId).area, ids = itemOrderIn(area).filter((id) => id !== dragId);
+    let at = ids.indexOf(t.el.dataset.rid) + (t.after ? 1 : 0); ids.splice(at, 0, dragId);
+    const all = rankOrder().filter((id) => byId(id).area !== area);
+    S.natan.order = all.concat(ids); markRanked(); return;
+  }
+  if (dragKind === 'rcat') {
+    const cats = catOrder().filter((a) => a !== dragId);
+    cats.splice(cats.indexOf(t.el.dataset.rcat) + (t.after ? 1 : 0), 0, dragId);
+    S.natan.catOrder = cats; S.natan.order = cats.flatMap(itemOrderIn); S.natan.ranked = true; save('natan'); render();
+  }
 });
 
 // ---- Katherine: who I am (behind the star) ----------------------------------------------
