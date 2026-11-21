@@ -172,10 +172,11 @@ function tabs() {
 }
 function render() {
   $('#titlebar').innerHTML = `<h1>Tulip · Chief of Staff</h1>${VIEW === 'katherine'
-    ? `<button class="star ${tab === 'who' ? 'on' : ''}" data-tab="who" title="Who I am — my notes">★</button><button class="star n ${tab === 'natan' ? 'on' : ''}" data-tab="natan" title="Natan’s input">N</button>` : ''}`;
+    ? `<button class="star ${tab === 'who' ? 'on' : ''}" data-tab="who" title="Who I am — my notes">★</button><a class="star n" href="../natan/" title="Natan’s view">N</a>`
+    : `<a class="star n" href="../katherine/" title="Katherine’s view">K</a>`}`;
   $('#subtitle').textContent = VIEW === 'natan' ? '' : 'Katherine’s workspace';
   $('#tabs').innerHTML = tabs().map(([k, l]) => `<button data-tab="${k}" class="${k === tab ? 'on' : ''}">${l}</button>`).join('');
-  const views = { edit: vEdit, time: vTime, bring: vBring, rank: vRank, who: vWho, role: vRole, natan: vNatanInput, combined: vCombined };
+  const views = { edit: vEdit, time: vTime, bring: vBring, rank: vRank, who: vWho, role: vRole, combined: vCombined };
   $('#main').innerHTML = views[tab]();
   document.querySelectorAll('textarea.grow').forEach(autoGrow);
 }
@@ -477,17 +478,6 @@ function changesHtml() {
     ${st === 'edited' ? `<div class="why">Posting said: “${esc(DEFAULT_B_TEXT[c.id])}”</div>` : ''}</div>`).join('');
 }
 const bringLabel = (d) => d === 'day1' ? 'Day 1' : d === 'learn' ? 'Can learn' : '–';
-function vNatanInput() {
-  const rows = rankOrder().map((id, i) => {
-    const c = byId(id), r = S.natan.items[id] || {}, t = effTime(id);
-    return `<tr><td class="n">${i + 1}</td><td><span class="swatch" style="background:${areaColor(c.area)}"></span>${esc(c.text)}</td><td class="n">${t == null ? '–' : r1(t)}</td><td class="n">${bringLabel(r.dayone)}</td></tr>`;
-  }).join('');
-  const at = areas().map((a) => `<div class="abar"><span><span class="swatch" style="background:${areaColor(a)}"></span>${esc(a)}</span><b>${r1(areaTotal(a))}%</b></div>`).join('');
-  return `<div class="intro">${S.updated.natan ? 'Last saved ' + timeStr(S.updated.natan) + '.' : 'Nothing entered yet.'}${S.natan.ranked ? '' : ' The ranking hasn’t been adjusted yet — it’s still in the posting’s order.'}</div>
-    <div class="card"><h3>Changes to the posting</h3>${changesHtml()}</div>
-    <div class="card"><h3>Time by area</h3>${at}<p class="sub" style="margin-top:8px">Total ${r1(grandTotal())}%.</p></div>
-    <div class="card"><h3>Priorities</h3><table><thead><tr><th class="n">Rank</th><th>Item</th><th class="n">% time</th><th class="n">Day 1 / learn</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-}
 
 // ---- Katherine: combined ---------------------------------------------------------------------
 function analyze() {
