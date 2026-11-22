@@ -55,13 +55,15 @@
     var rep = r.reports_to || (r.reports_into && r.reports_into !== "Unknown" ? r.reports_into : "");
     var repHtml = rep && r.reports_basis !== "not_stated" ? 'Reports to <span class="' + (r.reports_basis === "inferred" ? "inferred" : "") + '">' + esc(rep) +
       (r.reports_basis === "inferred" ? " inferred" : "") + '</span>' : "";
-    var tools = r.langs.concat(r.tools).slice(0, 3);
+    var stack = r.langs.map(function (t) { return '<li class="tag lang">' + esc(t) + '</li>'; })
+      .concat(r.tools.map(function (t) { return '<li class="tag">' + esc(t) + '</li>'; })).join("");
     return '<article class="card job">' +
       '<h3>' + esc(r.title) + '</h3>' +
       '<div class="co"><b>' + esc(r.company) + '</b>' + (r.location ? ' · ' + esc(r.location) : "") + '</div>' +
       '<div class="tags">' + tags.join("") + '</div>' +
       (r.comp ? '<div class="pay">' + pay(r.comp) + '</div>' : '<div class="pay nopay">Pay not posted</div>') +
-      '<div class="mid"><span>' + repHtml + '</span><span class="tools">' + tools.map(function (t) { return r.langs.indexOf(t) >= 0 ? '<b class="lang">' + esc(t) + '</b>' : esc(t); }).join(" · ") + '</span></div>' +
+      (repHtml ? '<div class="mid"><span>' + repHtml + '</span></div>' : "") +
+      (stack ? '<ul class="tags-list" aria-label="Languages and tools">' + stack + '</ul>' : "") +
       '<div class="bottom"><span>' + (isNew(r) ? "Posted " + md(r.first_seen) : "Open since tracking began") + '</span>' +
       '<a href="' + esc(r.url) + '" target="_blank" rel="noopener">Original posting ↗</a></div></article>';
   }
