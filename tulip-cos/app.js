@@ -568,22 +568,56 @@ function concernType(a) {
 function natanLine(a) {
   return `Natan: #${a.rank} of ${a.n}${a.t != null ? `, ~${r1(a.t)}% of time` : ''}${a.nt.dayone === 'day1' ? ', needed day 1' : a.nt.dayone === 'learn' ? ', can learn' : ''}.`;
 }
+// combined table: sortable columns and columns that can be hidden (item column always shows)
+const COMB_COLS = [
+  { key: 'item', label: 'Item', val: (a) => a.c.text.toLowerCase() },
+  { key: 'rank', label: 'Rank', group: 'rank', val: (a) => a.rank },
+  { key: 'time', label: '% time', group: 'time', val: (a) => a.t },
+  { key: 'day1', label: 'Day 1 / learn', group: 'day1', val: (a) => a.nt.dayone === 'day1' ? 0 : a.nt.dayone === 'learn' ? 1 : null },
+  { key: 'can', label: 'Can do', group: 'cw', val: (a) => a.k.can == null ? null : snap(a.k.can) },
+  { key: 'want', label: 'Want', group: 'cw', val: (a) => a.k.want == null ? null : snap(a.k.want) },
+];
+const COMB_GROUPS = [['rank', 'Rank'], ['time', '% time'], ['day1', 'Day 1 / learn'], ['cw', 'Can do / want']];
+let combSort = { key: 'rank', dir: 1 }; const combHide = new Set();
 function vCombined() {
   const rows = analyze(), done = rows.filter((r) => r.complete);
   const cell = (v) => v == null ? '<span class="dot mid">–</span>' : `<span class="dot ${v >= 4 ? 'hi' : v <= 2 ? 'lo' : 'mid'}">${snap(v)}</span>`;
-  const table = `<table><thead><tr><th>Item</th><th class="n">Rank</th><th class="n">% time</th><th class="n">Day 1 / learn</th><th class="n">Can do</th><th class="n">Want</th></tr></thead><tbody>${
-    rows.map((a) => `<tr><td><span class="swatch" style="background:${areaColor(a.c.area)}"></span>${esc(a.c.text)}</td><td class="n">${a.rank}</td><td class="n">${a.t == null ? '–' : r1(a.t)}</td>
-      <td class="n">${bringLabel(a.nt.dayone)}</td><td class="n">${cell(a.k.can)}</td><td class="n">${cell(a.k.want)}</td></tr>`).join('')}</tbody></table>`;
+  const cols = COMB_COLS.filter((c) => !c.group || !combHide.has(c.group));
+  const sc = COMB_COLS.find((c) => c.key === combSort.key) || COMB_COLS[1];
+  const sorted = rows.slice().sort((x, y) => {
+    const a = sc.val(x), b = sc.val(y);
+    if (a == null && b == null) return x.rank - y.rank;
+    if (a == null) return 1; if (b == null) return -1; // blanks always last
+    return (a < b ? -1 : a > b ? 1 : 0) * combSort.dir || x.rank - y.rank;
+  });
+  const td = {
+    item: (a) => `<td><span class="swatch" style="background:${areaColor(a.c.area)}"></span>${esc(a.c.text)}</td>`,
+    rank: (a) => `<td class="n">${a.rank}</td>`,
+    time: (a) => `<td class="n">${a.t == null ? '–' : r1(a.t)}</td>`,
+    day1: (a) => `<td class="n">${bringLabel(a.nt.dayone)}</td>`,
+    can: (a) => `<td class="n">${cell(a.k.can)}</td>`,
+    want: (a) => `<td class="n">${cell(a.k.want)}</td>`,
+  };
+  const arrow = (k) => combSort.key === k ? (combSort.dir > 0 ? ' ↑' : ' ↓') : '';
+  const head = cols.map((c) => `<th class="${c.key === 'item' ? '' : 'n'} sortable ${combSort.key === c.key ? 'sorted' : ''}" data-sort="${c.key}" title="Sort">${c.label}<span class="arr">${arrow(c.key)}</span></th>`).join('');
+  const toggles = COMB_GROUPS.map(([g, l]) => `<button class="colt ${combHide.has(g) ? '' : 'on'}" data-colt="${g}">${combHide.has(g) ? '' : '✓ '}${l}</button>`).join('');
+  const table = `<table><thead><tr>${head}</tr></thead><tbody>${sorted.map((a) => `<tr>${cols.map((c) => td[c.key](a)).join('')}</tr>`).join('')}</tbody></table>`;
   const top = done.filter((r) => r.score > 0.08).sort((a, b) => b.score - a.score).slice(0, 3);
   const flagged = !done.length ? '<p class="sub">Place items on the 2×2 to see these.</p>'
     : top.length ? `<ul class="flags">${top.map((a) => `<li><b>${esc(a.c.text)}</b> — ${concernType(a).toLowerCase()}. ${natanLine(a)} Katherine: can do ${snap(a.k.can)}, want ${snap(a.k.want)}.</li>`).join('')}</ul>`
     : '<p class="sub">Nothing stands out.</p>';
-  return `<div class="card"><h3>Side by side, in Natan’s order</h3>${table}</div>
+  return `<div class="card"><div class="combhead"><h3>Side by side</h3><div class="colts"><span>Show</span>${toggles}</div></div>${table}</div>
     <div class="card quiet"><h3>Top misalignments <span class="auto-tag">auto-flagged</span></h3>${flagged}
       <details class="method"><summary>How these are picked</summary><p>A formula, not judgment: items high in Natan’s order where Katherine’s can-do (counted at half if it can be learned) or want is low, weighted by share of time.</p></details></div>`;
 }
 
 // ---- events ----------------------------------------------------------------------------------
+document.addEventListener('click', (e) => {
+  const th = e.target.closest('[data-sort]');
+  if (th) { const k = th.dataset.sort; combSort = combSort.key === k ? { key: k, dir: -combSort.dir } : { key: k, dir: 1 }; render(); return; }
+  const t = e.target.closest('[data-colt]');
+  if (t) { const g = t.dataset.colt; combHide.has(g) ? combHide.delete(g) : combHide.add(g); if (COMB_COLS.find((c) => c.key === combSort.key)?.group === g) combSort = { key: 'item', dir: 1 }; render(); }
+});
 const ownerKey = (path) => path.split('.')[0];
 document.addEventListener('click', (e) => {
   const t = e.target.closest('button'); if (!t) return;
