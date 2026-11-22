@@ -222,3 +222,4 @@ a.card.qc { display: flex; flex-direction: column; justify-content: space-betwee
 .stats { gap: 32px 40px; }
 .stats b { font-size: clamp(48px, 5.2vw, 68px); white-space: nowrap; }
 .stats span { font-size: 17px; }
+@media (min-width: 1000px) { .stats { grid-template-columns: repeat(5, 1fr); gap: 32px; } .stats b { font-size: 60px; } }
