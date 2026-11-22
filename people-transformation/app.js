@@ -114,9 +114,40 @@
   var METROS = [["Remote", /remote/i], ["San Francisco Bay Area", /san francisco|\bsf\b|bay area|palo alto|menlo park|mountain view|san mateo|oakland|san jose|sunnyvale|redwood city|south san francisco/i],
     ["New York", /new york|\bnyc\b|brooklyn/i], ["Seattle", /seattle|bellevue|redmond/i], ["Los Angeles", /los angeles|\bla\b|santa monica|el segundo|costa mesa|irvine/i],
     ["Boston", /boston|cambridge/i], ["Austin", /austin/i], ["Washington, DC", /washington|\bdc\b|arlington|reston/i], ["Chicago", /chicago/i], ["Denver", /denver|boulder/i]];
+  function toolPicker(counts, st, onChange) {
+    var inp = document.getElementById("tp"), list = document.getElementById("tplist"), chips = document.getElementById("tpchips"), act = -1, opts = [];
+    function renderChips() {
+      chips.innerHTML = st.tools.map(function (t, i) { return '<span class="tchip">' + esc(t) + '<button type="button" data-i="' + i + '" aria-label="Remove ' + esc(t) + '">×</button></span>'; }).join("");
+      chips.querySelectorAll("button").forEach(function (b) { b.onclick = function () { st.tools.splice(+b.dataset.i, 1); renderChips(); onChange(); inp.focus(); }; });
+      inp.placeholder = st.tools.length ? "Add another tool" : "Filter by tools, e.g. Workday, Python, Claude";
+    }
+    function close() { list.hidden = true; inp.setAttribute("aria-expanded", "false"); act = -1; }
+    function open() {
+      var q = inp.value.toLowerCase().trim();
+      opts = counts.filter(function (x) { return st.tools.indexOf(x[0]) < 0 && (!q || x[0].toLowerCase().indexOf(q) >= 0); })
+        .sort(function (a, b) { var as = a[0].toLowerCase().indexOf(q) === 0, bs = b[0].toLowerCase().indexOf(q) === 0; return (bs - as) || (b[1] - a[1]); }).slice(0, 8);
+      if (!opts.length) { list.innerHTML = '<li class="none">No tool matches “' + esc(inp.value) + '”</li>'; }
+      else list.innerHTML = opts.map(function (x, i) { return '<li role="option" id="tpo' + i + '" data-i="' + i + '"' + (i === act ? ' aria-selected="true"' : "") + '><span>' + esc(x[0]) + '</span><span class="mono">' + x[1] + '</span></li>'; }).join("");
+      list.hidden = false; inp.setAttribute("aria-expanded", "true");
+      if (act >= 0) inp.setAttribute("aria-activedescendant", "tpo" + act); else inp.removeAttribute("aria-activedescendant");
+      list.querySelectorAll("li[role=option]").forEach(function (li) { li.onmousedown = function (e) { e.preventDefault(); add(opts[+li.dataset.i][0]); }; });
+    }
+    function add(t) { if (st.tools.indexOf(t) < 0) st.tools.push(t); inp.value = ""; act = -1; renderChips(); onChange(); open(); }
+    inp.oninput = function () { act = -1; open(); };
+    inp.onfocus = open;
+    inp.onblur = function () { setTimeout(close, 100); };
+    inp.onkeydown = function (e) {
+      if (e.key === "ArrowDown") { e.preventDefault(); act = Math.min(act + 1, opts.length - 1); open(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); act = Math.max(act - 1, 0); open(); }
+      else if (e.key === "Enter") { e.preventDefault(); var pick = act >= 0 ? opts[act] : opts[0]; if (pick && inp.value.trim() || act >= 0) add(pick[0]); }
+      else if (e.key === "Escape") { close(); }
+      else if (e.key === "Backspace" && !inp.value && st.tools.length) { st.tools.pop(); renderChips(); onChange(); }
+    };
+    renderChips();
+  }
   function jobs() {
-    var st = { fwd: false, group: "", q: "", metro: "", pay: "", tool: "" };
-    var tools = top(tally(R, function (r) { return r.tools; }), 30).map(function (x) { return x[0]; }).sort(function (a, b) { return a.toLowerCase() < b.toLowerCase() ? -1 : 1; });
+    var st = { fwd: false, group: "", q: "", metro: "", pay: "", tools: [] };
+    var toolCounts = top(tally(R, function (r) { return r.tools; }), 100000);
     function sel(id, label, opts) { return '<label for="' + id + '" style="position:absolute;left:-9999px">' + label + '</label><select id="' + id + '"><option value="">' + label + '</option>' +
       opts.map(function (o) { return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>'; }).join("") + '</select>'; }
     app.innerHTML = '<div class="page-head"><h1>New jobs</h1></div>' +
@@ -126,7 +157,9 @@
       sel("grp", "Every kind of role", D.group_order.map(function (g) { return [g, g]; })) +
       sel("metro", "Anywhere", METROS.map(function (m) { return [m[0], m[0]]; })) +
       sel("pay", "Any pay", [["posted", "Pay posted"], ["150", "$150k+"], ["200", "$200k+"], ["250", "$250k+"]]) +
-      sel("tool", "Any tool", tools.map(function (t) { return [t, t]; })) + '</div>' +
+      '</div><div class="toolpick"><div class="tp-box"><span id="tpchips"></span>' +
+      '<input id="tp" type="text" role="combobox" aria-expanded="false" aria-controls="tplist" aria-autocomplete="list" autocomplete="off" placeholder="Filter by tools, e.g. Workday, Python, Claude"></div>' +
+      '<ul id="tplist" role="listbox" hidden></ul></div>' +
       '<p class="count"></p><div id="jobs"></div>';
     function mid(r) { return r.comp ? (r.comp[0] + (r.comp[1] || r.comp[0])) / 2 : 0; }
     function draw() {
@@ -137,7 +170,7 @@
         if (m && !m[1].test(r.location || "")) return false;
         if (st.pay === "posted" && !r.comp) return false;
         if (st.pay && st.pay !== "posted" && mid(r) < +st.pay * 1000) return false;
-        if (st.tool && r.tools.indexOf(st.tool) < 0) return false;
+        if (st.tools.length && !st.tools.some(function (t) { return r.tools.indexOf(t) >= 0; })) return false;
         if (q) { var h = (r.title + " " + r.company + " " + (r.location || "") + " " + r.tools.join(" ") + " " + r.summary + " " + r.group).toLowerCase();
           if (!q.split(/\s+/).every(function (w) { return h.indexOf(w) >= 0; })) return false; }
         return true; });
@@ -146,7 +179,8 @@
       jobList(document.getElementById("jobs"), rows);
     }
     document.getElementById("fwd").onclick = function () { st.fwd = !st.fwd; this.setAttribute("aria-pressed", st.fwd); draw(); };
-    [["grp", "group"], ["metro", "metro"], ["pay", "pay"], ["tool", "tool"]].forEach(function (p) {
+    toolPicker(toolCounts, st, draw);
+    [["grp", "group"], ["metro", "metro"], ["pay", "pay"]].forEach(function (p) {
       document.getElementById(p[0]).onchange = function () { st[p[1]] = this.value; draw(); }; });
     var t; document.getElementById("jq").oninput = function (e) { clearTimeout(t); t = setTimeout(function () { st.q = e.target.value; draw(); }, 150); };
     draw();
