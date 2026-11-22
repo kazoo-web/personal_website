@@ -197,3 +197,25 @@ a.card.qc { display: flex; flex-direction: column; justify-content: space-betwee
 .dcard .hbar.small .lab { white-space: nowrap; }
 @media (max-width: 1000px) { .dcard .hbar.small { grid-template-columns: minmax(110px, 180px) 1fr 44px; } .dcard .hbar.small .lab { white-space: normal; } .dcard h2 { white-space: normal; } }
 .dcard > p.muted { margin-bottom: 24px; }
+
+/* streamlined job cards (closer to the mockup) */
+.card.job { padding: 28px 32px 24px; border-radius: 24px; }
+.job h3 { font-size: clamp(20px, 2vw, 24px); }
+.job .co { font-size: 16px; margin-top: 4px; }
+.job .tags { margin-top: 14px; font-size: 15px; gap: 2px 8px; }
+.job .dot { width: 9px; height: 9px; }
+.job .pay { font-size: clamp(24px, 2.6vw, 30px); margin-top: 22px; }
+.job .pay.nopay { font-size: 14px; margin-top: 22px; }
+.job .mid { margin-top: 6px; font-size: 14px; flex-wrap: nowrap; align-items: baseline; }
+.job .mid > span:first-child { flex: none; }
+.job .tools { font-size: 13px; max-width: none; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.job .bottom { padding-top: 22px; font-size: 14px; }
+.grid2 .job { min-height: 0; }
+@media (min-width: 820px) { #jobs .grid2 { gap: 20px; } }
+@media (max-width: 560px) { .card.job { padding: 22px 20px 20px; } }
+.grid2 > * { min-width: 0; }
+@media (max-width: 560px) { .job .mid { flex-wrap: wrap; } .job .tools { flex-basis: 100%; text-align: left; } }
+
+.filters2 { margin-top: -16px; }
+.filters2 select { flex: 1 1 160px; min-width: 0; }
+#jq { flex: 1 1 320px; }

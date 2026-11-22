@@ -55,14 +55,13 @@
     var rep = r.reports_to || (r.reports_into && r.reports_into !== "Unknown" ? r.reports_into : "");
     var repHtml = rep && r.reports_basis !== "not_stated" ? 'Reports to <span class="' + (r.reports_basis === "inferred" ? "inferred" : "") + '">' + esc(rep) +
       (r.reports_basis === "inferred" ? " inferred" : "") + '</span>' : "";
-    var tools = r.tools.slice(0, 4).join(" · ");
+    var tools = r.tools.slice(0, 3).join(" · ");
     return '<article class="card job">' +
       '<h3>' + esc(r.title) + '</h3>' +
       '<div class="co"><b>' + esc(r.company) + '</b>' + (r.location ? ' · ' + esc(r.location) : "") + '</div>' +
       '<div class="tags">' + tags.join("") + '</div>' +
       (r.comp ? '<div class="pay">' + pay(r.comp) + '</div>' : '<div class="pay nopay">Pay not posted</div>') +
       '<div class="mid"><span>' + repHtml + '</span><span class="tools">' + esc(tools) + '</span></div>' +
-      (l >= 2 && r.ai_evidence ? '<div class="why">“' + esc(r.ai_evidence) + '”</div>' : "") +
       '<div class="bottom"><span>' + (isNew(r) ? "Posted " + md(r.first_seen) : "Open since tracking began") + '</span>' +
       '<a href="' + esc(r.url) + '" target="_blank" rel="noopener">Original posting ↗</a></div></article>';
   }
@@ -112,21 +111,44 @@
   }
 
   /* ---------- Jobs ---------- */
+  var METROS = [["Remote", /remote/i], ["San Francisco Bay Area", /san francisco|\bsf\b|bay area|palo alto|menlo park|mountain view|san mateo|oakland|san jose|sunnyvale|redwood city|south san francisco/i],
+    ["New York", /new york|\bnyc\b|brooklyn/i], ["Seattle", /seattle|bellevue|redmond/i], ["Los Angeles", /los angeles|\bla\b|santa monica|el segundo|costa mesa|irvine/i],
+    ["Boston", /boston|cambridge/i], ["Austin", /austin/i], ["Washington, DC", /washington|\bdc\b|arlington|reston/i], ["Chicago", /chicago/i], ["Denver", /denver|boulder/i]];
   function jobs() {
-    var st = { fwd: false, group: "" };
+    var st = { fwd: false, group: "", q: "", metro: "", pay: "", tool: "" };
+    var tools = top(tally(R, function (r) { return r.tools; }), 30).map(function (x) { return x[0]; }).sort(function (a, b) { return a.toLowerCase() < b.toLowerCase() ? -1 : 1; });
+    function sel(id, label, opts) { return '<label for="' + id + '" style="position:absolute;left:-9999px">' + label + '</label><select id="' + id + '"><option value="">' + label + '</option>' +
+      opts.map(function (o) { return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>'; }).join("") + '</select>'; }
     app.innerHTML = '<div class="page-head"><h1>New jobs</h1></div>' +
-      '<div class="controls"><button class="pill" type="button" id="fwd" aria-pressed="false">Builds with AI or leads</button>' +
-      '<label for="grp" style="position:absolute;left:-9999px">Kind of role</label><select id="grp"><option value="">Every kind of role</option>' +
-      D.group_order.map(function (g) { return '<option>' + esc(g) + '</option>'; }).join("") + '</select></div>' +
+      '<div class="controls"><label for="jq" style="position:absolute;left:-9999px">Search jobs</label><input id="jq" type="search" placeholder="Search title, company, location, tool">' +
+      '<button class="pill" type="button" id="fwd" aria-pressed="false">Builds with AI</button></div>' +
+      '<div class="controls filters2">' +
+      sel("grp", "Every kind of role", D.group_order.map(function (g) { return [g, g]; })) +
+      sel("metro", "Anywhere", METROS.map(function (m) { return [m[0], m[0]]; })) +
+      sel("pay", "Any pay", [["posted", "Pay posted"], ["150", "$150k+"], ["200", "$200k+"], ["250", "$250k+"]]) +
+      sel("tool", "Any tool", tools.map(function (t) { return [t, t]; })) + '</div>' +
       '<p class="count"></p><div id="jobs"></div>';
+    function mid(r) { return r.comp ? (r.comp[0] + (r.comp[1] || r.comp[0])) / 2 : 0; }
     function draw() {
-      var rows = R.filter(function (r) { return (!st.fwd || lv(r) >= 2) && (!st.group || r.group === st.group); });
+      var q = st.q.toLowerCase().trim(), m = METROS.filter(function (x) { return x[0] === st.metro; })[0];
+      var rows = R.filter(function (r) {
+        if (st.fwd && lv(r) < 2) return false;
+        if (st.group && r.group !== st.group) return false;
+        if (m && !m[1].test(r.location || "")) return false;
+        if (st.pay === "posted" && !r.comp) return false;
+        if (st.pay && st.pay !== "posted" && mid(r) < +st.pay * 1000) return false;
+        if (st.tool && r.tools.indexOf(st.tool) < 0) return false;
+        if (q) { var h = (r.title + " " + r.company + " " + (r.location || "") + " " + r.tools.join(" ") + " " + r.summary + " " + r.group).toLowerCase();
+          if (!q.split(/\s+/).every(function (w) { return h.indexOf(w) >= 0; })) return false; }
+        return true; });
       var nw = rows.filter(isNew).length;
       app.querySelector(".count").textContent = n(rows.length) + " open · " + n(nw) + " posted since " + md(S.first_day) + " · newest first";
       jobList(document.getElementById("jobs"), rows);
     }
     document.getElementById("fwd").onclick = function () { st.fwd = !st.fwd; this.setAttribute("aria-pressed", st.fwd); draw(); };
-    document.getElementById("grp").onchange = function () { st.group = this.value; draw(); };
+    [["grp", "group"], ["metro", "metro"], ["pay", "pay"], ["tool", "tool"]].forEach(function (p) {
+      document.getElementById(p[0]).onchange = function () { st[p[1]] = this.value; draw(); }; });
+    var t; document.getElementById("jq").oninput = function (e) { clearTimeout(t); t = setTimeout(function () { st.q = e.target.value; draw(); }, 150); };
     draw();
   }
 
