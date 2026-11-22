@@ -140,15 +140,20 @@
       var shown = x[0].replace(/\s*\(.*\)$/, ""); if (!seen[key] && !seen[shown] && out.length < k_) { seen[key] = 1; seen[shown] = 1; out.push(shown); } });
     return out;
   }
+  var SHORT = {
+    "Building & automation": "People practitioners who build the tools, automations and agents they run.",
+    "People systems": "Run and configure the HR stack: Workday, the ATS, payroll and comp tools.",
+    "People analytics & research": "Study the workforce with data and turn it into decisions.",
+    "Strategic projects & initiatives": "Run change with an end date: rollouts, expansions, restructurings, AI adoption.",
+    "Embedded engineer": "Engineers who write production code for People and Talent.",
+    "Embedded product & design": "Product managers and designers building internal People products.",
+    "Core People & Talent": "Recruiting, HR partners, people ops, total rewards and programs."
+  };
   function roles() {
-    function byG(g) { return R.filter(function (r) { return r.group === g; }); }
-    app.innerHTML = '<h1>Roles</h1><p class="section-sub" style="margin-top:-24px;max-width:62ch;font-size:19px">Seven kinds of role, sorted from the jobs themselves. Six are where People work is being rebuilt; the seventh is the core of the function they grow out of.</p>' +
-      '<div class="grid2">' + ROLE_ORDER.map(function (g) {
-        var rows = byG(g), nw = rows.filter(isNew).length;
-        return '<a class="card role-card" href="#roles/' + slug(g) + '"><h3>' + esc(g) + '</h3>' +
-          '<span class="open"><span class="dot"></span>' + n(rows.length) + ' open' + (nw ? ' <span class="mono">+' + nw + ' new</span>' : "") + '</span>' +
-          '<p>' + esc(GROUPS[g][1]) + '</p>' +
-          '<p class="titles"><span class="muted">Titles in the wild:</span> ' + realTitles(rows, 3).map(esc).join(" · ") + '</p></a>'; }).join("") + '</div>';
+    app.innerHTML = '<h1>Roles</h1><div class="grid2">' + ROLE_ORDER.map(function (g) {
+      var rows = R.filter(function (r) { return r.group === g; }), nw = rows.filter(isNew).length;
+      return '<a class="card qc" href="#roles/' + slug(g) + '"><div class="num">' + n(rows.length) + '<small>open' + (nw ? ' +' + nw + ' new' : "") + '</small></div>' +
+        '<div><h3>' + esc(g) + '</h3><p>' + esc(SHORT[g]) + '</p></div></a>'; }).join("") + '</div>';
   }
   function category(key) {
     var title, def, rows;

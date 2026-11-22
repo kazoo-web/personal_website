@@ -181,3 +181,11 @@ td.num, th.num { text-align: right; font-family: var(--mono); font-size: 14px; }
 .titles.big { font-size: 17px; line-height: 1.9; max-width: 80ch; }
 @media (min-width: 900px) { .entry.wide { grid-template-columns: 170px 1fr 460px; } }
 .legend.tight { margin: 12px 0 0; font-size: 13px; }
+
+/* role cards: quiet */
+a.card.qc { display: flex; flex-direction: column; justify-content: space-between; gap: 40px; min-height: 280px; padding: 40px 40px 36px; }
+.qc .num { font-size: clamp(56px, 6vw, 76px); font-weight: 500; letter-spacing: -0.05em; color: var(--rust); line-height: 1; }
+.qc .num small { font-family: var(--mono); font-size: 14px; color: var(--muted); letter-spacing: 0; margin-left: 10px; }
+.qc h3 { font-size: clamp(24px, 2.6vw, 28px); letter-spacing: -0.03em; margin-bottom: 8px; }
+.qc p { margin: 0; color: var(--muted); font-size: 17px; max-width: 36ch; }
+@media (max-width: 560px) { a.card.qc { padding: 28px 24px; min-height: 0; gap: 28px; } }
