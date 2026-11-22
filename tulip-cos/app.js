@@ -593,7 +593,7 @@ const COMB_COLS = [
   { key: 'want', label: 'Want', group: 'cw', val: (a) => a.k.want == null ? null : snap(a.k.want) },
 ];
 const COMB_GROUPS = [['rank', 'Rank'], ['time', '% time'], ['day1', 'Day 1 / learn'], ['cw', 'Can do / want']];
-let combSort = { key: 'rank', dir: 1 }; const combHide = new Set();
+let combSort = { key: 'rank', dir: 1 }; const combHide = new Set(); let colMenuOpen = false;
 function vCombined() {
   const rows = analyze(), done = rows.filter((r) => r.complete);
   const cell = (v) => v == null ? '<span class="dot mid">–</span>' : `<span class="dot ${v >= 4 ? 'hi' : v <= 2 ? 'lo' : 'mid'}">${snap(v)}</span>`;
@@ -615,13 +615,13 @@ function vCombined() {
   };
   const arrow = (k) => combSort.key === k ? (combSort.dir > 0 ? ' ↑' : ' ↓') : '';
   const head = cols.map((c) => `<th class="${c.key === 'item' ? '' : 'n'} sortable ${combSort.key === c.key ? 'sorted' : ''}" data-sort="${c.key}" title="Sort">${c.label}<span class="arr">${arrow(c.key)}</span></th>`).join('');
-  const toggles = COMB_GROUPS.map(([g, l]) => `<button class="colt ${combHide.has(g) ? '' : 'on'}" data-colt="${g}">${combHide.has(g) ? '' : '✓ '}${l}</button>`).join('');
+  const toggles = `<button class="mbtn" data-colmenu aria-expanded="${colMenuOpen}">Columns ▾</button><div class="cmenu ${colMenuOpen ? 'open' : ''}">${COMB_GROUPS.map(([g, l]) => `<label><input type="checkbox" data-colt="${g}" ${combHide.has(g) ? '' : 'checked'}>${l}</label>`).join('')}</div>`;
   const table = `<table><thead><tr>${head}</tr></thead><tbody>${sorted.map((a) => `<tr>${cols.map((c) => td[c.key](a)).join('')}</tr>`).join('')}</tbody></table>`;
   const top = misalignments(rows);
   const flagged = !done.length ? '<p class="sub">Place items on the 2×2 to see these.</p>'
     : top.length ? `<ul class="flags">${top.map((m) => `<li><b>${esc(m.a.c.text)}</b> <span class="mtype">${m.label}</span><br>${m.why}</li>`).join('')}</ul>`
     : '<p class="sub">No significant misalignments: nothing in the top half of Natan’s order scores 2 or below on can-do or want.</p>';
-  return `<div class="card"><div class="combhead"><h3>Side by side</h3><div class="colts"><span>Show</span>${toggles}</div></div>${table}</div>
+  return `<div class="card"><div class="combhead"><h3>Side by side</h3><div class="colmenu">${toggles}</div></div>${table}</div>
     <div class="card quiet"><h3>Top misalignments <span class="auto-tag">auto-flagged</span></h3>${flagged}
       <details class="method"><summary>How these are picked</summary><p>A rule, not judgment. Only items in the top half of Natan’s order, or above an even share of time, are considered. One is flagged when Katherine’s want is 1–2, or her can-do is 1–2 (a can-do gap counts for less when Natan marked it learnable). The strongest gaps on the most important items come first; at most three are shown.</p></details></div>`;
 }
@@ -630,8 +630,10 @@ function vCombined() {
 document.addEventListener('click', (e) => {
   const th = e.target.closest('[data-sort]');
   if (th) { const k = th.dataset.sort; combSort = combSort.key === k ? { key: k, dir: -combSort.dir } : { key: k, dir: 1 }; render(); return; }
-  const t = e.target.closest('[data-colt]');
-  if (t) { const g = t.dataset.colt; combHide.has(g) ? combHide.delete(g) : combHide.add(g); if (COMB_COLS.find((c) => c.key === combSort.key)?.group === g) combSort = { key: 'item', dir: 1 }; render(); }
+  if (e.target.closest('[data-colmenu]')) { colMenuOpen = !colMenuOpen; render(); return; }
+  const t = e.target.closest('input[data-colt]');
+  if (t) { const g = t.dataset.colt; combHide.has(g) ? combHide.delete(g) : combHide.add(g); if (COMB_COLS.find((c) => c.key === combSort.key)?.group === g) combSort = { key: 'item', dir: 1 }; render(); return; }
+  if (colMenuOpen && !e.target.closest('.cmenu')) { colMenuOpen = false; render(); }
 });
 const ownerKey = (path) => path.split('.')[0];
 document.addEventListener('click', (e) => {
