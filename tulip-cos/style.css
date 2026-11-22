@@ -283,3 +283,5 @@ th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
 th.sortable:hover { color: var(--accent); }
 th.sorted { color: var(--accent); }
 th .arr { display: inline-block; min-width: 10px; }
+
+.mtype { display: inline-block; font-size: 11px; font-weight: 700; color: var(--accent); background: var(--warn-soft); border-radius: 999px; padding: 1px 8px; margin-left: 6px; vertical-align: 1px; }

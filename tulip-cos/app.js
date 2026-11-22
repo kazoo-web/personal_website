@@ -558,6 +558,21 @@ function analyze() {
     return { ...base, complete: true, canGap, wantGap, score: imp * Math.max(canGap, wantGap) * w };
   });
 }
+// a misalignment needs a real gap (a 1 or 2) on something that matters to Natan
+function misalignments(rows) {
+  const n = rows.length, even = 100 / n;
+  return rows.filter((a) => a.complete).map((a) => {
+    const matters = a.rank <= Math.ceil(n / 2) || (a.t != null && a.t > even);
+    if (!matters) return null;
+    const can = snap(a.k.can), want = snap(a.k.want), learn = a.nt.dayone === 'learn';
+    const wantSev = want <= 2 ? 3 - want : 0;            // 1 or 2
+    const canSev = can <= 2 ? (3 - can) * (learn ? 0.5 : 1) : 0;
+    const sev = Math.max(wantSev, canSev); if (!sev) return null;
+    const label = wantSev && canSev ? 'Low want and can-do gap' : wantSev ? 'Low want' : learn ? 'Can-do gap · learnable' : a.nt.dayone === 'day1' ? 'Can-do gap · needed day 1' : 'Can-do gap';
+    const nat = `Natan ranks it #${a.rank} of ${n}${a.t != null ? `, about ${r1(a.t)}% of the job` : ''}${a.nt.dayone === 'day1' ? ', needed on day 1' : learn ? ', learnable' : ''}`;
+    return { a, label, why: `${nat}. Katherine: can do ${can}, want ${want}.`, score: sev * (0.5 + a.imp) * (a.w || 1) };
+  }).filter(Boolean).sort((x, y) => y.score - x.score).slice(0, 3);
+}
 function concernType(a) {
   const s = a.canGap >= 0.5, w = a.wantGap >= 0.5;
   if (s && w) return 'Can-do + want gap';
@@ -602,13 +617,13 @@ function vCombined() {
   const head = cols.map((c) => `<th class="${c.key === 'item' ? '' : 'n'} sortable ${combSort.key === c.key ? 'sorted' : ''}" data-sort="${c.key}" title="Sort">${c.label}<span class="arr">${arrow(c.key)}</span></th>`).join('');
   const toggles = COMB_GROUPS.map(([g, l]) => `<button class="colt ${combHide.has(g) ? '' : 'on'}" data-colt="${g}">${combHide.has(g) ? '' : '✓ '}${l}</button>`).join('');
   const table = `<table><thead><tr>${head}</tr></thead><tbody>${sorted.map((a) => `<tr>${cols.map((c) => td[c.key](a)).join('')}</tr>`).join('')}</tbody></table>`;
-  const top = done.filter((r) => r.score > 0.08).sort((a, b) => b.score - a.score).slice(0, 3);
+  const top = misalignments(rows);
   const flagged = !done.length ? '<p class="sub">Place items on the 2×2 to see these.</p>'
-    : top.length ? `<ul class="flags">${top.map((a) => `<li><b>${esc(a.c.text)}</b> — ${concernType(a).toLowerCase()}. ${natanLine(a)} Katherine: can do ${snap(a.k.can)}, want ${snap(a.k.want)}.</li>`).join('')}</ul>`
-    : '<p class="sub">Nothing stands out.</p>';
+    : top.length ? `<ul class="flags">${top.map((m) => `<li><b>${esc(m.a.c.text)}</b> <span class="mtype">${m.label}</span><br>${m.why}</li>`).join('')}</ul>`
+    : '<p class="sub">No significant misalignments: nothing in the top half of Natan’s order scores 2 or below on can-do or want.</p>';
   return `<div class="card"><div class="combhead"><h3>Side by side</h3><div class="colts"><span>Show</span>${toggles}</div></div>${table}</div>
     <div class="card quiet"><h3>Top misalignments <span class="auto-tag">auto-flagged</span></h3>${flagged}
-      <details class="method"><summary>How these are picked</summary><p>A formula, not judgment: items high in Natan’s order where Katherine’s can-do (counted at half if it can be learned) or want is low, weighted by share of time.</p></details></div>`;
+      <details class="method"><summary>How these are picked</summary><p>A rule, not judgment. Only items in the top half of Natan’s order, or above an even share of time, are considered. One is flagged when Katherine’s want is 1–2, or her can-do is 1–2 (a can-do gap counts for less when Natan marked it learnable). The strongest gaps on the most important items come first; at most three are shown.</p></details></div>`;
 }
 
 // ---- events ----------------------------------------------------------------------------------
