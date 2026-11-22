@@ -319,8 +319,8 @@
     withBasis("code_basis");
     var codeCard = splitBars(code, "Who writes code", "Share of each kind of role whose posting has the person writing code.");
     withBasis("reports_basis");
-    var outCard = splitBars(function (r) { return ["IT", "Engineering", "Finance", "Operations", "CEO/Executive", "Other"].indexOf(r.reports_into) >= 0; },
-      "Who reports outside People", "Share of each kind of role reporting into IT, Engineering, Finance, Operations or the CEO.");
+    var outCard = splitBars(function (r) { return ["IT", "Engineering", "Finance", "Operations", "Other"].indexOf(r.reports_into) >= 0; },
+      "Who reports outside People", "Share of each kind of role reporting into another function: IT, Engineering, Finance or Operations. Roles that report to the CEO aren't counted.");
     app.innerHTML = '<h1>Data</h1>' +
       '<p class="muted" style="margin:-24px 0 32px;font-size:19px;max-width:60ch">Across ' + n(R.length) + ' open People and Talent roles at US startups and growth companies:</p>' +
       '<div class="stats">' + [[pct(nAI, R.length) + "%", "work with AI"],
