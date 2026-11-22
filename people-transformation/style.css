@@ -189,3 +189,11 @@ a.card.qc { display: flex; flex-direction: column; justify-content: space-betwee
 .qc h3 { font-size: clamp(24px, 2.6vw, 28px); letter-spacing: -0.03em; margin-bottom: 8px; }
 .qc p { margin: 0; color: var(--muted); font-size: 17px; max-width: 36ch; }
 @media (max-width: 560px) { a.card.qc { padding: 28px 24px; min-height: 0; gap: 28px; } }
+
+/* data cards: identical structure so rows line up across cards */
+.dcard h2 { white-space: nowrap; }
+.dcard > p.muted { min-height: 3em; }
+.dcard .hbar.small { grid-template-columns: 236px 1fr 48px; }
+.dcard .hbar.small .lab { white-space: nowrap; }
+@media (max-width: 1000px) { .dcard .hbar.small { grid-template-columns: minmax(110px, 180px) 1fr 44px; } .dcard .hbar.small .lab { white-space: normal; } .dcard h2 { white-space: normal; } }
+.dcard > p.muted { margin-bottom: 24px; }

@@ -244,8 +244,8 @@
     function splitBars(test, title, sub) {
       var rows = ROLE_ORDER.map(function (g) { var rs = byG(g);
         var st = rs.filter(function (r) { return test(r) && r._b(r) === "stated"; }).length, inf = rs.filter(function (r) { return test(r) && r._b(r) !== "stated"; }).length;
-        return [g, st, inf, rs.length]; }).sort(function (a, b) { return (b[1] + b[2]) / b[3] - (a[1] + a[2]) / a[3]; });
-      return '<div class="card"><h2>' + title + '</h2><p class="muted">' + sub + '</p><div class="hbars">' + rows.map(function (x) {
+        return [g, st, inf, rs.length]; });
+      return '<div class="card dcard"><h2>' + title + '</h2><p class="muted">' + sub + '</p><div class="hbars">' + rows.map(function (x) {
         return '<div class="hbar small"><span class="lab">' + esc(x[0]) + '</span><span class="trk"><i class="solid" style="width:' + 100 * x[1] / x[3] + '%"></i><i class="hatched" style="width:' + 100 * x[2] / x[3] + '%"></i></span><span class="val">' + pct(x[1] + x[2], x[3]) + '%</span></div>'; }).join("") + '</div></div>';
     }
     var code = function (r) { return r.code === "yes"; }; code._ = 1;
@@ -255,7 +255,7 @@
     var codeCard = splitBars(code, "Who writes code", "Share of each kind of role whose posting has the person writing code.");
     withBasis("reports_basis");
     var outCard = splitBars(function (r) { return ["IT", "Engineering", "Finance", "Operations", "CEO/Executive", "Other"].indexOf(r.reports_into) >= 0; },
-      "Who reports outside People and Talent", "Share of each kind of role whose reporting line is IT, Engineering, Finance, Operations or the CEO.");
+      "Who reports outside People", "Share of each kind of role reporting into IT, Engineering, Finance, Operations or the CEO.");
     app.innerHTML = '<h1>Data</h1>' +
       '<div class="stats">' + [[n(R.length), "roles tracked"], [pct(builders.length, R.length) + "%", "in the six new kinds of role"],
         [pct(builders.filter(function (r) { return r.code === "yes"; }).length, builders.length) + "%", "of those write code"],
