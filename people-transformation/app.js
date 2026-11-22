@@ -210,8 +210,6 @@
     var fwd = R.filter(FWD), tools = top(tally(fwd, function (r) { return r.tools; }), 6);
 
     var entries = [
-      ["Building & automation is the most AI-forward kind of role: all " + ba.length + " build with AI or lead AI change.",
-        "Sorting roles by kind tells you more about AI than any title does. Builder roles sit at one end; core recruiting and HR roles sit at the other, with three in four not mentioning AI at all.", mixChart, true],
       ["People systems work is still Workday work.",
         psWd + " of " + ps.length + " People systems roles name Workday, often down to EIBs and Core Connectors, and " + pct(anyAI(ps), ps.length) + "% mention AI at all. " + psIT + " of them report into IT rather than People.",
         hb(psTools, psTools.length ? psTools[0][1] : 1, function (x) { return x[1] + "/" + ps.length; })],
