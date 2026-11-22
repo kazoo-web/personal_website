@@ -260,8 +260,13 @@
 
   /* ---------- Data ---------- */
   function data() {
-    var builders = R.filter(function (r) { return r.group !== "Core People & Talent"; });
-    var inferredRep = R.filter(function (r) { return r.reports_basis === "inferred"; }).length;
+    var NEW = ["Embedded engineer", "Embedded product & design", "Building & automation"];
+    var nr = R.filter(function (r) { return NEW.indexOf(r.group) >= 0; });
+    var core = R.filter(function (r) { return r.group === "Core People & Talent"; });
+    function medPay(rows) { var a = rows.filter(function (r) { return r.comp; }).map(function (r) { return (r.comp[0] + (r.comp[1] || r.comp[0])) / 2; }).sort(function (x, y) { return x - y; });
+      if (!a.length) return 0; var m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; }
+    var cos = {}, ncos = {}; R.forEach(function (r) { cos[r.company] = 1; }); nr.forEach(function (r) { ncos[r.company] = 1; });
+    var nc = Object.keys(ncos).length, tc = Object.keys(cos).length;
     function byG(g) { return R.filter(function (r) { return r.group === g; }); }
     function splitBars(test, title, sub) {
       var rows = ROLE_ORDER.map(function (g) { var rs = byG(g);
@@ -279,9 +284,11 @@
     var outCard = splitBars(function (r) { return ["IT", "Engineering", "Finance", "Operations", "CEO/Executive", "Other"].indexOf(r.reports_into) >= 0; },
       "Who reports outside People", "Share of each kind of role reporting into IT, Engineering, Finance, Operations or the CEO.");
     app.innerHTML = '<h1>Data</h1>' +
-      '<div class="stats">' + [[n(R.length), "roles tracked"], [pct(builders.length, R.length) + "%", "in the six new kinds of role"],
-        [pct(builders.filter(function (r) { return r.code === "yes"; }).length, builders.length) + "%", "of those write code"],
-        [pct(inferredRep, R.length) + "%", "of reporting lines are inferred, not stated"]].map(function (s) {
+      '<p class="muted" style="margin:-24px 0 32px;font-size:19px;max-width:60ch">The new kinds of role: embedded engineers, embedded product and design, and People-native builders.</p>' +
+      '<div class="stats">' + [[n(nr.length), "open roles, " + pct(nr.length, R.length) + "% of all People and Talent roles"],
+        ["1 in " + Math.round(tc / Math.max(nc, 1)), "companies hiring for People and Talent has one open (" + nc + " of " + tc + ")"],
+        [k(medPay(nr)), "median posted pay, against " + k(medPay(core)) + " for core People roles"],
+        [pct(nr.filter(function (r) { return r.code === "yes"; }).length, nr.length) + "%", "write code"]].map(function (s) {
         return '<div><b>' + s[0] + '</b><span>' + s[1] + '</span></div>'; }).join("") + '</div>' + LEGEND +
       '<div class="grid2">' + codeCard + outCard + '</div>' + src();
   }

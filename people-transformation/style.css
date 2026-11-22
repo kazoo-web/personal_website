@@ -219,3 +219,6 @@ a.card.qc { display: flex; flex-direction: column; justify-content: space-betwee
 .filters2 { margin-top: -16px; }
 .filters2 select { flex: 1 1 160px; min-width: 0; }
 #jq { flex: 1 1 320px; }
+.stats { gap: 32px 40px; }
+.stats b { font-size: clamp(48px, 5.2vw, 68px); white-space: nowrap; }
+.stats span { font-size: 17px; }
