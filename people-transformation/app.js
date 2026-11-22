@@ -1,240 +1,261 @@
-/* People Transformation Tracker — static site. Data: data.json (built by site/build_site.py). */
+/* People Transformation Tracker. Data: data.json, built by site/build_site.py */
 (function () {
   "use strict";
-  var D, ROLES, app = document.getElementById("app");
+  var D, R, S, app = document.getElementById("app");
 
   var LEVEL = { "None": 0, "Uses AI": 1, "Builds with AI": 2,
     "Leads AI transformation - People/Talent": 3, "Leads AI transformation - company-wide": 4 };
   var COLOR = ["var(--l0)", "var(--l1)", "var(--l2)", "var(--l3)", "var(--l4)"];
-  var LABEL = ["No AI in the role", "Uses AI", "Builds with AI",
+  var AI_NAME = ["No AI in the role", "Uses AI", "Builds with AI",
     "Leads AI transformation – People/Talent", "Leads AI transformation – company-wide"];
-  var LEVEL_DEF = [
-    "The posting does not ask the role to work with AI.",
+  var AI_SHORT = ["No AI", "Uses AI", "Builds", "Leads – People", "Leads – company"];
+  var AI_DEF = [
+    "The posting doesn't ask the role to work with AI.",
     "Expected to use AI tools in its own work.",
     "Builds specific AI tools, agents, workflows or integrations inside the People function.",
     "Changes how the People/Talent function, or a broad part of it such as recruiting, works with AI: through skills and adoption, or by rebuilding its operating model around AI.",
     "Changes how the whole company, or several functions, works with AI: enablement programs, training, champions, redesigning roles."
   ];
-  var GROUP_DEF = {
-    "Embedded engineer": "Software, data or AI engineers who sit in or build for People/Talent.",
-    "Embedded product & design": "Hired as product managers or designers to build internal People products.",
-    "Building & automation": "People-native builders: they design and build People capabilities, the process together with the tools, automations or AI agents that run it, and come from People or talent backgrounds rather than engineering.",
-    "People systems": "Work within existing People systems (HRIS, ATS, payroll and comp tools): administer, configure, integrate, migrate.",
-    "People analytics & research": "Analysts, data scientists and researchers working on people data across the function.",
-    "Strategic projects & initiatives": "Time-bound, cross-functional initiatives: restructuring, change and AI-adoption initiatives, People-technology rollouts.",
-    "Core People & Talent": "Recruiting, sourcing, coordination, HR business partners, total rewards, people operations, L&D, employee relations and recurring People programs."
+  var GROUPS = {
+    "Building & automation": ["People-native builders", "People and Talent practitioners who design and build the process together with the tools, automations or AI agents that run it. Hired from People or talent backgrounds, not as engineers."],
+    "Embedded engineer": ["Engineers in People", "Software, data and AI engineers who sit in People/Talent or build for it."],
+    "Embedded product & design": ["Product and design in People", "Hired as product managers or designers to build internal People products."],
+    "People systems": ["Inside the HR stack", "Work within existing People systems (HRIS, ATS, payroll and comp tools): administer, configure, integrate, migrate."],
+    "People analytics & research": ["Data on people", "Analysts, data scientists and researchers working on people data across the function."],
+    "Strategic projects & initiatives": ["Time-bound change", "Cross-functional initiatives: restructuring, change and AI adoption, People-technology rollouts."],
+    "Core People & Talent": ["The core of the function", "Recruiting, sourcing, coordination, HR business partners, total rewards, people operations, L&D, employee relations and recurring People programs."]
   };
-  var SENIORITY = ["intern", "entry", "mid", "senior", "staff_principal", "manager", "director", "vp_plus", "unclear"];
-  var SEN_LABEL = { intern: "Intern", entry: "Entry", mid: "Mid", senior: "Senior", staff_principal: "Staff / principal",
-    manager: "Manager", director: "Director", vp_plus: "VP and above", unclear: "Unclear" };
+  var BUILDER_GROUPS = ["Building & automation", "Embedded engineer", "Embedded product & design", "People systems", "People analytics & research", "Strategic projects & initiatives"];
 
+  /* ---------- helpers ---------- */
   function lv(r) { return LEVEL[r.ai] || 0; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
-  function fmtDate(d) { if (!d) return ""; var p = d.split("-");
-    return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+p[1] - 1] + " " + (+p[2]); }
+  var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  function md(d) { if (!d) return ""; var p = d.split("-"); return MON[+p[1] - 1] + " " + (+p[2]); }
+  function mdy(d) { var p = d.split("-"); return MON[+p[1] - 1] + " " + (+p[2]) + ", " + p[0]; }
   function n(x) { return Number(x).toLocaleString("en-US"); }
-  function pct(a, b) { return b ? Math.round(100 * a / b) + "%" : "0%"; }
-  function ladder(l) { return '<span class="ladder" data-l="' + l + '" role="img" aria-label="' + esc(LABEL[l]) + '"><i></i><i></i><i></i><i></i><i></i></span>'; }
-  function money(c) { if (!c) return ""; var f = function (v) { return "$" + Math.round(v / 1000) + "k"; };
-    return c[1] && c[1] !== c[0] ? f(c[0]) + "–" + f(c[1]) : f(c[0]); }
-  function words(s) { return (s || "").replace(/_/g, " "); }
-  function count(list, key) { var m = {}; list.forEach(function (r) { var k = key(r); if (k) m[k] = (m[k] || 0) + 1; }); return m; }
-  function top(m, k) { return Object.keys(m).map(function (x) { return [x, m[x]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, k); }
-  function median(a) { if (!a.length) return null; a = a.slice().sort(function (x, y) { return x - y; }); var m = a.length >> 1;
-    return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; }
+  function pct(a, b) { return b ? Math.round(100 * a / b) : 0; }
+  function slug(s) { return s.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""); }
+  function k(v) { return "$" + Math.round(v / 1000) + "k"; }
+  function pay(c) { return !c ? "" : (c[1] && c[1] !== c[0] ? k(c[0]) + "–" + k(c[1]) : k(c[0])); }
+  function tally(list, f) { var m = {}; list.forEach(function (r) { [].concat(f(r) || []).forEach(function (x) { if (x) m[x] = (m[x] || 0) + 1; }); }); return m; }
+  function top(m, n_) { return Object.keys(m).map(function (x) { return [x, m[x]]; }).sort(function (a, b) { return b[1] - a[1] || (a[0] > b[0] ? 1 : -1); }).slice(0, n_); }
+  function isNew(r) { return r.first_seen > S.first_day; }
+  function src(extra) { return '<p class="src">Source: public job boards of ' + n(S.companies_tracked) + ' US startups and growth companies, as of ' + md(S.as_of) + (extra ? ". " + extra : "") + '</p>'; }
+  var FWD = function (r) { return lv(r) >= 2; };
 
-  /* ---------- shared pieces ---------- */
-  function roleItem(r) {
-    var l = lv(r);
-    var dl = [];
-    if (r.group) dl.push(["Kind of role", r.group]);
-    if (r.sub) dl.push(["Area", words(r.sub)]);
-    if (r.seniority) dl.push(["Seniority", (SEN_LABEL[r.seniority] || r.seniority) + (r.seniority_basis === "inferred" ? " (inferred)" : "")]);
-    if (r.reports_to || r.reports_into) dl.push(["Reports into", esc(r.reports_to || r.reports_into)]);
-    if (r.works_with.length) dl.push(["Works with", r.works_with.join(", ")]);
-    if (r.tools.length) dl.push(["Tools named", r.tools.join(", ")]);
-    if (r.comp) dl.push(["Posted pay", money(r.comp)]);
-    if (r.department) dl.push(["Listed under", r.department]);
-    return '<li class="role"><details><summary>' + ladder(l) +
-      '<span><span class="t">' + esc(r.title) + '</span> <span class="co">at ' + esc(r.company) + '</span></span>' +
-      '<span class="when">' + fmtDate(r.first_seen) + '</span>' +
-      '<span class="meta">' + esc([LABEL[l] === LABEL[0] ? "" : LABEL[l], r.group, r.location].filter(Boolean).join(" / ")) + '</span>' +
-      '</summary><div class="detail"><div>' +
-      (r.summary ? '<p>' + esc(r.summary) + '</p>' : "") +
-      (r.ai_evidence && l > 0 ? '<blockquote class="quote" style="border-color:' + COLOR[l] + '">“' + esc(r.ai_evidence) + '”</blockquote>' : "") +
-      '<p><a class="open-link" href="' + esc(r.url) + '" target="_blank" rel="noopener">Open the posting</a></p></div>' +
-      '<dl>' + dl.map(function (x) { return "<dt>" + x[0] + "</dt><dd>" + esc(x[1]) + "</dd>"; }).join("") + '</dl></div></details></li>';
+  /* ---------- job card (the core visual) ---------- */
+  function jobCard(r) {
+    var l = lv(r), tags = [];
+    tags.push('<span class="dot" style="background:' + COLOR[Math.max(l, 1)] + '"></span><span>' + esc(r.group) + '</span>');
+    if (l > 0) tags.push('<span class="sep">·</span><span class="ai">' + esc(AI_NAME[l]) + '</span>');
+    if (r.code === "yes") tags.push('<span class="sep">·</span><span class="mono">writes code</span>');
+    var rep = r.reports_to || (r.reports_into && r.reports_into !== "Unknown" ? r.reports_into : "");
+    var repHtml = rep && r.reports_basis !== "not_stated" ? 'Reports to <span class="' + (r.reports_basis === "inferred" ? "inferred" : "") + '">' + esc(rep) +
+      (r.reports_basis === "inferred" ? " inferred" : "") + '</span>' : "";
+    var tools = r.tools.slice(0, 4).join(" · ");
+    return '<article class="card job">' +
+      '<h3>' + esc(r.title) + '</h3>' +
+      '<div class="co"><b>' + esc(r.company) + '</b>' + (r.location ? ' · ' + esc(r.location) : "") + '</div>' +
+      '<div class="tags">' + tags.join("") + '</div>' +
+      (r.comp ? '<div class="pay">' + pay(r.comp) + '</div>' : '<div class="pay nopay">Pay not posted</div>') +
+      '<div class="mid"><span>' + repHtml + '</span><span class="tools">' + esc(tools) + '</span></div>' +
+      (l >= 2 && r.ai_evidence ? '<div class="why">“' + esc(r.ai_evidence) + '”</div>' : "") +
+      '<div class="bottom"><span>' + (isNew(r) ? "Posted " + md(r.first_seen) : "Open since tracking began") + '</span>' +
+      '<a href="' + esc(r.url) + '" target="_blank" rel="noopener">Original posting ↗</a></div></article>';
   }
-
-  function list(el, rows, step) {
-    var shown = 0; step = step || 40;
+  function jobList(el, rows, step) {
+    var shown = 0; step = step || 20;
+    if (!rows.length) { el.innerHTML = '<p class="muted">No jobs match. Clear a filter to see more.</p>'; return; }
+    el.innerHTML = '<div class="grid2 jl"></div><div class="more"></div>';
     function more() {
-      var ul = el.querySelector(".roles");
-      ul.insertAdjacentHTML("beforeend", rows.slice(shown, shown + step).map(roleItem).join(""));
+      el.querySelector(".jl").insertAdjacentHTML("beforeend", rows.slice(shown, shown + step).map(jobCard).join(""));
       shown += step;
-      var b = el.querySelector(".more");
-      b.innerHTML = shown < rows.length ? '<button class="btn" type="button">Show ' + Math.min(step, rows.length - shown) + ' more of ' + n(rows.length - shown) + '</button>' : "";
-      var btn = b.querySelector("button"); if (btn) btn.onclick = more;
+      var m = el.querySelector(".more");
+      m.innerHTML = shown < rows.length ? '<button class="btn" type="button">Show more jobs (' + n(rows.length - shown) + ' left)</button>' : "";
+      if (m.firstChild) m.firstChild.onclick = more;
     }
-    el.innerHTML = '<ul class="roles"></ul><div class="more"></div>';
-    if (!rows.length) { el.innerHTML = '<p class="muted">No roles match. Clear a filter to see more.</p>'; return; }
     more();
   }
 
-  function spectrum(rows) {
-    var c = [0, 0, 0, 0, 0]; rows.forEach(function (r) { c[lv(r)]++; });
-    var order = [4, 3, 2, 1, 0];
-    return '<div class="spectrum" role="img" aria-label="Roles by AI role">' + order.map(function (l) {
-      return '<span style="flex-grow:' + c[l] + ';background:' + COLOR[l] + '" title="' + esc(LABEL[l]) + ': ' + c[l] + '"></span>'; }).join("") +
-      '</div><ul class="key">' + order.map(function (l) {
-      return '<li><span class="sw" style="background:' + COLOR[l] + '"></span>' + esc(LABEL[l]) + ' <b>' + n(c[l]) + '</b></li>'; }).join("") + '</ul>';
+  /* ---------- bars ---------- */
+  function basisBars(rows, cats, getCat, small) {
+    // stated (solid) / inferred (hatched) share of all rows, one bar per category, plus "Not stated"
+    var tot = rows.length, out = cats.map(function (c) {
+      var st = rows.filter(function (r) { return getCat(r) === c && r._b === "stated"; }).length;
+      var inf = rows.filter(function (r) { return getCat(r) === c && r._b === "inferred"; }).length;
+      return [c, st, inf]; }).filter(function (x) { return x[1] + x[2] > 0; }).sort(function (a, b) { return (b[1] + b[2]) - (a[1] + a[2]); });
+    var ns = rows.filter(function (r) { return r._b === "not_stated"; }).length;
+    var max = Math.max.apply(null, out.map(function (x) { return x[1] + x[2]; }).concat([ns, 1]));
+    function row(lab, parts, val) {
+      return '<div class="hbar' + (small ? " small" : "") + '"><span class="lab">' + esc(lab) + '</span><span class="trk">' + parts + '</span><span class="val">' + val + '%</span></div>'; }
+    return '<div class="hbars">' + out.map(function (x) {
+      return row(x[0], '<i class="solid" style="width:' + 100 * x[1] / max + '%"></i><i class="hatched" style="width:' + 100 * x[2] / max + '%"></i>', pct(x[1] + x[2], tot)); }).join("") +
+      (ns ? row("Not stated", '<i class="none" style="width:' + 100 * ns / max + '%"></i>', pct(ns, tot)) : "") + '</div>';
+  }
+  var LEGEND = '<ul class="legend"><li><i class="solid"></i>Stated in posting</li><li><i class="hatched"></i>Inferred</li><li><i class="none"></i>Not stated</li></ul>';
+
+  /* ---------- Home ---------- */
+  function home() {
+    var c = [0, 0, 0, 0, 0]; R.forEach(function (r) { c[lv(r)]++; });
+    var ai = R.length - c[0];
+    var rows = [[AI_NAME[4], c[4]], [AI_NAME[3], c[3]], [AI_NAME[2], c[2]], [AI_NAME[1], c[1]]];
+    var max = Math.max.apply(null, rows.map(function (x) { return x[1]; }));
+    app.innerHTML = '<section class="hero"><h1>People work is being <span>rebuilt.</span></h1>' +
+      '<p>Builders, automators and AI leads are showing up inside People and Talent teams. This tracks every one, from the job boards of ' + n(S.companies_tracked) + ' startups and growth companies.</p></section>' +
+      '<section class="statblock"><div class="bigstat"><b>' + pct(ai, R.length) + '%</b><span>of open People and Talent roles work with AI.</span></div>' +
+      '<div class="hbars">' + rows.map(function (x, i) {
+        return '<div class="hbar"><span class="lab">' + esc(x[0]) + '</span><span class="trk"><i style="width:' + (100 * x[1] / max) + '%;background:' + COLOR[4 - i] + '"></i></span><span class="val">' + (x[1] && pct(x[1], R.length) < 1 ? "<1" : pct(x[1], R.length)) + '%</span></div>'; }).join("") +
+      '</div><div class="foot-row"><span class="src" style="margin:0">' + n(R.length) + ' open roles · US · as of ' + md(S.as_of) + '</span><a href="#roles">See the roles ↗</a></div></section>';
   }
 
   /* ---------- Jobs ---------- */
   function jobs() {
-    var R = ROLES, s = D.stats, forward = R.filter(function (r) { return lv(r) >= 2; });
-    var filter = -1;
-    app.innerHTML =
-      '<h1>' + n(R.length) + ' People and Talent roles are open at ' + n(s.companies_with_roles) + ' US startups and growth companies.</h1>' +
-      '<p class="lede">' + n(forward.length) + ' of them build with AI or lead AI transformation. Every role is sorted by how it works with AI, from no AI at all to leading company-wide change.</p>' +
-      spectrum(R) +
-      '<h2>Newest roles</h2><p class="muted small">Tracking began ' + fmtDate(s.first_day) + ', so roles already open then are dated ' + fmtDate(s.first_day) + '. Open a role for its details.</p>' +
-      '<div class="chips" role="group" aria-label="Filter by AI role"></div><p class="count"></p><div id="jl"></div>';
-    var chips = app.querySelector(".chips");
-    var opts = [[-1, "All roles"], [5, "Builds with AI or leads"], [4, LABEL[4]], [3, LABEL[3]], [2, LABEL[2]], [1, LABEL[1]]];
+    var st = { fwd: false, group: "" };
+    app.innerHTML = '<div class="page-head"><h1>New jobs</h1></div>' +
+      '<div class="controls"><button class="pill" type="button" id="fwd" aria-pressed="false">Builds with AI or leads</button>' +
+      '<label for="grp" style="position:absolute;left:-9999px">Kind of role</label><select id="grp"><option value="">Every kind of role</option>' +
+      D.group_order.map(function (g) { return '<option>' + esc(g) + '</option>'; }).join("") + '</select></div>' +
+      '<p class="count"></p><div id="jobs"></div>';
     function draw() {
-      chips.innerHTML = opts.map(function (o) { return '<button class="chip" type="button" data-f="' + o[0] + '" aria-pressed="' + (filter === o[0]) + '">' +
-        (o[0] >= 1 && o[0] <= 4 ? ladder(o[0]) : "") + esc(o[1]) + '</button>'; }).join("");
-      var rows = R.filter(function (r) { return filter === -1 || (filter === 5 ? lv(r) >= 2 : lv(r) === filter); });
-      app.querySelector(".count").textContent = n(rows.length) + " roles, newest first";
-      list(document.getElementById("jl"), rows);
-      chips.querySelectorAll("button").forEach(function (b) { b.onclick = function () { filter = +b.dataset.f; draw(); }; });
+      var rows = R.filter(function (r) { return (!st.fwd || lv(r) >= 2) && (!st.group || r.group === st.group); });
+      var nw = rows.filter(isNew).length;
+      app.querySelector(".count").textContent = n(rows.length) + " open · " + n(nw) + " posted since " + md(S.first_day) + " · newest first";
+      jobList(document.getElementById("jobs"), rows);
     }
+    document.getElementById("fwd").onclick = function () { st.fwd = !st.fwd; this.setAttribute("aria-pressed", st.fwd); draw(); };
+    document.getElementById("grp").onchange = function () { st.group = this.value; draw(); };
     draw();
   }
 
   /* ---------- Roles ---------- */
-  function rolesPage() {
-    var st = { q: "", group: "", ai: "", sen: "", sub: "" };
-    var subs = top(count(ROLES, function (r) { return r.sub; }), 40).map(function (x) { return x[0]; }).sort();
-    function sel(id, label, options) {
-      return '<label class="sr" for="' + id + '" style="position:absolute;left:-9999px">' + label + '</label><select id="' + id + '"><option value="">' + label + '</option>' +
-        options.map(function (o) { return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>'; }).join("") + '</select>';
+  function mix(rows) {
+    var c = [0, 0, 0, 0, 0]; rows.forEach(function (r) { c[lv(r)]++; });
+    var m = Math.max.apply(null, c.concat([1]));
+    return '<span class="mix" role="img" aria-label="AI role mix: ' + [4, 3, 2, 1, 0].map(function (l) { return AI_SHORT[l] + " " + c[l]; }).join(", ") + '">' +
+      [0, 1, 2, 3, 4].map(function (l) { return '<i style="height:' + Math.max(4, 100 * c[l] / m) + '%;background:' + COLOR[l] + '"></i>'; }).join("") + '</span>';
+  }
+  function glyph(l) { return '<span class="mix" aria-hidden="true">' + [1, 2, 3, 4].map(function (i) { return '<i style="height:' + (i * 25) + '%;background:' + (i <= l ? COLOR[l] : "var(--l0)") + '"></i>'; }).join("") + '</span>'; }
+  function catCard(name, rows, href, l) {
+    var nw = rows.filter(isNew).length;
+    return '<a class="card cat" href="' + href + '"><h3>' + esc(name) + '</h3>' + (l ? glyph(l) : mix(rows)) +
+      '<span class="open"><span class="dot"></span>' + n(rows.length) + ' open' + (nw ? ' <span class="mono">+' + nw + ' new</span>' : "") + '</span></a>';
+  }
+  function roles() {
+    var order = BUILDER_GROUPS.slice().sort(function (a, b) { return byG(b).length - byG(a).length; });
+    function byG(g) { return R.filter(function (r) { return r.group === g; }); }
+    app.innerHTML = '<h1>Roles</h1>' +
+      '<div class="grid2">' + order.map(function (g) { return catCard(g, byG(g), "#roles/" + slug(g)); }).join("") + '</div>' +
+      '<h2 class="section-title">By AI role</h2><p class="section-sub">The same roles, sorted by how they work with AI. In the cards above, the bars show the mix for each kind of role, from no AI (left) to leading company-wide change (right).</p>' +
+      '<div class="grid2">' + [4, 3, 2, 1].map(function (l) {
+        return catCard(AI_NAME[l], R.filter(function (r) { return lv(r) === l; }), "#roles/ai-" + l, l); }).join("") + '</div>' +
+      '<h2 class="section-title">The core of the function</h2><p class="section-sub">Recruiting, HR business partners, people ops, total rewards and programs: most of the market, and the baseline everything else is measured against.</p>' +
+      '<div class="grid2">' + catCard("Core People & Talent", byG("Core People & Talent"), "#roles/" + slug("Core People & Talent")) +
+      catCard("Every role", R, "#roles/all") + '</div>';
+  }
+  function category(key) {
+    var title, def, rows;
+    if (key === "all") { title = "Every role"; def = "Every open People and Talent role we track, searchable."; rows = R; }
+    else if (key.indexOf("ai-") === 0) { var l = +key.slice(3); title = AI_NAME[l]; def = AI_DEF[l]; rows = R.filter(function (r) { return lv(r) === l; }); }
+    else { var g = D.group_order.filter(function (x) { return slug(x) === key; })[0]; if (!g) return roles();
+      title = g; def = GROUPS[g][1]; rows = R.filter(function (r) { return r.group === g; }); }
+    rows = rows.slice().sort(function (a, b) { return lv(b) - lv(a) || (b.first_seen > a.first_seen ? 1 : -1); });
+    var tools = top(tally(rows, function (r) { return r.tools; }), 5).map(function (x) { return x[0]; });
+    app.innerHTML = '<a class="back" href="#roles">← All roles</a><div class="cat-head"><h1>' + esc(title) + '</h1><p>' + esc(def) + '</p></div>' +
+      '<p class="count">' + n(rows.length) + ' open' + (tools.length ? ' · most-named tools: ' + esc(tools.join(", ")) : "") + '</p>' +
+      '<div class="controls" style="margin-top:16px"><label for="q" style="position:absolute;left:-9999px">Search</label><input id="q" type="search" placeholder="Search title, company, tool"></div><div id="jobs"></div>';
+    function draw(q) {
+      q = (q || "").toLowerCase().trim();
+      var rs = !q ? rows : rows.filter(function (r) { var h = (r.title + " " + r.company + " " + r.tools.join(" ") + " " + r.summary).toLowerCase();
+        return q.split(/\s+/).every(function (w) { return h.indexOf(w) >= 0; }); });
+      jobList(document.getElementById("jobs"), rs);
     }
-    app.innerHTML = '<h1>Every open role, searchable.</h1>' +
-      '<p class="lede">Search titles, companies, tools and summaries, or narrow by kind of role, AI role, seniority or area.</p>' +
-      '<div class="filters"><label for="q" style="position:absolute;left:-9999px">Search roles</label><input id="q" type="search" placeholder="Search, e.g. Workday, talent engineer, Claude">' +
-      sel("fg", "Any kind of role", D.group_order.map(function (g) { return [g, g]; })) +
-      sel("fa", "Any AI role", [4, 3, 2, 1, 0].map(function (l) { return [l, LABEL[l]]; })) +
-      sel("fs", "Any seniority", SENIORITY.map(function (s) { return [s, SEN_LABEL[s]]; })) +
-      sel("fu", "Any area", subs.map(function (s) { return [s, words(s)]; })) + '</div>' +
-      '<p class="count"></p><div id="rl"></div>';
-    function draw() {
-      var q = st.q.toLowerCase().trim();
-      var rows = ROLES.filter(function (r) {
-        if (st.group && r.group !== st.group) return false;
-        if (st.ai !== "" && lv(r) !== +st.ai) return false;
-        if (st.sen && r.seniority !== st.sen) return false;
-        if (st.sub && r.sub !== st.sub) return false;
-        if (q) { var hay = (r.title + " " + r.company + " " + r.tools.join(" ") + " " + r.summary + " " + r.location).toLowerCase();
-          if (q.split(/\s+/).some(function (w) { return hay.indexOf(w) < 0; })) return false; }
-        return true;
-      }).sort(function (a, b) { return lv(b) - lv(a) || (a.company > b.company ? 1 : -1); });
-      app.querySelector(".count").textContent = n(rows.length) + " of " + n(ROLES.length) + " roles, most AI-forward first";
-      list(document.getElementById("rl"), rows, 50);
-    }
-    var t; document.getElementById("q").oninput = function (e) { clearTimeout(t); t = setTimeout(function () { st.q = e.target.value; draw(); }, 150); };
-    [["fg", "group"], ["fa", "ai"], ["fs", "sen"], ["fu", "sub"]].forEach(function (p) {
-      document.getElementById(p[0]).onchange = function (e) { st[p[1]] = e.target.value; draw(); }; });
-    draw();
+    var t; document.getElementById("q").oninput = function (e) { clearTimeout(t); t = setTimeout(function () { draw(e.target.value); }, 150); };
+    draw("");
   }
 
   /* ---------- Insights ---------- */
   function insights() {
-    var R = ROLES, fwd = R.filter(function (r) { return lv(r) >= 2; });
-    var nonCore = R.filter(function (r) { return r.group !== "Core People & Talent"; });
-    // 1. AI role by kind of role
-    var g = D.group_order.map(function (name) {
-      var rows = R.filter(function (r) { return r.group === name; }), c = [0, 0, 0, 0, 0];
-      rows.forEach(function (r) { c[lv(r)]++; }); return { name: name, rows: rows, c: c, fwd: c[2] + c[3] + c[4] }; });
-    var core = g[g.length - 1];
-    var groupBars = g.map(function (x) {
-      return '<div class="bar-row"><span>' + esc(x.name) + '</span><span class="track" role="img" aria-label="' + esc(x.name) + ': ' + pct(x.fwd, x.rows.length) + ' build with AI or lead">' +
-        [4, 3, 2, 1, 0].map(function (l) { return '<span style="width:' + (x.rows.length ? 100 * x.c[l] / x.rows.length : 0) + '%;background:' + COLOR[l] + '"></span>'; }).join("") +
-        '</span><span class="n">' + n(x.rows.length) + '</span></div>'; }).join("");
-    // 2. companies
-    var comp = top(count(fwd, function (r) { return r.company; }), 12);
-    // 3. tools
-    var tools = {}; fwd.forEach(function (r) { r.tools.forEach(function (t) { tools[t] = (tools[t] || 0) + 1; }); });
-    var tt = top(tools, 12), tmax = tt.length ? tt[0][1] : 1;
-    // 4. pay
-    var pay = [[0, "No AI in the role"], [1, "Uses AI"], [2, "Builds with AI"], [3, "Leads AI transformation (either)"]].map(function (p) {
-      var rows = R.filter(function (r) { return r.comp && r.seniority === "senior" && (p[0] === 3 ? lv(r) >= 3 : lv(r) === p[0]); });
-      return [p[1], median(rows.map(function (r) { return (r.comp[0] + (r.comp[1] || r.comp[0])) / 2; })), rows.length]; });
-    // 5. works with
-    var ww = {}; fwd.forEach(function (r) { r.works_with.forEach(function (t) { ww[t] = (ww[t] || 0) + 1; }); });
-    var wt = top(ww, 8), wmax = wt.length ? wt[0][1] : 1;
-    function simpleBars(rows, max, total) {
-      return '<div class="bars">' + rows.map(function (x) { return '<div class="bar-row"><span>' + esc(x[0]) + '</span><span class="track"><span class="solo" style="width:' +
-        (100 * x[1] / max) + '%"></span></span><span class="n">' + (total ? pct(x[1], total) : n(x[1])) + '</span></div>'; }).join("") + '</div>'; }
-
-    app.innerHTML = '<h1>Where AI is showing up in People work.</h1>' +
-      '<p class="lede">A first read from ' + n(R.length) + ' open roles as of ' + fmtDate(D.stats.as_of) + '. Tracking started ' + fmtDate(D.stats.first_day) + ', so these are levels, not trends yet.</p>' +
-      '<h2>Builder roles are rare, and almost all of them work with AI</h2>' +
-      '<p>' + pct(core.rows.length, R.length) + ' of open roles are core People and Talent work, and ' + pct(core.fwd, core.rows.length) +
-      ' of those build with AI or lead AI change. Across the other ' + n(nonCore.length) + ' roles it is ' +
-      pct(nonCore.filter(function (r) { return lv(r) >= 2; }).length, nonCore.length) + '.</p>' +
-      '<div class="bars">' + groupBars + '</div>' + spectrum([]).replace(/<div class="spectrum[\s\S]*?<\/div>/, "").replace(/ <b>0<\/b>/g, "") +
-      '<div class="cols"><div><h2>Companies hiring the most AI-forward People roles</h2>' +
-      '<p class="muted small">Roles that build with AI or lead AI transformation.</p>' +
-      '<table><thead><tr><th>Company</th><th class="num">Roles</th></tr></thead><tbody>' +
-      comp.map(function (c) { return '<tr><td>' + esc(c[0]) + '</td><td class="num">' + c[1] + '</td></tr>'; }).join("") + '</tbody></table></div>' +
-      '<div><h2>Tools named in those roles</h2><p class="muted small">Share of the ' + n(fwd.length) + ' AI-forward roles that name each tool.</p>' +
-      simpleBars(tt, tmax, fwd.length) + '</div></div>' +
-      '<div class="cols"><div><h2>Who they work with</h2><p class="muted small">Teams named as partners in AI-forward roles.</p>' + simpleBars(wt, wmax, fwd.length) + '</div>' +
-      '<div><h2>Posted pay for senior roles</h2><p class="muted small">Median midpoint of the posted US pay range, senior-level roles only.</p>' +
-      '<table><thead><tr><th>AI role</th><th class="num">Median</th><th class="num">Roles</th></tr></thead><tbody>' +
-      pay.map(function (p) { return '<tr><td>' + esc(p[0]) + '</td><td class="num">' + (p[1] ? "$" + Math.round(p[1] / 1000) + "k" : "–") + '</td><td class="num">' + p[2] + '</td></tr>'; }).join("") +
-      '</tbody></table><p class="muted small">Small samples: read as a direction, not a benchmark.</p></div></div>';
+    var c = [0, 0, 0, 0, 0]; R.forEach(function (r) { c[lv(r)]++; });
+    var fwd = R.filter(FWD), builders = R.filter(function (r) { return r.group !== "Core People & Talent"; }),
+        core = R.filter(function (r) { return r.group === "Core People & Talent"; });
+    var bF = pct(builders.filter(FWD).length, builders.length), cF = pct(core.filter(FWD).length, core.length);
+    var tools = top(tally(fwd, function (r) { return r.tools; }), 5);
+    var cos = top(tally(fwd, function (r) { return r.company; }), 5);
+    var cw = R.filter(function (r) { return lv(r) === 4; });
+    function vb(items, maxv, hi) {
+      return '<div class="vbars">' + items.map(function (x, i) {
+        return '<div><span>' + (x[3] || n(x[1])) + '</span><i style="height:' + Math.max(3, 100 * x[1] / maxv) + '%;background:' + (x[2] || (i === hi ? "var(--rust)" : "var(--l1)")) + '"></i><span>' + esc(x[0]) + '</span></div>'; }).join("") + '</div>'; }
+    var entries = [
+      [n(fwd.length) + " roles build with AI or lead AI transformation.",
+        "That's " + pct(fwd.length, R.length) + "% of open People and Talent roles. Another " + n(c[1]) + " expect the person to use AI tools day to day.",
+        vb([4, 3, 2, 1, 0].map(function (l) { return [AI_SHORT[l], c[l], COLOR[l]]; }), Math.max.apply(null, c))],
+      ["Outside the core, " + bF + "% of roles are AI-forward. Inside it, " + cF + "%.",
+        "Builder, systems, analytics and project roles are " + pct(builders.length, R.length) + "% of open roles but " + pct(builders.filter(FWD).length, fwd.length) + "% of the AI-forward ones. Most core recruiting and HR postings don't mention AI at all.",
+        vb([["Outside the core", bF, null, bF + "%"], ["Core People & Talent", cF, null, cF + "%"]], 100, 0)],
+      [esc(tools.length ? tools[0][0] : "") + " is the tool AI-forward roles name most.",
+        "The systems of record still anchor the work: " + tools.slice(0, 3).map(function (x) { return x[0]; }).join(", ") + " lead the list of tools named in roles that build with AI or lead it.",
+        vb(tools.map(function (x) { return [x[0], x[1]]; }), tools.length ? tools[0][1] : 1, 0)],
+      [esc(cos.length ? cos[0][0] : "") + " is hiring the most AI-forward People roles.",
+        cos.map(function (x) { return x[0] + " (" + x[1] + ")"; }).join(", ") + ". It's spread thin: " + n(Object.keys(tally(fwd, function (r) { return r.company; })).length) + " of the " + n(S.companies_with_roles) + " companies hiring People roles have at least one.",
+        vb(cos.map(function (x) { return [x[0], x[1]]; }), cos.length ? cos[0][1] : 1, 0)],
+      ["Only " + n(cw.length) + " role" + (cw.length === 1 ? "" : "s") + " lead AI transformation for the whole company.",
+        "Company-wide AI enablement rarely sits in a People role yet: " + cw.map(function (r) { return r.title + " at " + r.company; }).join("; ") + ".",
+        '<div class="dots" role="img" aria-label="' + fwd.length + ' AI-forward roles, ' + cw.length + ' company-wide">' +
+          fwd.slice().sort(function (a, b) { return lv(a) - lv(b); }).map(function (r) { return '<i class="' + (lv(r) === 4 ? "on" : lv(r) === 3 ? "mid" : "") + '"></i>'; }).join("") + '</div>']
+    ];
+    app.innerHTML = '<h1>Insights</h1>' + entries.map(function (e) {
+      return '<article class="entry"><div class="when">First read<br>' + mdy(S.as_of) + '</div><div><h2>' + e[0] + '</h2><p>' + esc(e[1]) + '</p></div><div class="card">' + e[2] + '</div></article>'; }).join("") +
+      src("Tracking began " + md(S.first_day) + "; week-over-week reports start once there is history.");
   }
 
   /* ---------- Data ---------- */
   function data() {
-    var s = D.stats;
-    app.innerHTML = '<h1>How the tracker works.</h1>' +
-      '<p class="lede">Every day it reads the public job boards of US startups and growth companies, keeps the People and Talent roles, and sorts each one by the kind of work it is and how it works with AI.</p>' +
-      '<div class="facts">' +
-      [[n(s.companies_tracked), "companies tracked"], [n(s.open_postings), "open postings read"], [n(s.us_people_candidates), "US People and Talent candidates"],
-       [n(s.in_scope), "roles published"], [fmtDate(s.as_of), "last updated"]].map(function (f) {
-        return '<div class="fact"><b>' + f[0] + '</b><span>' + f[1] + '</span></div>'; }).join("") + '</div>' +
-      '<h2>Which companies</h2><p>Companies come from public lists of startups and growth companies, kept only if their job board can be read directly. ' +
-      'Enterprise companies are not included yet.</p>' +
-      '<table><thead><tr><th>Source list</th><th class="num">Companies</th></tr></thead><tbody>' +
-      Object.keys(s.sources).map(function (k) { return '<tr><td>' + esc(k) + '</td><td class="num">' + n(s.sources[k]) + '</td></tr>'; }).join("") + '</tbody></table>' +
-      '<p class="muted small">A company can appear on more than one list. Job boards read: ' + Object.keys(s.by_ats).map(function (k) { return k + " (" + s.by_ats[k] + ")"; }).join(", ") + '.</p>' +
-      '<h2>Which roles</h2><p>A role is kept when it belongs to the company\'s own People, HR, Talent or Recruiting function, or builds tools, data or AI for it. ' +
-      'Left out: roles at HR-tech and payroll companies that serve customers, IT and security roles, workplace and facilities, early-career recruiting funnels for other teams, and roles outside the US.</p>' +
-      '<h2>Kinds of role</h2><dl class="defs">' + D.group_order.map(function (g) { return '<dt>' + esc(g) + '</dt><dd>' + esc(GROUP_DEF[g]) + '</dd>'; }).join("") + '</dl>' +
-      '<h2>AI role</h2><p>Each role gets one AI role. When a role fits more than one, the higher step wins. Company boilerplate about AI and experience asked for in the requirements do not count.</p>' +
-      '<dl class="defs">' + [4, 3, 2, 1, 0].map(function (l) { return '<dt>' + ladder(l) + ' ' + esc(LABEL[l]) + '</dt><dd>' + esc(LEVEL_DEF[l]) + '</dd>'; }).join("") + '</dl>' +
-      '<h2>How roles are classified</h2><p>Each posting is read by Claude (Anthropic\'s model) against these definitions, which were calibrated by hand on a labeled review set. ' +
-      'Details such as tools, reporting line and seniority are taken from the posting; when the posting does not say, the field is left blank or marked inferred. ' +
-      'Classifications can be wrong. Each role links to the original posting.</p>' +
-      '<h2>Known gaps</h2><p>Tracking started ' + fmtDate(s.first_day) + ', so there is no trend history yet. Some boards only show part of their roles to a direct read. ' +
-      'Companies on Workday and other enterprise systems are not included.</p>' +
-      '<p class="muted small">Classifier ' + esc(s.classifier_version) + '.</p>';
+    var outside = R.filter(function (r) { return r.reports_into && ["People/HR", "Talent/Recruiting", "Unknown"].indexOf(r.reports_into) < 0; });
+    var known = R.filter(function (r) { return r.reports_into && r.reports_into !== "Unknown"; });
+    var ai = R.filter(function (r) { return lv(r) > 0; }), code = R.filter(function (r) { return r.code === "yes"; });
+    var rep = R.map(function (r) { return Object.assign({}, r, { _b: r.reports_into === "Unknown" ? "not_stated" : r.reports_basis }); });
+    var cats = ["People/HR", "Talent/Recruiting", "Finance", "IT", "Operations", "CEO/Executive", "Engineering", "Other"];
+    var byGroup = D.group_order.map(function (g) {
+      var rows = R.filter(function (r) { return r.group === g; });
+      var st = rows.filter(function (r) { return r.code === "yes" && r.code_basis === "stated"; }).length;
+      var inf = rows.filter(function (r) { return r.code === "yes" && r.code_basis !== "stated"; }).length;
+      return [g, st, inf, rows.length]; }).sort(function (a, b) { return (b[1] + b[2]) / b[3] - (a[1] + a[2]) / a[3]; });
+    app.innerHTML = '<h1>Data</h1>' +
+      '<div class="stats">' +
+      [[pct(ai.length, R.length) + "%", "work with AI"], [pct(outside.length, known.length) + "%", "report outside People"], [pct(code.length, R.length) + "%", "write code"], [n(R.length), "roles tracked"]].map(function (s) {
+        return '<div><b>' + s[0] + '</b><span>' + s[1] + '</span></div>'; }).join("") + '</div>' + LEGEND +
+      '<div class="grid2"><div class="card"><h2>Who they report to</h2><p class="muted">Share of all roles, by the team named as the reporting line.</p>' +
+      basisBars(rep, cats, function (r) { return r.reports_into; }, true) + '</div>' +
+      '<div class="card"><h2>Who writes code, by kind of role</h2><p class="muted">Share of each kind of role whose posting has the person writing code.</p><div class="hbars">' +
+      byGroup.map(function (x) { var m = 100;
+        return '<div class="hbar small"><span class="lab">' + esc(x[0]) + '</span><span class="trk"><i class="solid" style="width:' + 100 * x[1] / x[3] + '%"></i><i class="hatched" style="width:' + 100 * x[2] / x[3] + '%"></i></span><span class="val">' + pct(x[1] + x[2], x[3]) + '%</span></div>'; }).join("") +
+      '</div></div></div>' + src() +
+      '<section class="method"><h2>How the tracker works</h2>' +
+      '<p>Every day it reads the public job boards of ' + n(S.companies_tracked) + ' US startups and growth companies, keeps the roles that belong to the company\'s own People, HR, Talent or Recruiting function, and reads each posting with Claude against the definitions below. The definitions were calibrated by hand on a labeled review set. Each job links to its original posting.</p>' +
+      '<p class="muted">Left out: roles at HR-tech and payroll companies that serve customers, IT and security, workplace and facilities, and roles outside the US. Companies on Workday and other enterprise systems aren\'t included yet.</p>' +
+      '<h3 style="margin-top:40px">Kinds of role</h3><dl class="defs">' + D.group_order.map(function (g) { return '<dt>' + esc(g) + '</dt><dd>' + esc(GROUPS[g][1]) + '</dd>'; }).join("") + '</dl>' +
+      '<h3>AI role</h3><p class="muted">One per role; when a role fits more than one, the higher one wins. Company boilerplate about AI and experience asked for in the requirements don\'t count.</p><dl class="defs">' +
+      [4, 3, 2, 1, 0].map(function (l) { return '<dt>' + esc(AI_NAME[l]) + '</dt><dd>' + esc(AI_DEF[l]) + '</dd>'; }).join("") + '</dl>' +
+      '<table><thead><tr><th>Where the companies come from</th><th class="num">Companies</th></tr></thead><tbody>' +
+      Object.keys(S.sources).map(function (k_) { return '<tr><td>' + esc(k_) + '</td><td class="num">' + n(S.sources[k_]) + '</td></tr>'; }).join("") + '</tbody></table>' +
+      '<p class="src">A company can be on more than one list. Classifier ' + esc(S.classifier_version) + '.</p></section>';
   }
 
   /* ---------- routing ---------- */
-  var ROUTES = { jobs: jobs, roles: rolesPage, insights: insights, data: data };
+  var ROUTES = { home: home, jobs: jobs, roles: roles, insights: insights, data: data };
   function route() {
-    var r = (location.hash || "#jobs").slice(1); if (!ROUTES[r]) r = "jobs";
-    document.querySelectorAll("nav a").forEach(function (a) { a.toggleAttribute("aria-current", a.dataset.route === r); if (a.dataset.route === r) a.setAttribute("aria-current", "page"); });
-    document.title = (r === "jobs" ? "" : r.charAt(0).toUpperCase() + r.slice(1) + " – ") + "People Transformation Tracker";
-    ROUTES[r](); window.scrollTo(0, 0);
+    var h = (location.hash || "#home").slice(1), parts = h.split("/"), r = ROUTES[parts[0]] ? parts[0] : "home";
+    document.querySelectorAll("nav a").forEach(function (a) { if (a.dataset.route === r) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+    document.title = (r === "home" ? "" : r.charAt(0).toUpperCase() + r.slice(1) + " – ") + "People Transformation Tracker";
+    if (r === "roles" && parts[1]) category(parts[1]); else ROUTES[r]();
+    window.scrollTo(0, 0);
   }
   fetch("data.json").then(function (res) { return res.json(); }).then(function (d) {
-    D = d; ROLES = d.roles; window.addEventListener("hashchange", route); route();
-  }).catch(function () { app.innerHTML = '<p class="loading">The role data did not load. Refresh the page to try again.</p>'; });
+    D = d; R = d.roles; S = d.stats;
+    var nw = R.filter(isNew).length, b = document.getElementById("newcount");
+    if (nw) { b.textContent = nw; b.hidden = false; b.setAttribute("aria-label", nw + " new jobs"); }
+    window.addEventListener("hashchange", route); route();
+  }).catch(function () { app.innerHTML = '<p class="loading">The role data didn\'t load. Refresh the page to try again.</p>'; });
 })();
