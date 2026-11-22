@@ -43,7 +43,8 @@
   function tally(list, f) { var m = {}; list.forEach(function (r) { [].concat(f(r) || []).forEach(function (x) { if (x) m[x] = (m[x] || 0) + 1; }); }); return m; }
   function top(m, n_) { return Object.keys(m).map(function (x) { return [x, m[x]]; }).sort(function (a, b) { return b[1] - a[1] || (a[0] > b[0] ? 1 : -1); }).slice(0, n_); }
   function isNew(r) { return r.first_seen > S.first_day; }
-  function src(extra) { return '<p class="src">Source: public job boards of ' + n(S.companies_tracked) + ' US startups and growth companies, as of ' + md(S.as_of) + (extra ? ". " + extra : "") + '</p>'; }
+  function src(extra) { return '<p class="src">Source: public job boards of ' + n(S.companies_tracked) + ' US startups and growth companies' + (extra ? ". " + extra : ".") + '</p>'; }
+  function posted(d) { var y = S.as_of.slice(0, 4); return d.slice(0, 4) === y ? md(d) : mdy(d); }
   var FWD = function (r) { return lv(r) >= 2; };
 
   /* ---------- job card (the core visual) ---------- */
@@ -64,7 +65,7 @@
       (r.comp ? '<div class="pay">' + pay(r.comp) + '</div>' : '<div class="pay nopay">Pay not posted</div>') +
       (repHtml ? '<div class="mid"><span>' + repHtml + '</span></div>' : "") +
       (stack ? '<ul class="tags-list" aria-label="Languages and tools">' + stack + '</ul>' : "") +
-      '<div class="bottom"><span>' + (isNew(r) ? "Posted " + md(r.first_seen) : "Open since tracking began") + '</span>' +
+      '<div class="bottom"><span>' + (r.posted ? "Posted " + posted(r.posted) : "") + '</span>' +
       '<a href="' + esc(r.url) + '" target="_blank" rel="noopener">Original posting ↗</a></div></article>';
   }
   function jobList(el, rows, step) {
@@ -109,7 +110,7 @@
       '<section class="statblock"><div class="bigstat"><b>' + pct(ai, R.length) + '%</b><span>of open People and Talent roles work with AI.</span></div>' +
       '<div class="hbars">' + rows.map(function (x, i) {
         return '<div class="hbar"><span class="lab">' + esc(x[0]) + '</span><span class="trk"><i style="width:' + (100 * x[1] / max) + '%;background:' + COLOR[4 - i] + '"></i></span><span class="val">' + (x[1] && pct(x[1], R.length) < 1 ? "<1" : pct(x[1], R.length)) + '%</span></div>'; }).join("") +
-      '</div><div class="foot-row"><span class="src" style="margin:0">' + n(R.length) + ' open roles · US · as of ' + md(S.as_of) + '</span><a href="#roles">See the roles ↗</a></div></section>';
+      '</div><div class="foot-row"><span class="src" style="margin:0">' + n(R.length) + ' open roles · US</span><a href="#roles">See the roles ↗</a></div></section>';
   }
 
   /* ---------- Jobs ---------- */
@@ -178,7 +179,7 @@
           if (!q.split(/\s+/).every(function (w) { return h.indexOf(w) >= 0; })) return false; }
         return true; });
       var nw = rows.filter(isNew).length;
-      app.querySelector(".count").textContent = n(rows.length) + " open · " + n(nw) + " posted since " + md(S.first_day) + " · newest first";
+      app.querySelector(".count").textContent = n(rows.length) + " open · " + n(nw) + " new since tracking began · newest first";
       jobList(document.getElementById("jobs"), rows);
     }
     document.getElementById("fwd").onclick = function () { st.fwd = !st.fwd; this.setAttribute("aria-pressed", st.fwd); draw(); };
@@ -290,9 +291,23 @@
         "The systems of record anchor the AI work: " + tools.slice(0, 3).map(function (x) { return x[0]; }).join(", ") + " lead the tools named in roles that build with AI or lead it.",
         hb(tools, tools.length ? tools[0][1] : 1, function (x) { return pct(x[1], fwd.length) + "%"; })]
     ];
+    // When open roles were posted
+    var MONS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var lastM = S.as_of.slice(0, 7), months = [];
+    for (var i = 5; i >= 0; i--) { var dt = new Date(+lastM.slice(0, 4), +lastM.slice(5, 7) - 1 - i, 1); months.push(dt.getFullYear() + "-" + ("0" + (dt.getMonth() + 1)).slice(-2)); }
+    var buckets = [["Earlier", function (m) { return m < months[0]; }]].concat(months.map(function (m) { return [MONS[+m.slice(5) - 1], function (x) { return x === m; }]; }));
+    var tb = buckets.map(function (b) { var rs = R.filter(function (r) { return r.posted && b[1](r.posted.slice(0, 7)); });
+      return [b[0], rs.length, pct(rs.filter(function (r) { return lv(r) > 0; }).length, rs.length)]; });
+    var sortedPosted = R.map(function (r) { return r.posted; }).filter(Boolean).sort(), medPosted = sortedPosted[sortedPosted.length >> 1];
+    var medDays = Math.round((new Date(S.as_of) - new Date(medPosted)) / 864e5);
+    var tmax = Math.max.apply(null, tb.map(function (x) { return x[1]; }));
+    var recent = tb.slice(1).filter(function (x) { return x[1] >= 30; }), aiLo = Math.min.apply(null, recent.map(function (x) { return x[2]; })), aiHi = Math.max.apply(null, recent.map(function (x) { return x[2]; }));
+    entries.push(["Half of today's open roles were posted in the last " + (medDays <= 70 ? Math.round(medDays / 7) + " weeks" : Math.round(medDays / 30) + " months") + ".",
+      "Each bar counts the roles open now by the month they were first posted; the latest month is still in progress. Older roles have mostly been filled or closed, so the bars rise toward the present whether or not hiring is growing; growth will show once the tracker has months of its own history. What already holds: the share that works with AI stays between " + aiLo + "% and " + aiHi + "% across recent months.",
+      '<div class="vbars tall">' + tb.map(function (x, i) { return '<div><span>' + x[1] + '</span><i style="height:' + Math.max(2, 100 * x[1] / tmax) + '%;background:' + (i === tb.length - 1 ? "var(--rust)" : "var(--l1)") + '"></i><span>' + x[0] + '</span><span class="ai-share">' + (x[1] ? x[2] + "% AI" : "") + '</span></div>'; }).join("") + '</div>', true]);
     app.innerHTML = '<h1>Insights</h1>' + entries.map(function (e) {
-      return '<article class="entry' + (e[3] ? " wide" : "") + '"><div class="when">First read<br>' + mdy(S.as_of) + '</div><div><h2>' + e[0] + '</h2><p>' + esc(e[1]) + '</p></div><div class="card">' + e[2] + '</div></article>'; }).join("") +
-      src("Tracking began " + md(S.first_day) + "; week-over-week reports start once there is history.");
+      return '<article class="entry' + (e[3] ? " wide" : "") + '"><div class="when">First read</div><div><h2>' + e[0] + '</h2><p>' + esc(e[1]) + '</p></div><div class="card">' + e[2] + '</div></article>'; }).join("") +
+      src("Week-over-week reports start once there is more history.");
   }
 
   /* ---------- Data ---------- */
@@ -342,7 +357,7 @@
       [4, 3, 2, 1, 0].map(function (l) { return '<dt>' + esc(AI_NAME[l]) + '</dt><dd>' + esc(AI_DEF[l]) + '</dd>'; }).join("") + '</dl>' +
       '<table><thead><tr><th>Where the companies come from</th><th class="num">Companies</th></tr></thead><tbody>' +
       Object.keys(S.sources).map(function (k_) { return '<tr><td>' + esc(k_) + '</td><td class="num">' + n(S.sources[k_]) + '</td></tr>'; }).join("") + '</tbody></table>' +
-      '<p class="src">A company can be on more than one list. Tracking began ' + md(S.first_day) + '. Classifier ' + esc(S.classifier_version) + '.</p>';
+      '<p class="src">A company can be on more than one list. Classifier ' + esc(S.classifier_version) + '.</p>';
   }
 
   /* ---------- routing ---------- */

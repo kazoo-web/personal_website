@@ -246,3 +246,5 @@ a.card.qc { display: flex; flex-direction: column; justify-content: space-betwee
 .tag { font-family: var(--mono); font-size: 12px; color: var(--muted); background: var(--bg); border-radius: 999px; padding: 3px 10px; }
 .tag.lang { color: var(--ink); background: var(--tint); font-weight: 700; }
 .job .bottom { padding-top: 18px; }
+.vbars.tall { height: 220px; }
+.vbars .ai-share { color: var(--rust); font-size: 11px; }
