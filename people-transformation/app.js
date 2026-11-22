@@ -17,14 +17,15 @@
     "Changes how the whole company, or several functions, works with AI: enablement programs, training, champions, redesigning roles."
   ];
   var GROUPS = {
-    "Building & automation": ["People-native builders", "People and Talent practitioners who design and build the process together with the tools, automations or AI agents that run it. Hired from People or talent backgrounds, not as engineers."],
-    "Embedded engineer": ["Engineers in People", "Software, data and AI engineers who sit in People/Talent or build for it."],
-    "Embedded product & design": ["Product and design in People", "Hired as product managers or designers to build internal People products."],
-    "People systems": ["Inside the HR stack", "Work within existing People systems (HRIS, ATS, payroll and comp tools): administer, configure, integrate, migrate."],
-    "People analytics & research": ["Data on people", "Analysts, data scientists and researchers working on people data across the function."],
-    "Strategic projects & initiatives": ["Time-bound change", "Cross-functional initiatives: restructuring, change and AI adoption, People-technology rollouts."],
-    "Core People & Talent": ["The core of the function", "Recruiting, sourcing, coordination, HR business partners, total rewards, people operations, L&D, employee relations and recurring People programs."]
+    "Building & automation": ["", "People and Talent practitioners whose main output is something they build: AI agents, automations, workflows and tools that run hiring and People processes. They come from recruiting, People operations or HR tech rather than software engineering, and they usually own the whole thing, from how the process should work to the tool that runs it."],
+    "Embedded engineer": ["", "Software, data and AI engineers who sit on the People or Talent team, or on an engineering team that builds for it. They write production code: integrations, internal People apps, data pipelines and AI features for HR and recruiting."],
+    "Embedded product & design": ["", "Product managers and designers by profession who build internal People products, such as hiring tools, HR self-service and employee-experience platforms, and own their roadmaps."],
+    "People systems": ["", "The people who run the HR stack: Workday, Ashby, Greenhouse, payroll and compensation tools. They configure modules, build integrations and reports, keep employee data clean and move the company from one system to the next. The work happens inside existing systems rather than building new ones."],
+    "People analytics & research": ["", "Analysts, data scientists and researchers who study the workforce: attrition, engagement, performance, hiring funnels and whether People programs work. They turn people data into recommendations for People leaders."],
+    "Strategic projects & initiatives": ["", "People team members hired to run change with a start and an end: a Workday or ServiceNow rollout, an international expansion, a restructuring, an AI adoption program. The job is the project, not a recurring program."],
+    "Core People & Talent": ["", "The core of the function: recruiting, sourcing and coordination, HR business partners, people operations, total rewards, learning and development, employee relations, and recurring People programs like performance cycles and onboarding."]
   };
+
   var BUILDER_GROUPS = ["Building & automation", "Embedded engineer", "Embedded product & design", "People systems", "People analytics & research", "Strategic projects & initiatives"];
 
   /* ---------- helpers ---------- */
@@ -130,29 +131,24 @@
   }
 
   /* ---------- Roles ---------- */
-  function mix(rows) {
-    var c = [0, 0, 0, 0, 0]; rows.forEach(function (r) { c[lv(r)]++; });
-    var m = Math.max.apply(null, c.concat([1]));
-    return '<span class="mix" role="img" aria-label="AI role mix: ' + [4, 3, 2, 1, 0].map(function (l) { return AI_SHORT[l] + " " + c[l]; }).join(", ") + '">' +
-      [0, 1, 2, 3, 4].map(function (l) { return '<i style="height:' + Math.max(4, 100 * c[l] / m) + '%;background:' + COLOR[l] + '"></i>'; }).join("") + '</span>';
-  }
-  function glyph(l) { return '<span class="mix" aria-hidden="true">' + [1, 2, 3, 4].map(function (i) { return '<i style="height:' + (i * 25) + '%;background:' + (i <= l ? COLOR[l] : "var(--l0)") + '"></i>'; }).join("") + '</span>'; }
-  function catCard(name, rows, href, l) {
-    var nw = rows.filter(isNew).length;
-    return '<a class="card cat" href="' + href + '"><h3>' + esc(name) + '</h3>' + (l ? glyph(l) : mix(rows)) +
-      '<span class="open"><span class="dot"></span>' + n(rows.length) + ' open' + (nw ? ' <span class="mono">+' + nw + ' new</span>' : "") + '</span></a>';
+  var ROLE_ORDER = ["Building & automation", "People systems", "People analytics & research", "Strategic projects & initiatives",
+    "Embedded engineer", "Embedded product & design", "Core People & Talent"];
+  function realTitles(rows, k_) {
+    var seen = {}, out = [];
+    top(tally(rows, function (r) { return r.title; }), 40).forEach(function (x) {
+      var key = x[0].toLowerCase().replace(/^(senior|sr\.?|staff|lead|principal)\s+/, "").replace(/\s*[\(,\-–|].*$/, "");
+      var shown = x[0].replace(/\s*\(.*\)$/, ""); if (!seen[key] && !seen[shown] && out.length < k_) { seen[key] = 1; seen[shown] = 1; out.push(shown); } });
+    return out;
   }
   function roles() {
-    var order = BUILDER_GROUPS.slice().sort(function (a, b) { return byG(b).length - byG(a).length; });
     function byG(g) { return R.filter(function (r) { return r.group === g; }); }
-    app.innerHTML = '<h1>Roles</h1>' +
-      '<div class="grid2">' + order.map(function (g) { return catCard(g, byG(g), "#roles/" + slug(g)); }).join("") + '</div>' +
-      '<h2 class="section-title">By AI role</h2><p class="section-sub">The same roles, sorted by how they work with AI. In the cards above, the bars show the mix for each kind of role, from no AI (left) to leading company-wide change (right).</p>' +
-      '<div class="grid2">' + [4, 3, 2, 1].map(function (l) {
-        return catCard(AI_NAME[l], R.filter(function (r) { return lv(r) === l; }), "#roles/ai-" + l, l); }).join("") + '</div>' +
-      '<h2 class="section-title">The core of the function</h2><p class="section-sub">Recruiting, HR business partners, people ops, total rewards and programs: most of the market, and the baseline everything else is measured against.</p>' +
-      '<div class="grid2">' + catCard("Core People & Talent", byG("Core People & Talent"), "#roles/" + slug("Core People & Talent")) +
-      catCard("Every role", R, "#roles/all") + '</div>';
+    app.innerHTML = '<h1>Roles</h1><p class="section-sub" style="margin-top:-24px;max-width:62ch;font-size:19px">Seven kinds of role, sorted from the jobs themselves. Six are where People work is being rebuilt; the seventh is the core of the function they grow out of.</p>' +
+      '<div class="grid2">' + ROLE_ORDER.map(function (g) {
+        var rows = byG(g), nw = rows.filter(isNew).length;
+        return '<a class="card role-card" href="#roles/' + slug(g) + '"><h3>' + esc(g) + '</h3>' +
+          '<span class="open"><span class="dot"></span>' + n(rows.length) + ' open' + (nw ? ' <span class="mono">+' + nw + ' new</span>' : "") + '</span>' +
+          '<p>' + esc(GROUPS[g][1]) + '</p>' +
+          '<p class="titles"><span class="muted">Titles in the wild:</span> ' + realTitles(rows, 3).map(esc).join(" · ") + '</p></a>'; }).join("") + '</div>';
   }
   function category(key) {
     var title, def, rows;
@@ -161,10 +157,11 @@
     else { var g = D.group_order.filter(function (x) { return slug(x) === key; })[0]; if (!g) return roles();
       title = g; def = GROUPS[g][1]; rows = R.filter(function (r) { return r.group === g; }); }
     rows = rows.slice().sort(function (a, b) { return lv(b) - lv(a) || (b.first_seen > a.first_seen ? 1 : -1); });
-    var tools = top(tally(rows, function (r) { return r.tools; }), 5).map(function (x) { return x[0]; });
+    var titles = top(tally(rows, function (r) { return r.title; }), 12);
     app.innerHTML = '<a class="back" href="#roles">← All roles</a><div class="cat-head"><h1>' + esc(title) + '</h1><p>' + esc(def) + '</p></div>' +
-      '<p class="count">' + n(rows.length) + ' open' + (tools.length ? ' · most-named tools: ' + esc(tools.join(", ")) : "") + '</p>' +
-      '<div class="controls" style="margin-top:16px"><label for="q" style="position:absolute;left:-9999px">Search</label><input id="q" type="search" placeholder="Search title, company, tool"></div><div id="jobs"></div>';
+      '<p class="count">' + n(rows.length) + ' open</p>' +
+      (key.indexOf("ai-") ? '<h3 style="margin:32px 0 8px">Titles in this category</h3><p class="titles big">' + titles.map(function (x) { return esc(x[0]) + (x[1] > 1 ? ' <span class="mono muted">×' + x[1] + '</span>' : ""); }).join('<span class="sep"> · </span>') + '</p>' : "") +
+      '<div class="controls" style="margin-top:32px"><label for="q" style="position:absolute;left:-9999px">Search</label><input id="q" type="search" placeholder="Search title, company, tool"></div><div id="jobs"></div>';
     function draw(q) {
       q = (q || "").toLowerCase().trim();
       var rs = !q ? rows : rows.filter(function (r) { var h = (r.title + " " + r.company + " " + r.tools.join(" ") + " " + r.summary).toLowerCase();
@@ -176,79 +173,113 @@
   }
 
   /* ---------- Insights ---------- */
+  function stack(rows) {
+    var c = [0, 0, 0, 0, 0]; rows.forEach(function (r) { c[lv(r)]++; });
+    return [4, 3, 2, 1, 0].map(function (l) { return '<i style="width:' + (rows.length ? 100 * c[l] / rows.length : 0) + '%;background:' + COLOR[l] + '"></i>'; }).join("");
+  }
+  var AI_KEY = '<ul class="legend">' + [4, 3, 2, 1, 0].map(function (l) { return '<li><i style="background:' + COLOR[l] + '"></i>' + esc(AI_SHORT[l]) + '</li>'; }).join("") + '</ul>';
   function insights() {
-    var c = [0, 0, 0, 0, 0]; R.forEach(function (r) { c[lv(r)]++; });
-    var fwd = R.filter(FWD), builders = R.filter(function (r) { return r.group !== "Core People & Talent"; }),
-        core = R.filter(function (r) { return r.group === "Core People & Talent"; });
-    var bF = pct(builders.filter(FWD).length, builders.length), cF = pct(core.filter(FWD).length, core.length);
-    var tools = top(tally(fwd, function (r) { return r.tools; }), 5);
-    var cos = top(tally(fwd, function (r) { return r.company; }), 5);
-    var cw = R.filter(function (r) { return lv(r) === 4; });
-    function vb(items, maxv, hi) {
-      return '<div class="vbars">' + items.map(function (x, i) {
-        return '<div><span>' + (x[3] || n(x[1])) + '</span><i style="height:' + Math.max(3, 100 * x[1] / maxv) + '%;background:' + (x[2] || (i === hi ? "var(--rust)" : "var(--l1)")) + '"></i><span>' + esc(x[0]) + '</span></div>'; }).join("") + '</div>'; }
+    function byG(g) { return R.filter(function (r) { return r.group === g; }); }
+    function anyAI(rows) { return rows.filter(function (r) { return lv(r) > 0; }).length; }
+    function hb(items, max, fmt) {
+      return '<div class="hbars">' + items.map(function (x) { return '<div class="hbar small"><span class="lab">' + esc(x[0]) + '</span><span class="trk"><i class="solid" style="width:' + (100 * x[1] / max) + '%"></i></span><span class="val">' + (fmt ? fmt(x) : x[1]) + '</span></div>'; }).join("") + '</div>'; }
+    // 1. AI mix by kind of role
+    var order = ROLE_ORDER.slice().sort(function (a, b) {
+      var A = byG(a), B = byG(b); return B.filter(FWD).length / B.length - A.filter(FWD).length / A.length; });
+    var ba = byG("Building & automation");
+    var mixChart = '<div class="hbars">' + order.map(function (g) { var rs = byG(g);
+      return '<div class="hbar small"><span class="lab">' + esc(g) + '</span><span class="trk">' + stack(rs) + '</span><span class="val">' + rs.length + '</span></div>'; }).join("") + '</div>' + AI_KEY;
+    // 2. People systems
+    var ps = byG("People systems"), psTools = top(tally(ps, function (r) { return r.tools; }), 5);
+    var psWd = ps.filter(function (r) { return r.tools.indexOf("Workday") >= 0; }).length;
+    var psIT = ps.filter(function (r) { return r.reports_into === "IT"; }).length;
+    // 3. People analytics
+    var pa = byG("People analytics & research"), paTools = top(tally(pa, function (r) { return r.tools; }), 5);
+    // 4. Strategic projects: what the projects are
+    var sp = byG("Strategic projects & initiatives");
+    var THEMES = [["People systems rollouts", /workday|servicenow|hris|system|platform|tool|implementation|go-live/i],
+      ["AI adoption", /\bai\b|claude|automation/i], ["Expansion and org change", /expansion|international|location|restructur|org change|reorg|site/i]];
+    var themes = THEMES.map(function (t) { return [t[0], sp.filter(function (r) { return t[1].test(r.title + " " + r.summary); }).length]; });
+    // 5. Inside the core
+    var core = byG("Core People & Talent"), SUB = { recruiting: "Recruiting", people_operations: "People operations", hrbp: "HR business partners",
+      recruiting_coordination: "Recruiting coordination", total_rewards: "Total rewards", sourcing: "Sourcing", recruiting_operations: "Recruiting operations",
+      learning_development: "Learning & development", employee_relations: "Employee relations" };
+    var subs = Object.keys(SUB).map(function (s) { var rs = core.filter(function (r) { return r.sub === s; }); return [SUB[s], pct(anyAI(rs), rs.length), rs.length]; })
+      .filter(function (x) { return x[2] >= 10; }).sort(function (a, b) { return b[1] - a[1]; });
+    // 6. Tools in AI-forward roles
+    var fwd = R.filter(FWD), tools = top(tally(fwd, function (r) { return r.tools; }), 6);
+
     var entries = [
-      [n(fwd.length) + " roles build with AI or lead AI transformation.",
-        "That's " + pct(fwd.length, R.length) + "% of open People and Talent roles. Another " + n(c[1]) + " expect the person to use AI tools day to day.",
-        vb([4, 3, 2, 1, 0].map(function (l) { return [AI_SHORT[l], c[l], COLOR[l]]; }), Math.max.apply(null, c))],
-      ["Outside the core, " + bF + "% of roles are AI-forward. Inside it, " + cF + "%.",
-        "Builder, systems, analytics and project roles are " + pct(builders.length, R.length) + "% of open roles but " + pct(builders.filter(FWD).length, fwd.length) + "% of the AI-forward ones. Most core recruiting and HR postings don't mention AI at all.",
-        vb([["Outside the core", bF, null, bF + "%"], ["Core People & Talent", cF, null, cF + "%"]], 100, 0)],
+      ["Building & automation is the most AI-forward kind of role: all " + ba.length + " build with AI or lead AI change.",
+        "Sorting roles by kind tells you more about AI than any title does. Builder roles sit at one end; core recruiting and HR roles sit at the other, with three in four not mentioning AI at all.", mixChart, true],
+      ["People systems work is still Workday work.",
+        psWd + " of " + ps.length + " People systems roles name Workday, often down to EIBs and Core Connectors, and " + pct(anyAI(ps), ps.length) + "% mention AI at all. " + psIT + " of them report into IT rather than People.",
+        hb(psTools, psTools.length ? psTools[0][1] : 1, function (x) { return x[1] + "/" + ps.length; })],
+      ["People analytics runs on R, Python and SQL. Few roles build with AI.",
+        "R, Python and SQL are the most-named tools in People analytics and research roles; " + pct(anyAI(pa), pa.length) + "% of these roles mention AI, and " + pa.filter(FWD).length + " of " + pa.length + " build with it or lead it.",
+        hb(paTools, paTools.length ? paTools[0][1] : 1, function (x) { return x[1] + "/" + pa.length; })],
+      ["Strategic projects split between systems rollouts and AI adoption.",
+        "Read the " + sp.length + " project roles and the projects are a Workday or ServiceNow go-live, a new talent tool, an AI adoption push, or an expansion. A role can cover more than one.",
+        hb(themes, sp.length, function (x) { return x[1] + "/" + sp.length; })],
+      ["Inside the core, sourcing is where AI shows up most.",
+        "Among core People and Talent roles, sourcers are the most likely to be asked to work with AI; HR business partners and coordinators the least.",
+        hb(subs, 100, function (x) { return x[1] + "%"; })],
       [esc(tools.length ? tools[0][0] : "") + " is the tool AI-forward roles name most.",
-        "The systems of record still anchor the work: " + tools.slice(0, 3).map(function (x) { return x[0]; }).join(", ") + " lead the list of tools named in roles that build with AI or lead it.",
-        vb(tools.map(function (x) { return [x[0], x[1]]; }), tools.length ? tools[0][1] : 1, 0)],
-      [esc(cos.length ? cos[0][0] : "") + " is hiring the most AI-forward People roles.",
-        cos.map(function (x) { return x[0] + " (" + x[1] + ")"; }).join(", ") + ". It's spread thin: " + n(Object.keys(tally(fwd, function (r) { return r.company; })).length) + " of the " + n(S.companies_with_roles) + " companies hiring People roles have at least one.",
-        vb(cos.map(function (x) { return [x[0], x[1]]; }), cos.length ? cos[0][1] : 1, 0)],
-      ["Only " + n(cw.length) + " role" + (cw.length === 1 ? "" : "s") + " lead AI transformation for the whole company.",
-        "Company-wide AI enablement rarely sits in a People role yet: " + cw.map(function (r) { return r.title + " at " + r.company; }).join("; ") + ".",
-        '<div class="dots" role="img" aria-label="' + fwd.length + ' AI-forward roles, ' + cw.length + ' company-wide">' +
-          fwd.slice().sort(function (a, b) { return lv(a) - lv(b); }).map(function (r) { return '<i class="' + (lv(r) === 4 ? "on" : lv(r) === 3 ? "mid" : "") + '"></i>'; }).join("") + '</div>']
+        "The systems of record anchor the AI work: " + tools.slice(0, 3).map(function (x) { return x[0]; }).join(", ") + " lead the tools named in roles that build with AI or lead it.",
+        hb(tools, tools.length ? tools[0][1] : 1, function (x) { return pct(x[1], fwd.length) + "%"; })]
     ];
     app.innerHTML = '<h1>Insights</h1>' + entries.map(function (e) {
-      return '<article class="entry"><div class="when">First read<br>' + mdy(S.as_of) + '</div><div><h2>' + e[0] + '</h2><p>' + esc(e[1]) + '</p></div><div class="card">' + e[2] + '</div></article>'; }).join("") +
+      return '<article class="entry' + (e[3] ? " wide" : "") + '"><div class="when">First read<br>' + mdy(S.as_of) + '</div><div><h2>' + e[0] + '</h2><p>' + esc(e[1]) + '</p></div><div class="card">' + e[2] + '</div></article>'; }).join("") +
       src("Tracking began " + md(S.first_day) + "; week-over-week reports start once there is history.");
   }
 
   /* ---------- Data ---------- */
   function data() {
-    var outside = R.filter(function (r) { return r.reports_into && ["People/HR", "Talent/Recruiting", "Unknown"].indexOf(r.reports_into) < 0; });
-    var known = R.filter(function (r) { return r.reports_into && r.reports_into !== "Unknown"; });
-    var ai = R.filter(function (r) { return lv(r) > 0; }), code = R.filter(function (r) { return r.code === "yes"; });
-    var rep = R.map(function (r) { return Object.assign({}, r, { _b: r.reports_into === "Unknown" ? "not_stated" : r.reports_basis }); });
-    var cats = ["People/HR", "Talent/Recruiting", "Finance", "IT", "Operations", "CEO/Executive", "Engineering", "Other"];
-    var byGroup = D.group_order.map(function (g) {
-      var rows = R.filter(function (r) { return r.group === g; });
-      var st = rows.filter(function (r) { return r.code === "yes" && r.code_basis === "stated"; }).length;
-      var inf = rows.filter(function (r) { return r.code === "yes" && r.code_basis !== "stated"; }).length;
-      return [g, st, inf, rows.length]; }).sort(function (a, b) { return (b[1] + b[2]) / b[3] - (a[1] + a[2]) / a[3]; });
+    var builders = R.filter(function (r) { return r.group !== "Core People & Talent"; });
+    var inferredRep = R.filter(function (r) { return r.reports_basis === "inferred"; }).length;
+    function byG(g) { return R.filter(function (r) { return r.group === g; }); }
+    function splitBars(test, title, sub) {
+      var rows = ROLE_ORDER.map(function (g) { var rs = byG(g);
+        var st = rs.filter(function (r) { return test(r) && r._b(r) === "stated"; }).length, inf = rs.filter(function (r) { return test(r) && r._b(r) !== "stated"; }).length;
+        return [g, st, inf, rs.length]; }).sort(function (a, b) { return (b[1] + b[2]) / b[3] - (a[1] + a[2]) / a[3]; });
+      return '<div class="card"><h2>' + title + '</h2><p class="muted">' + sub + '</p><div class="hbars">' + rows.map(function (x) {
+        return '<div class="hbar small"><span class="lab">' + esc(x[0]) + '</span><span class="trk"><i class="solid" style="width:' + 100 * x[1] / x[3] + '%"></i><i class="hatched" style="width:' + 100 * x[2] / x[3] + '%"></i></span><span class="val">' + pct(x[1] + x[2], x[3]) + '%</span></div>'; }).join("") + '</div></div>';
+    }
+    var code = function (r) { return r.code === "yes"; }; code._ = 1;
+    R.forEach(function (r) { r._b = function (x) { return x.__b; }; });
+    function withBasis(field) { R.forEach(function (r) { r.__b = r[field]; }); }
+    withBasis("code_basis");
+    var codeCard = splitBars(code, "Who writes code", "Share of each kind of role whose posting has the person writing code.");
+    withBasis("reports_basis");
+    var outCard = splitBars(function (r) { return ["IT", "Engineering", "Finance", "Operations", "CEO/Executive", "Other"].indexOf(r.reports_into) >= 0; },
+      "Who reports outside People and Talent", "Share of each kind of role whose reporting line is IT, Engineering, Finance, Operations or the CEO.");
     app.innerHTML = '<h1>Data</h1>' +
-      '<div class="stats">' +
-      [[pct(ai.length, R.length) + "%", "work with AI"], [pct(outside.length, known.length) + "%", "report outside People"], [pct(code.length, R.length) + "%", "write code"], [n(R.length), "roles tracked"]].map(function (s) {
+      '<div class="stats">' + [[n(R.length), "roles tracked"], [pct(builders.length, R.length) + "%", "in the six new kinds of role"],
+        [pct(builders.filter(function (r) { return r.code === "yes"; }).length, builders.length) + "%", "of those write code"],
+        [pct(inferredRep, R.length) + "%", "of reporting lines are inferred, not stated"]].map(function (s) {
         return '<div><b>' + s[0] + '</b><span>' + s[1] + '</span></div>'; }).join("") + '</div>' + LEGEND +
-      '<div class="grid2"><div class="card"><h2>Who they report to</h2><p class="muted">Share of all roles, by the team named as the reporting line.</p>' +
-      basisBars(rep, cats, function (r) { return r.reports_into; }, true) + '</div>' +
-      '<div class="card"><h2>Who writes code, by kind of role</h2><p class="muted">Share of each kind of role whose posting has the person writing code.</p><div class="hbars">' +
-      byGroup.map(function (x) { var m = 100;
-        return '<div class="hbar small"><span class="lab">' + esc(x[0]) + '</span><span class="trk"><i class="solid" style="width:' + 100 * x[1] / x[3] + '%"></i><i class="hatched" style="width:' + 100 * x[2] / x[3] + '%"></i></span><span class="val">' + pct(x[1] + x[2], x[3]) + '%</span></div>'; }).join("") +
-      '</div></div></div>' + src() +
-      '<section class="method"><h2>How the tracker works</h2>' +
+      '<div class="grid2">' + codeCard + outCard + '</div>' + src();
+  }
+
+  /* ---------- Appendix ---------- */
+  function appendix() {
+    app.innerHTML = '<h1>How the tracker works</h1>' +
       '<p>Every day it reads the public job boards of ' + n(S.companies_tracked) + ' US startups and growth companies, keeps the roles that belong to the company\'s own People, HR, Talent or Recruiting function, and reads each posting with Claude against the definitions below. The definitions were calibrated by hand on a labeled review set. Each job links to its original posting.</p>' +
       '<p class="muted">Left out: roles at HR-tech and payroll companies that serve customers, IT and security, workplace and facilities, and roles outside the US. Companies on Workday and other enterprise systems aren\'t included yet.</p>' +
-      '<h3 style="margin-top:40px">Kinds of role</h3><dl class="defs">' + D.group_order.map(function (g) { return '<dt>' + esc(g) + '</dt><dd>' + esc(GROUPS[g][1]) + '</dd>'; }).join("") + '</dl>' +
-      '<h3>AI role</h3><p class="muted">One per role; when a role fits more than one, the higher one wins. Company boilerplate about AI and experience asked for in the requirements don\'t count.</p><dl class="defs">' +
+      '<h2 style="margin-top:48px">Kinds of role</h2><dl class="defs">' + ROLE_ORDER.map(function (g) { return '<dt>' + esc(g) + '</dt><dd>' + esc(GROUPS[g][1]) + '</dd>'; }).join("") + '</dl>' +
+      '<h2>AI role</h2><p class="muted">One per role; when a role fits more than one, the higher one wins. Company boilerplate about AI and experience asked for in the requirements don\'t count.</p><dl class="defs">' +
       [4, 3, 2, 1, 0].map(function (l) { return '<dt>' + esc(AI_NAME[l]) + '</dt><dd>' + esc(AI_DEF[l]) + '</dd>'; }).join("") + '</dl>' +
       '<table><thead><tr><th>Where the companies come from</th><th class="num">Companies</th></tr></thead><tbody>' +
       Object.keys(S.sources).map(function (k_) { return '<tr><td>' + esc(k_) + '</td><td class="num">' + n(S.sources[k_]) + '</td></tr>'; }).join("") + '</tbody></table>' +
-      '<p class="src">A company can be on more than one list. Classifier ' + esc(S.classifier_version) + '.</p></section>';
+      '<p class="src">A company can be on more than one list. Tracking began ' + md(S.first_day) + '. Classifier ' + esc(S.classifier_version) + '.</p>';
   }
 
   /* ---------- routing ---------- */
-  var ROUTES = { home: home, jobs: jobs, roles: roles, insights: insights, data: data };
+  var ROUTES = { home: home, jobs: jobs, roles: roles, insights: insights, data: data, appendix: appendix };
   function route() {
     var h = (location.hash || "#home").slice(1), parts = h.split("/"), r = ROUTES[parts[0]] ? parts[0] : "home";
     document.querySelectorAll("nav a").forEach(function (a) { if (a.dataset.route === r) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
-    document.title = (r === "home" ? "" : r.charAt(0).toUpperCase() + r.slice(1) + " – ") + "People Transformation Tracker";
+    document.title = (r === "home" ? "" : (r === "appendix" ? "How it works" : r.charAt(0).toUpperCase() + r.slice(1)) + " – ") + "People Transformation Tracker";
     if (r === "roles" && parts[1]) category(parts[1]); else ROUTES[r]();
     window.scrollTo(0, 0);
   }

@@ -74,7 +74,7 @@ p { max-width: 66ch; margin: 0 0 12px; }
 .solid { background: var(--rust); }
 .hatched { background: var(--hatch); box-shadow: inset 0 0 0 1.5px var(--rust); }
 .none { background: var(--l0); }
-.legend { display: flex; gap: 8px 24px; flex-wrap: wrap; margin: 8px 0 24px; font-size: 15px; color: var(--muted); padding: 0; list-style: none; }
+.legend { display: flex; gap: 6px 18px; flex-wrap: wrap; margin: 8px 0 24px; font-size: 15px; color: var(--muted); padding: 0; list-style: none; }
 .legend li { display: flex; align-items: center; gap: 8px; }
 .legend i { width: 18px; height: 14px; display: inline-block; }
 
@@ -170,3 +170,14 @@ td.num, th.num { text-align: right; font-family: var(--mono); font-size: 14px; }
   @keyframes grow { from { transform: scaleX(0); } }
   @keyframes growv { from { transform: scaleY(0); } }
 }
+
+/* role cards */
+.role-card { display: flex; flex-direction: column; gap: 12px; }
+.role-card h3 { font-size: clamp(24px, 2.6vw, 30px); letter-spacing: -0.03em; }
+.role-card .open { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 17px; }
+.role-card p { margin: 0; font-size: 17px; color: var(--ink); }
+.titles { font-size: 15px; color: var(--ink); }
+.titles .sep { color: var(--faint); }
+.titles.big { font-size: 17px; line-height: 1.9; max-width: 80ch; }
+@media (min-width: 900px) { .entry.wide { grid-template-columns: 170px 1fr 460px; } }
+.legend.tight { margin: 12px 0 0; font-size: 13px; }
