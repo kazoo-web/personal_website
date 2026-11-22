@@ -238,3 +238,5 @@ a.card.qc { display: flex; flex-direction: column; justify-content: space-betwee
 #tplist li .mono { color: var(--muted); font-size: 12px; }
 #tplist li[aria-selected="true"], #tplist li[role=option]:hover { background: var(--tint); }
 #tplist li.none { color: var(--muted); cursor: default; }
+.job .tools .lang { font-weight: 700; color: var(--ink); }
+#tplist .kind { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-left: 6px; }

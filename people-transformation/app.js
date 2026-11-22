@@ -55,13 +55,13 @@
     var rep = r.reports_to || (r.reports_into && r.reports_into !== "Unknown" ? r.reports_into : "");
     var repHtml = rep && r.reports_basis !== "not_stated" ? 'Reports to <span class="' + (r.reports_basis === "inferred" ? "inferred" : "") + '">' + esc(rep) +
       (r.reports_basis === "inferred" ? " inferred" : "") + '</span>' : "";
-    var tools = r.tools.slice(0, 3).join(" · ");
+    var tools = r.langs.concat(r.tools).slice(0, 3);
     return '<article class="card job">' +
       '<h3>' + esc(r.title) + '</h3>' +
       '<div class="co"><b>' + esc(r.company) + '</b>' + (r.location ? ' · ' + esc(r.location) : "") + '</div>' +
       '<div class="tags">' + tags.join("") + '</div>' +
       (r.comp ? '<div class="pay">' + pay(r.comp) + '</div>' : '<div class="pay nopay">Pay not posted</div>') +
-      '<div class="mid"><span>' + repHtml + '</span><span class="tools">' + esc(tools) + '</span></div>' +
+      '<div class="mid"><span>' + repHtml + '</span><span class="tools">' + tools.map(function (t) { return r.langs.indexOf(t) >= 0 ? '<b class="lang">' + esc(t) + '</b>' : esc(t); }).join(" · ") + '</span></div>' +
       '<div class="bottom"><span>' + (isNew(r) ? "Posted " + md(r.first_seen) : "Open since tracking began") + '</span>' +
       '<a href="' + esc(r.url) + '" target="_blank" rel="noopener">Original posting ↗</a></div></article>';
   }
@@ -119,15 +119,15 @@
     function renderChips() {
       chips.innerHTML = st.tools.map(function (t, i) { return '<span class="tchip">' + esc(t) + '<button type="button" data-i="' + i + '" aria-label="Remove ' + esc(t) + '">×</button></span>'; }).join("");
       chips.querySelectorAll("button").forEach(function (b) { b.onclick = function () { st.tools.splice(+b.dataset.i, 1); renderChips(); onChange(); inp.focus(); }; });
-      inp.placeholder = st.tools.length ? "Add another tool" : "Filter by tools, e.g. Workday, Python, Claude";
+      inp.placeholder = st.tools.length ? "Add another" : "Filter by tools and languages, e.g. Workday, SQL, Claude";
     }
     function close() { list.hidden = true; inp.setAttribute("aria-expanded", "false"); act = -1; }
     function open() {
       var q = inp.value.toLowerCase().trim();
       opts = counts.filter(function (x) { return st.tools.indexOf(x[0]) < 0 && (!q || x[0].toLowerCase().indexOf(q) >= 0); })
         .sort(function (a, b) { var as = a[0].toLowerCase().indexOf(q) === 0, bs = b[0].toLowerCase().indexOf(q) === 0; return (bs - as) || (b[1] - a[1]); }).slice(0, 8);
-      if (!opts.length) { list.innerHTML = '<li class="none">No tool matches “' + esc(inp.value) + '”</li>'; }
-      else list.innerHTML = opts.map(function (x, i) { return '<li role="option" id="tpo' + i + '" data-i="' + i + '"' + (i === act ? ' aria-selected="true"' : "") + '><span>' + esc(x[0]) + '</span><span class="mono">' + x[1] + '</span></li>'; }).join("");
+      if (!opts.length) { list.innerHTML = '<li class="none">Nothing matches “' + esc(inp.value) + '”</li>'; }
+      else list.innerHTML = opts.map(function (x, i) { return '<li role="option" id="tpo' + i + '" data-i="' + i + '"' + (i === act ? ' aria-selected="true"' : "") + '><span>' + esc(x[0]) + ' <span class="kind">' + x[2].toLowerCase() + '</span></span><span class="mono">' + x[1] + '</span></li>'; }).join("");
       list.hidden = false; inp.setAttribute("aria-expanded", "true");
       if (act >= 0) inp.setAttribute("aria-activedescendant", "tpo" + act); else inp.removeAttribute("aria-activedescendant");
       list.querySelectorAll("li[role=option]").forEach(function (li) { li.onmousedown = function (e) { e.preventDefault(); add(opts[+li.dataset.i][0]); }; });
@@ -147,7 +147,8 @@
   }
   function jobs() {
     var st = { fwd: false, group: "", q: "", metro: "", pay: "", tools: [] };
-    var toolCounts = top(tally(R, function (r) { return r.tools; }), 100000);
+    var toolCounts = top(tally(R, function (r) { return r.tools; }), 100000).map(function (x) { return [x[0], x[1], "Tool"]; })
+      .concat(top(tally(R, function (r) { return r.langs; }), 1000).map(function (x) { return [x[0], x[1], "Language"]; }));
     function sel(id, label, opts) { return '<label for="' + id + '" style="position:absolute;left:-9999px">' + label + '</label><select id="' + id + '"><option value="">' + label + '</option>' +
       opts.map(function (o) { return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>'; }).join("") + '</select>'; }
     app.innerHTML = '<div class="page-head"><h1>New jobs</h1></div>' +
@@ -158,7 +159,7 @@
       sel("metro", "Anywhere", METROS.map(function (m) { return [m[0], m[0]]; })) +
       sel("pay", "Any pay", [["posted", "Pay posted"], ["150", "$150k+"], ["200", "$200k+"], ["250", "$250k+"]]) +
       '</div><div class="toolpick"><div class="tp-box"><span id="tpchips"></span>' +
-      '<input id="tp" type="text" role="combobox" aria-expanded="false" aria-controls="tplist" aria-autocomplete="list" autocomplete="off" placeholder="Filter by tools, e.g. Workday, Python, Claude"></div>' +
+      '<input id="tp" type="text" role="combobox" aria-expanded="false" aria-controls="tplist" aria-autocomplete="list" autocomplete="off" placeholder="Filter by tools and languages, e.g. Workday, SQL, Claude"></div>' +
       '<ul id="tplist" role="listbox" hidden></ul></div>' +
       '<p class="count"></p><div id="jobs"></div>';
     function mid(r) { return r.comp ? (r.comp[0] + (r.comp[1] || r.comp[0])) / 2 : 0; }
@@ -170,8 +171,8 @@
         if (m && !m[1].test(r.location || "")) return false;
         if (st.pay === "posted" && !r.comp) return false;
         if (st.pay && st.pay !== "posted" && mid(r) < +st.pay * 1000) return false;
-        if (st.tools.length && !st.tools.some(function (t) { return r.tools.indexOf(t) >= 0; })) return false;
-        if (q) { var h = (r.title + " " + r.company + " " + (r.location || "") + " " + r.tools.join(" ") + " " + r.summary + " " + r.group).toLowerCase();
+        if (st.tools.length && !st.tools.some(function (t) { return r.tools.indexOf(t) >= 0 || r.langs.indexOf(t) >= 0; })) return false;
+        if (q) { var h = (r.title + " " + r.company + " " + (r.location || "") + " " + r.tools.join(" ") + " " + r.langs.join(" ") + " " + r.summary + " " + r.group).toLowerCase();
           if (!q.split(/\s+/).every(function (w) { return h.indexOf(w) >= 0; })) return false; }
         return true; });
       var nw = rows.filter(isNew).length;
@@ -225,7 +226,7 @@
       '<div class="controls" style="margin-top:32px"><label for="q" style="position:absolute;left:-9999px">Search</label><input id="q" type="search" placeholder="Search title, company, tool"></div><div id="jobs"></div>';
     function draw(q) {
       q = (q || "").toLowerCase().trim();
-      var rs = !q ? rows : rows.filter(function (r) { var h = (r.title + " " + r.company + " " + r.tools.join(" ") + " " + r.summary).toLowerCase();
+      var rs = !q ? rows : rows.filter(function (r) { var h = (r.title + " " + r.company + " " + r.tools.join(" ") + " " + r.langs.join(" ") + " " + r.summary).toLowerCase();
         return q.split(/\s+/).every(function (w) { return h.indexOf(w) >= 0; }); });
       jobList(document.getElementById("jobs"), rs);
     }
@@ -255,7 +256,7 @@
     var psWd = ps.filter(function (r) { return r.tools.indexOf("Workday") >= 0; }).length;
     var psIT = ps.filter(function (r) { return r.reports_into === "IT"; }).length;
     // 3. People analytics
-    var pa = byG("People analytics & research"), paTools = top(tally(pa, function (r) { return r.tools; }), 5);
+    var pa = byG("People analytics & research"), paTools = top(tally(pa, function (r) { return r.langs; }), 5);
     // 4. Strategic projects: what the projects are
     var sp = byG("Strategic projects & initiatives");
     var THEMES = [["People systems rollouts", /workday|servicenow|hris|system|platform|tool|implementation|go-live/i],
@@ -275,7 +276,7 @@
         psWd + " of " + ps.length + " People systems roles name Workday, often down to EIBs and Core Connectors, and " + pct(anyAI(ps), ps.length) + "% mention AI at all. " + psIT + " of them report into IT rather than People.",
         hb(psTools, psTools.length ? psTools[0][1] : 1, function (x) { return x[1] + "/" + ps.length; })],
       ["People analytics runs on R, Python and SQL. Few roles build with AI.",
-        "R, Python and SQL are the most-named tools in People analytics and research roles; " + pct(anyAI(pa), pa.length) + "% of these roles mention AI, and " + pa.filter(FWD).length + " of " + pa.length + " build with it or lead it.",
+        paTools.map(function (x) { return x[0]; }).join(", ") + " are the languages People analytics and research roles ask for; " + pct(anyAI(pa), pa.length) + "% of these roles mention AI, and " + pa.filter(FWD).length + " of " + pa.length + " build with it or lead it.",
         hb(paTools, paTools.length ? paTools[0][1] : 1, function (x) { return x[1] + "/" + pa.length; })],
       ["Strategic projects split between systems rollouts and AI adoption.",
         "Read the " + sp.length + " project roles and the projects are a Workday or ServiceNow go-live, a new talent tool, an AI adoption push, or an expansion. A role can cover more than one.",
