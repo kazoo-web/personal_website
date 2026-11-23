@@ -318,13 +318,17 @@
         coreRecent = pct(coreR.filter(function (r) { return r.posted.slice(0, 7) >= cutoff; }).length, coreR.length);
     var lead = gstats.slice().sort(function (a, b) { return b.recent / b.n - a.recent / a.n; })[0];
     var gmax = Math.max.apply(null, gstats.map(function (x) { return Math.max.apply(null, x.bars); }));
-    entries.push([esc(lead.g) + " roles skew the most recent: " + lead.recent + " of " + lead.n + " were posted in the last two months.",
-      "Across core People and Talent roles it's " + coreRecent + "%. Each row counts the roles open now by the month they were posted. The numbers are small, so read the rows as early signals, and the same caveat holds as above: older roles have closed, so every row leans recent.",
+    entries.push([esc(lead.g) + " roles are the newest.",
+      lead.recent + " of " + lead.n + " were posted in the last two months, against " + coreRecent + "% of core People and Talent roles. Each line counts the roles open now by the month they were posted. The numbers are small, so read them as early signals.",
       '<div class="multiples">' + gstats.map(function (x) {
-        return '<div class="mrow"><span class="mlab">' + esc(x.g) + '</span><span class="mbars">' + x.bars.map(function (v, i) {
-          return '<i title="' + buckets[i][0] + ': ' + v + '" style="height:' + (v ? Math.max(8, 100 * v / gmax) : 0) + '%;background:' + (i === x.bars.length - 1 ? "var(--rust)" : "var(--l1)") + '"></i>'; }).join("") +
+        var W = 100, H = 30, k_ = x.bars.length, mx = Math.max.apply(null, x.bars.concat([1]));
+        var pts = x.bars.map(function (v, i) { return [(i / (k_ - 1)) * W, H - 2 - (v / mx) * (H - 6)]; });
+        var last = pts[pts.length - 1];
+        return '<div class="mrow"><span class="mlab">' + esc(x.g) + '</span><span class="mline"><svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
+          '<polyline points="' + pts.map(function (p_) { return p_[0].toFixed(1) + "," + p_[1].toFixed(1); }).join(" ") + '" fill="none" stroke="var(--rust)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>' +
+          '</svg><span class="mdot" style="left:100%;top:' + (100 * last[1] / H) + '%"></span>' +
           '</span><span class="mono mn">' + x.n + '</span></div>'; }).join("") +
-        '<div class="mrow mlegend"><span class="mlab"></span><span class="mbars">' + buckets.map(function (b) { return '<em>' + (b[0] === "Earlier" ? "Pre" : b[0]) + '</em>'; }).join("") + '</span><span class="mn"></span></div></div>', true]);
+        '<div class="mrow mlegend"><span class="mlab"></span><span class="mends"><em>Before ' + buckets[1][0] + '</em><em>' + buckets[buckets.length - 1][0] + '</em></span><span class="mn"></span></div></div>', true]);
     app.innerHTML = '<h1>Insights</h1>' + entries.map(function (e) {
       return '<article class="entry' + (e[3] ? " wide" : "") + '"><div class="when">First read</div><div><h2>' + e[0] + '</h2><p>' + esc(e[1]) + '</p></div><div class="card">' + e[2] + '</div></article>'; }).join("") +
       src("Week-over-week reports start once there is more history.");

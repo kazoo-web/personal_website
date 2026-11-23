@@ -259,3 +259,10 @@ a.card.qc { display: flex; flex-direction: column; justify-content: space-betwee
 .mn { font-size: 12px; color: var(--muted); text-align: right; align-self: center; }
 .mlegend .mbars { height: auto; border: 0; }
 .mlegend em { font-style: normal; font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: center; overflow: hidden; }
+
+.mline { position: relative; height: 34px; display: block; }
+.mline svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.mdot { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--rust); transform: translate(-50%, -50%); }
+.mends { display: flex; justify-content: space-between; }
+.mends em { font-style: normal; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.mrow { align-items: center; }
