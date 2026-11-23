@@ -243,6 +243,30 @@
     return [4, 3, 2, 1, 0].map(function (l) { return '<i style="width:' + (rows.length ? 100 * c[l] / rows.length : 0) + '%;background:' + COLOR[l] + '"></i>'; }).join("");
   }
   var AI_KEY = '<ul class="legend">' + [4, 3, 2, 1, 0].map(function (l) { return '<li><i style="background:' + COLOR[l] + '"></i>' + esc(AI_SHORT[l]) + '</li>'; }).join("") + '</ul>';
+  var LINE_COLORS = ["#7B3A2A", "#2F7F79", "#C08A2B", "#4A6A9B", "#8A4B78", "#6B7A3A"];
+  function lineChart(series, xlabels) {
+    var W = 760, H = 300, L = 36, Rm = 230, T = 16, B = 32, iw = W - L - Rm, ih = H - T - B;
+    var mx = Math.max.apply(null, series.map(function (s_) { return Math.max.apply(null, s_.bars); }).concat([1]));
+    var step = mx <= 10 ? 2 : mx <= 20 ? 5 : 10, top_ = Math.ceil(mx / step) * step;
+    function x(i) { return L + iw * i / (xlabels.length - 1); }
+    function y(v) { return T + ih - ih * v / top_; }
+    var g = "";
+    for (var v = 0; v <= top_; v += step) g += '<line x1="' + L + '" x2="' + (L + iw) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--hair)"/><text x="' + (L - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end" class="ax">' + v + '</text>';
+    xlabels.forEach(function (lab, i) { g += '<text x="' + x(i) + '" y="' + (H - 8) + '" text-anchor="middle" class="ax">' + esc(lab) + '</text>'; });
+    // end labels, nudged apart so they don't collide
+    var ends = series.map(function (s_, i) { return { i: i, y: y(s_.bars[s_.bars.length - 1]), label: s_.g }; }).sort(function (a, b) { return a.y - b.y; });
+    for (var k = 1; k < ends.length; k++) if (ends[k].y - ends[k - 1].y < 16) ends[k].y = ends[k - 1].y + 16;
+    var over = ends[ends.length - 1].y - (T + ih + 4); if (over > 0) ends.forEach(function (e) { e.y -= over; });
+    series.forEach(function (s_, i) {
+      var c = LINE_COLORS[i % LINE_COLORS.length];
+      g += '<polyline fill="none" stroke="' + c + '" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round" points="' + s_.bars.map(function (v, j) { return x(j).toFixed(1) + "," + y(v).toFixed(1); }).join(" ") + '"/>';
+      g += '<circle cx="' + x(s_.bars.length - 1) + '" cy="' + y(s_.bars[s_.bars.length - 1]) + '" r="3.5" fill="' + c + '"/>';
+    });
+    ends.forEach(function (e) { var c = LINE_COLORS[e.i % LINE_COLORS.length], ly = y(series[e.i].bars[series[e.i].bars.length - 1]);
+      g += '<line x1="' + (L + iw + 6) + '" x2="' + (L + iw + 14) + '" y1="' + ly + '" y2="' + e.y + '" stroke="' + c + '" stroke-width="1"/>' +
+        '<text x="' + (L + iw + 18) + '" y="' + (e.y + 4) + '" class="lbl" fill="' + c + '">' + esc(e.label) + '</text>'; });
+    return '<svg class="linechart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Open roles by month posted, by kind of role">' + g + '</svg>';
+  }
   function insights() {
     function byG(g) { return R.filter(function (r) { return r.group === g; }); }
     function anyAI(rows) { return rows.filter(function (r) { return lv(r) > 0; }).length; }
@@ -320,17 +344,9 @@
     var gmax = Math.max.apply(null, gstats.map(function (x) { return Math.max.apply(null, x.bars); }));
     entries.push([esc(lead.g) + " roles are the newest.",
       lead.recent + " of " + lead.n + " were posted in the last two months, against " + coreRecent + "% of core People and Talent roles. Each line counts the roles open now by the month they were posted. The numbers are small, so read them as early signals.",
-      '<div class="multiples">' + gstats.map(function (x) {
-        var W = 100, H = 30, k_ = x.bars.length, mx = Math.max.apply(null, x.bars.concat([1]));
-        var pts = x.bars.map(function (v, i) { return [(i / (k_ - 1)) * W, H - 2 - (v / mx) * (H - 6)]; });
-        var last = pts[pts.length - 1];
-        return '<div class="mrow"><span class="mlab">' + esc(x.g) + '</span><span class="mline"><svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
-          '<polyline points="' + pts.map(function (p_) { return p_[0].toFixed(1) + "," + p_[1].toFixed(1); }).join(" ") + '" fill="none" stroke="var(--rust)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>' +
-          '</svg><span class="mdot" style="left:100%;top:' + (100 * last[1] / H) + '%"></span>' +
-          '</span><span class="mono mn">' + x.n + '</span></div>'; }).join("") +
-        '<div class="mrow mlegend"><span class="mlab"></span><span class="mends"><em>Before ' + buckets[1][0] + '</em><em>' + buckets[buckets.length - 1][0] + '</em></span><span class="mn"></span></div></div>', true]);
+      lineChart(gstats, buckets.map(function (b, i) { return i === 0 ? "Before " + buckets[1][0] : b[0]; })), "full"]);
     app.innerHTML = '<h1>Insights</h1>' + entries.map(function (e) {
-      return '<article class="entry' + (e[3] ? " wide" : "") + '"><div class="when">First read</div><div><h2>' + e[0] + '</h2><p>' + esc(e[1]) + '</p></div><div class="card">' + e[2] + '</div></article>'; }).join("") +
+      return '<article class="entry' + (e[3] === "full" ? " full" : e[3] ? " wide" : "") + '"><div class="when">First read</div><div><h2>' + e[0] + '</h2><p>' + esc(e[1]) + '</p></div><div class="card">' + e[2] + '</div></article>'; }).join("") +
       src("Week-over-week reports start once there is more history.");
   }
 

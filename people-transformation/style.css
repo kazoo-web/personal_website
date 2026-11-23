@@ -266,3 +266,8 @@ a.card.qc { display: flex; flex-direction: column; justify-content: space-betwee
 .mends { display: flex; justify-content: space-between; }
 .mends em { font-style: normal; font-family: var(--mono); font-size: 11px; color: var(--muted); }
 .mrow { align-items: center; }
+
+.linechart { width: 100%; height: auto; display: block; }
+.linechart .ax { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
+.linechart .lbl { font-size: 13px; font-weight: 600; }
+@media (min-width: 900px) { .entry.full .card { grid-column: 2 / 4; } }
