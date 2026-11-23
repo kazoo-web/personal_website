@@ -43,6 +43,7 @@ const DEFAULT_B = [
   ['Executive operations & decision support', 'Coordinate offsites, onsites, and company-wide events, including logistics and executive communications'],
 ].map(([area, text], i) => ({ id: 'b' + (i + 1), area, text }));
 const DEFAULT_B_TEXT = Object.fromEntries(DEFAULT_B.map((c) => [c.id, c.text]));
+let delArmed = null, delTimer = null;
 const DEFAULT_AREAS = [...new Set(DEFAULT_B.map((c) => c.area))];
 const AREA_COLORS = ['#8A3820', '#5C6B3A', '#3F5A6E', '#A86F2A', '#6E3F5C', '#7A6A5A'];
 
@@ -260,7 +261,8 @@ function vEdit() {
         <textarea class="grow edit" rows="1" data-btext="${c.id}" ${c.removed ? 'disabled' : ''} placeholder="Describe this part of the role">${esc(c.text)}</textarea>
         <div class="actions">${badge}
           ${st === 'edited' ? `<button class="small" data-revert="${c.id}">Undo edit</button>` : ''}
-          ${c.removed ? `<button class="small" data-restore="${c.id}">Restore</button>` : `<button class="small" data-remove="${c.id}">Remove</button>`}</div></div>`;
+          ${st === 'added' || (st === 'removed' && !(c.id in DEFAULT_B_TEXT)) ? `<button class="small ${delArmed === c.id ? 'armed' : ''}" data-del="${c.id}">${delArmed === c.id ? 'Click again to delete' : 'Delete'}</button>`
+            : c.removed ? `<button class="small" data-restore="${c.id}">Restore</button>` : `<button class="small" data-remove="${c.id}">Remove</button>`}</div></div>`;
     });
     html += `<button class="addlink" data-addto="${esc(area)}">+ Add to this area</button>`;
   });
@@ -642,6 +644,15 @@ document.addEventListener('click', (e) => {
   if (d.set) { const cur = getPath(d.set); const v = isNaN(Number(d.val)) ? d.val : Number(d.val); setPath(d.set, cur === v ? undefined : v); save(ownerKey(d.set)); render(); }
   else if (d.opennote) { openNotes.add(d.opennote); render(); const ta = document.querySelector(`textarea[data-text="${d.opennote}"]`); ta && ta.focus(); }
   else if (d.remove) { byId(d.remove).removed = true; save('partB'); render(); }
+  else if (d.del) {
+    // items Natan added are deleted outright (two clicks), along with anything rated on them
+    if (delArmed !== d.del) { delArmed = d.del; clearTimeout(delTimer); delTimer = setTimeout(() => { delArmed = null; render(); }, 4000); render(); return; }
+    const id = d.del; delArmed = null; clearTimeout(delTimer);
+    S.partB = S.partB.filter((c) => c.id !== id);
+    delete S.natan.items[id]; S.natan.order = (S.natan.order || []).filter((x) => x !== id);
+    delete S.katherine.b[id];
+    save('partB'); save('natan'); save('katherine'); render();
+  }
   else if (d.restore) { byId(d.restore).removed = false; save('partB'); render(); }
   else if (d.revert) { byId(d.revert).text = DEFAULT_B_TEXT[d.revert]; save('partB'); render(); }
   else if (d.addto !== undefined || d.newarea) {
