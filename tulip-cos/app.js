@@ -443,10 +443,9 @@ function vWho() {
     const text = editA
       ? `<div class="row"><textarea class="grow edit grow1" rows="1" data-atext="${i}">${esc(c.text)}</textarea><button class="small" data-adel="${i}">Remove</button></div>`
       : `<div class="text">${esc(c.text)}</div>`;
-    html += `<div class="item">${text}<div class="controls"><span class="ctl"><span class="lbl">How strong is this in me</span>${seg(`katherine.a.${c.id}.strength`, r.strength, ONE_FIVE)}</span></div>
-      <textarea class="grow note" data-text="katherine.a.${c.id}.note" placeholder="Evidence — the example I’d point to">${esc(r.note)}</textarea></div>`;
+    html += `<div class="item ${editA ? '' : 'row2'}">${text}${seg(`katherine.a.${c.id}.strength`, r.strength, ONE_FIVE)}</div>`;
   });
-  return `<div class="intro">★ <b>Who I am</b> — the “about you” half of the posting. How strong each is in me, and the proof point I’d use. My reference only; it doesn’t feed the fit analysis.</div>
+  return `<div class="intro">★ <b>Who I am</b> — the “about you” half of the posting. How strong each is in me, 1–5. My reference only; it doesn’t feed the fit analysis.</div>
     <div class="toolbar"><button class="small" data-toggleedita="1">${editA ? 'Done editing wording' : 'Edit wording (paste exact JD text)'}</button>${editA ? '<button class="small" data-aadd="1">+ Add item</button>' : ''}</div>${html}`;
 }
 
