@@ -57,7 +57,7 @@
     var repHtml = rep && r.reports_basis !== "not_stated" ? 'Reports to <span class="' + (r.reports_basis === "inferred" ? "inferred" : "") + '">' + esc(rep) +
       (r.reports_basis === "inferred" ? " inferred" : "") + '</span>' : "";
     var stack = r.langs.map(function (t) { return '<li class="tag lang">' + esc(t) + '</li>'; })
-      .concat(r.tools.map(function (t) { return '<li class="tag">' + esc(t) + '</li>'; })).join("");
+      .concat(r.tools.map(function (t) { var dt = (r.tool_detail || {})[t]; return '<li class="tag">' + esc(t) + (dt && dt.length ? '<span class="sub">: ' + esc(dt.join(", ")) + '</span>' : "") + '</li>'; })).join("");
     return '<article class="card job">' +
       '<h3>' + esc(r.title) + '</h3>' +
       '<div class="co"><b>' + esc(r.company) + '</b>' + (r.location ? ' · ' + esc(r.location) : "") + '</div>' +
@@ -257,7 +257,9 @@
     // 2. People systems
     var ps = byG("People systems"), psTools = top(tally(ps, function (r) { return r.tools; }), 5);
     var psWd = ps.filter(function (r) { return r.tools.indexOf("Workday") >= 0; }).length;
-    var psIT = ps.filter(function (r) { return r.reports_into === "IT"; }).length;
+    var INTEG = ["EIB", "Core Connectors", "Studio", "Extend", "APIs", "Integrations"];
+    var psInteg = ps.filter(function (r) { return ((r.tool_detail || {}).Workday || []).some(function (x) { return INTEG.indexOf(x) >= 0; }); }).length;
+    var allAI = pct(R.filter(function (r) { return lv(r) > 0; }).length, R.length);
     // 3. People analytics
     var pa = byG("People analytics & research"), paTools = top(tally(pa, function (r) { return r.langs; }), 5);
     // 4. Strategic projects: what the projects are
@@ -276,7 +278,7 @@
 
     var entries = [
       ["People systems work is still Workday work.",
-        psWd + " of " + ps.length + " People systems roles name Workday, often down to EIBs and Core Connectors, and " + pct(anyAI(ps), ps.length) + "% mention AI at all. " + psIT + " of them report into IT rather than People.",
+        psWd + " of " + ps.length + " People systems roles name Workday; the next most-named tool, " + (psTools[1] ? psTools[1][0] + ", appears in " + psTools[1][1] : "") + ". " + psInteg + " of the " + psWd + " Workday roles ask for its integration tools (EIB, Core Connectors, Studio): hands-on technical Workday work, not just administration. " + pct(anyAI(ps), ps.length) + "% mention AI, above the " + allAI + "% across all roles.",
         hb(psTools, psTools.length ? psTools[0][1] : 1, function (x) { return x[1] + "/" + ps.length; })],
       ["People analytics runs on R, Python and SQL. Few roles build with AI.",
         paTools.map(function (x) { return x[0]; }).join(", ") + " are the languages People analytics and research roles ask for; " + pct(anyAI(pa), pa.length) + "% of these roles mention AI, and " + pa.filter(FWD).length + " of " + pa.length + " build with it or lead it.",
@@ -305,6 +307,24 @@
     entries.push(["Half of today's open roles were posted in the last " + (medDays <= 70 ? Math.round(medDays / 7) + " weeks" : Math.round(medDays / 30) + " months") + ".",
       "Each bar counts the roles open now by the month they were first posted; the latest month is still in progress. Older roles have mostly been filled or closed, so the bars rise toward the present whether or not hiring is growing; growth will show once the tracker has months of its own history. What already holds: the share that works with AI stays between " + aiLo + "% and " + aiHi + "% across recent months.",
       '<div class="vbars tall">' + tb.map(function (x, i) { return '<div><span>' + x[1] + '</span><i style="height:' + Math.max(2, 100 * x[1] / tmax) + '%;background:' + (i === tb.length - 1 ? "var(--rust)" : "var(--l1)") + '"></i><span>' + x[0] + '</span><span class="ai-share">' + (x[1] ? x[2] + "% AI" : "") + '</span></div>'; }).join("") + '</div>', true]);
+    // Open roles by kind of role, by month posted
+    var SIX = ["Building & automation", "People systems", "People analytics & research", "Strategic projects & initiatives", "Embedded engineer", "Embedded product & design"];
+    var cutoff = months[months.length - 2];
+    var gstats = SIX.map(function (g) {
+      var rs = R.filter(function (r) { return r.group === g && r.posted; });
+      return { g: g, n: rs.length, recent: rs.filter(function (r) { return r.posted.slice(0, 7) >= cutoff; }).length,
+        bars: buckets.map(function (b) { return rs.filter(function (r) { return b[1](r.posted.slice(0, 7)); }).length; }) }; });
+    var coreR = R.filter(function (r) { return r.group === "Core People & Talent" && r.posted; }),
+        coreRecent = pct(coreR.filter(function (r) { return r.posted.slice(0, 7) >= cutoff; }).length, coreR.length);
+    var lead = gstats.slice().sort(function (a, b) { return b.recent / b.n - a.recent / a.n; })[0];
+    var gmax = Math.max.apply(null, gstats.map(function (x) { return Math.max.apply(null, x.bars); }));
+    entries.push([esc(lead.g) + " roles skew the most recent: " + lead.recent + " of " + lead.n + " were posted in the last two months.",
+      "Across core People and Talent roles it's " + coreRecent + "%. Each row counts the roles open now by the month they were posted. The numbers are small, so read the rows as early signals, and the same caveat holds as above: older roles have closed, so every row leans recent.",
+      '<div class="multiples">' + gstats.map(function (x) {
+        return '<div class="mrow"><span class="mlab">' + esc(x.g) + '</span><span class="mbars">' + x.bars.map(function (v, i) {
+          return '<i title="' + buckets[i][0] + ': ' + v + '" style="height:' + (v ? Math.max(8, 100 * v / gmax) : 0) + '%;background:' + (i === x.bars.length - 1 ? "var(--rust)" : "var(--l1)") + '"></i>'; }).join("") +
+          '</span><span class="mono mn">' + x.n + '</span></div>'; }).join("") +
+        '<div class="mrow mlegend"><span class="mlab"></span><span class="mbars">' + buckets.map(function (b) { return '<em>' + (b[0] === "Earlier" ? "Pre" : b[0]) + '</em>'; }).join("") + '</span><span class="mn"></span></div></div>', true]);
     app.innerHTML = '<h1>Insights</h1>' + entries.map(function (e) {
       return '<article class="entry' + (e[3] ? " wide" : "") + '"><div class="when">First read</div><div><h2>' + e[0] + '</h2><p>' + esc(e[1]) + '</p></div><div class="card">' + e[2] + '</div></article>'; }).join("") +
       src("Week-over-week reports start once there is more history.");

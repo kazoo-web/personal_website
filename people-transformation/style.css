@@ -248,3 +248,14 @@ a.card.qc { display: flex; flex-direction: column; justify-content: space-betwee
 .job .bottom { padding-top: 18px; }
 .vbars.tall { height: 220px; }
 .vbars .ai-share { color: var(--rust); font-size: 11px; }
+
+.tag .sub { font-weight: 400; color: var(--faint); }
+/* small multiples: roles by month posted */
+.multiples { display: grid; gap: 10px; }
+.mrow { display: grid; grid-template-columns: minmax(120px, 190px) 1fr 28px; gap: 12px; align-items: end; }
+.mlab { font-size: 14px; line-height: 1.2; align-self: center; }
+.mbars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; height: 34px; align-items: end; border-bottom: 1px solid var(--hair); }
+.mbars i { display: block; border-radius: 2px 2px 0 0; }
+.mn { font-size: 12px; color: var(--muted); text-align: right; align-self: center; }
+.mlegend .mbars { height: auto; border: 0; }
+.mlegend em { font-style: normal; font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: center; overflow: hidden; }
